@@ -33,6 +33,9 @@
 using System.Collections.Generic;
 using ClassicUO.Configuration;
 using ClassicUO.Game.Data;
+// ## BEGIN - END ## //
+using ClassicUO.Game.InteropServices.Runtime.UOClassicCombat;
+// ## BEGIN - END ## //
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.Scenes;
 using ClassicUO.IO;
@@ -80,6 +83,29 @@ namespace ClassicUO.Game.GameObjects
             ushort hue = Hue;
             ushort graphic = DisplayedGraphic;
             bool partial = ItemData.IsPartialHue;
+
+            // ## BEGIN - END ## //
+            if (UOClassicCombatCollection.IsStealthArt(Graphic))
+            {
+                if (ProfileManager.CurrentProfile.ColorStealth || ProfileManager.CurrentProfile.StealthNeonType != 0)
+                    hue = UOClassicCombatCollection.StealthtHue(hue);
+            }
+
+            if (ProfileManager.CurrentProfile.BlockWoS)
+            {
+                if (StaticFilters.IsWallOfStone(Graphic) || Graphic == ProfileManager.CurrentProfile.BlockWoSArt)
+                {
+                    if (ProfileManager.CurrentProfile.BlockWoSFelOnly && World.MapIndex != 0)
+                    {
+                        TileDataLoader.Instance.StaticData[Graphic].IsImpassable = false;
+                    }
+                    else
+                    {
+                        TileDataLoader.Instance.StaticData[Graphic].IsImpassable = true;
+                    }
+                }
+            }
+            // ## BEGIN - END ## //
 
             if (OnGround)
             {
@@ -174,6 +200,19 @@ namespace ClassicUO.Game.GameObjects
             {
                 HueVector.Z = 0.5f;
             }
+
+            // ## BEGIN - END ## //
+            if (ProfileManager.CurrentProfile.TransparentHousesEnabled)
+            {
+                if ((Z - World.Player.Z) > ProfileManager.CurrentProfile.TransparentHousesZ)
+                    HueVector.Z = (float)ProfileManager.CurrentProfile.TransparentHousesTransparency / 10;
+            }
+            if (ProfileManager.CurrentProfile.InvisibleHousesEnabled && (Z - World.Player.Z) > ProfileManager.CurrentProfile.InvisibleHousesZ)
+            {
+                //DO NOT DRAW IT
+                return false;
+            }
+            // ## BEGIN - END ## //
 
             DrawStaticAnimated
             (

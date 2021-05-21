@@ -33,6 +33,10 @@
 using System;
 using System.Runtime.CompilerServices;
 using ClassicUO.Configuration;
+// ## BEGIN - END ## //
+using ClassicUO.Game.Data;
+using ClassicUO.Game.InteropServices.Runtime.UOClassicCombat;
+// ## BEGIN - END ## //
 using ClassicUO.IO;
 using ClassicUO.IO.Resources;
 using ClassicUO.Renderer;
@@ -164,6 +168,47 @@ namespace ClassicUO.Game.GameObjects
                 );
             }
         }
+        // ## BEGIN - END ## //
+        protected static void DrawLandWF(UltimaBatcher2D batcher, ushort graphic, int x, int y, ref Vector3 hue, bool isImpassable)
+        {
+            UOTexture texture = ArtLoader.Instance.GetLandTextureWF(graphic, isImpassable);
+
+            if (texture != null)
+            {
+                texture.Ticks = Time.Ticks;
+
+                batcher.DrawSprite(texture, x, y, false, ref hue);
+            }
+        }
+        protected static void DrawLandWF
+        (
+            UltimaBatcher2D batcher,
+            ushort graphic,
+            int x,
+            int y,
+            ref Rectangle rectangle,
+            ref Vector3 n0,
+            ref Vector3 n1,
+            ref Vector3 n2,
+            ref Vector3 n3,
+            ref Vector3 hue,
+            bool isImpassable
+        )
+        {
+            UOTexture texture = TexmapsLoader.Instance.GetTextureWF(TileDataLoader.Instance.LandData[graphic].TexID, isImpassable);
+
+            if (texture != null)
+            {
+                texture.Ticks = Time.Ticks;
+
+                batcher.DrawSpriteLand(texture, x, y, ref rectangle, ref n0, ref n1, ref n2, ref n3, ref hue);
+            }
+            else
+            {
+                DrawStatic(batcher, graphic, x, y, ref hue);
+            }
+        }
+        // ## BEGIN - END ## //
 
         protected static void DrawLand
         (
@@ -311,6 +356,15 @@ namespace ClassicUO.Game.GameObjects
                 texture.Ticks = Time.Ticks;
                 index = ref ArtLoader.Instance.GetValidRefEntry(graphic + 0x4000);
 
+                // ## BEGIN - END ## //
+                if (ProfileManager.CurrentProfile.IgnoreCoTEnabled)
+                {
+                    if (StaticFilters.IsIgnoreCoT(graphic) || ProfileManager.CurrentProfile.TreeType == 1 && graphic == UOClassicCombatCollection.TREE_REPLACE_GRAPHIC || ProfileManager.CurrentProfile.TreeType == 2 & graphic == UOClassicCombatCollection.TREE_REPLACE_GRAPHIC_TILE)
+                    {
+                        transparent = false;
+                    }
+                }
+                // ## BEGIN - END ## //
                 if (transparent)
                 {
                     int maxDist = ProfileManager.CurrentProfile.CircleOfTransparencyRadius + 22;

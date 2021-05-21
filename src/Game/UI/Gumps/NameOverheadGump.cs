@@ -41,6 +41,7 @@ using ClassicUO.IO.Resources;
 using ClassicUO.Renderer;
 using ClassicUO.Utility;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace ClassicUO.Game.UI.Gumps
 {
@@ -50,7 +51,75 @@ namespace ClassicUO.Game.UI.Gumps
         private Point _lockedPosition;
         private bool _positionLocked;
         private readonly RenderedText _renderedText;
+        private Texture2D _borderColor = SolidColorTextureCache.GetTexture(Color.Black);
+        // ## BEGIN - END ## //
+        private LineCHB _hpLineBorder, _hpLineRed, _hpLine;
+        private static Color HPB_COLOR_DRAW_RED = Color.Red;
+        private static Color HPB_COLOR_DRAW_BLUE = Color.DodgerBlue;
+        private static Color HPB_COLOR_DRAW_BLACK = Color.Black;
+        private static readonly Texture2D HPB_COLOR_BLUE = SolidColorTextureCache.GetTexture(Color.DodgerBlue);
+        private static readonly Texture2D HPB_COLOR_YELLOW = SolidColorTextureCache.GetTexture(Color.Orange);
+        private static readonly Texture2D HPB_COLOR_POISON = SolidColorTextureCache.GetTexture(Color.LimeGreen);
+        private static readonly Texture2D HPB_COLOR_PARA = SolidColorTextureCache.GetTexture(Color.MediumPurple);
+        private static readonly Texture2D HPB_COLOR_ORANGE = SolidColorTextureCache.GetTexture(Color.DarkOrange);
 
+        private class LineCHB : Line
+        {
+            public LineCHB(int x, int y, int w, int h, uint color) : base
+            (
+                x,
+                y,
+                w,
+                h,
+                color
+            )
+            {
+                LineWidth = w;
+
+                LineColor = SolidColorTextureCache.GetTexture(new Color { PackedValue = color });
+
+                CanMove = true;
+            }
+
+            public int LineWidth { get; set; }
+            public Texture2D LineColor { get; set; }
+
+            public override bool Draw(UltimaBatcher2D batcher, int x, int y)
+            {
+                ResetHueVector();
+                ShaderHueTranslator.GetHueVector(ref HueVector, 0, false, Alpha);
+
+                return batcher.Draw2D
+                (
+                    LineColor,
+                    x,
+                    y,
+                    LineWidth,
+                    Height,
+                    ref HueVector
+                );
+            }
+        }
+        protected static int CalculatePercents(int max, int current, int maxValue)
+        {
+            if (max > 0)
+            {
+                max = current * 100 / max;
+
+                if (max > 100)
+                {
+                    max = 100;
+                }
+
+                if (max > 1)
+                {
+                    max = maxValue * max / 100;
+                }
+            }
+
+            return max;
+        }
+        // ## BEGIN - END ## //
 
         public NameOverheadGump(uint serial) : base(serial, 0)
         {
@@ -79,6 +148,47 @@ namespace ClassicUO.Game.UI.Gumps
                 30,
                 true
             );
+            // ## BEGIN - END ## //
+            if (entity is Mobile)
+            {
+                Add
+                (
+                    _hpLineBorder = new LineCHB
+                    (
+                        1, //HPB_BAR_SPACELEFT,
+                        -8,
+                        1, //HPB_BAR_WIDTH,
+                        8, //HPB_BAR_HEIGHT,
+                        HPB_COLOR_DRAW_BLACK.PackedValue
+                    )
+                    { LineWidth = 0 }
+                );
+                Add
+                (
+                    _hpLineRed = new LineCHB
+                    (
+                        1, //HPB_BAR_SPACELEFT,
+                        -7,
+                        1, //HPB_BAR_WIDTH,
+                        6, //HPB_BAR_HEIGHT,
+                        HPB_COLOR_DRAW_RED.PackedValue
+                    )
+                    { LineWidth = 0 }
+                );
+                Add
+                (
+                    _hpLine = new LineCHB
+                    (
+                        1,
+                        -7,
+                        1,
+                        6,
+                        HPB_COLOR_DRAW_BLUE.PackedValue
+                    )
+                    { LineWidth = 0 }
+                );
+            }
+            // ## BEGIN - END ## //
 
             SetTooltip(entity);
 
@@ -488,6 +598,75 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 Dispose();
             }
+            else
+            {
+                if (entity == TargetManager.LastTargetInfo.Serial)
+                {
+                    _borderColor = SolidColorTextureCache.GetTexture(Color.Red);
+                    _background.Hue = _renderedText.Hue = entity is Mobile m ? Notoriety.GetHue(m.NotorietyFlag) : (ushort)0x0481;
+                }
+                else
+                {
+                    _borderColor = SolidColorTextureCache.GetTexture(Color.Black);
+                    _background.Hue = _renderedText.Hue = entity is Mobile m ? Notoriety.GetHue(m.NotorietyFlag) : (ushort)0x0481;
+                }
+                // ## BEGIN - END ## //
+                if (_hpLineBorder != null)
+                {
+                    if (ProfileManager.CurrentProfile.ShowHPLineInNOH)
+                    {
+                        Mobile mobile = entity as Mobile;
+
+                        if (mobile != null)
+                        {
+                            //SET FIXED WIDTH
+                            _hpLineBorder.X = _background.X - 1;
+                            _hpLineRed.X = _hpLine.X = _background.X;
+                            _hpLineBorder.Y = _background.Y - 8;
+                            _hpLineRed.Y = _hpLine.Y = _background.Y - 7;
+                            _hpLineBorder.LineWidth = _background.Width + 2;
+                            _hpLineRed.LineWidth = /*_hpLine.LineWidth =*/ _background.Width;
+
+                            //SET HP WIDTH
+                            int hits = CalculatePercents(entity.HitsMax, entity.Hits, _background.Width);
+
+                            if (hits != _hpLine.LineWidth)
+                            {
+                                _hpLine.LineWidth = hits;
+                            }
+
+                            //SET COLOR BORDER AND LINE
+                            if (mobile.IsPoisoned)
+                            {
+                                _hpLine.LineColor = HPB_COLOR_POISON;
+                            }
+                            else if (mobile.IsParalyzed)
+                            {
+                                _hpLine.LineColor = HPB_COLOR_PARA;
+                            }
+                            else if (mobile.IsYellowHits)
+                            {
+                                _hpLine.LineColor = HPB_COLOR_YELLOW;
+                            }
+                            else if (mobile.HamstrungTime > 0)
+                            {
+                                _hpLine.LineColor = HPB_COLOR_ORANGE;
+                            }
+                            else
+                            {
+                                _hpLine.LineColor = HPB_COLOR_BLUE;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        _hpLineBorder.X = _hpLineRed.X = _hpLine.X = _background.X;
+                        _hpLineBorder.Y = _hpLineRed.Y = _hpLine.Y = _background.Y;
+                        _hpLineBorder.LineWidth = _hpLineRed.LineWidth = _hpLine.LineWidth = 0;
+                    }
+                }
+                // ## BEGIN - END ## //
+            }
         }
 
         public override bool Draw(UltimaBatcher2D batcher, int x, int y)
@@ -593,7 +772,7 @@ namespace ClassicUO.Game.UI.Gumps
 
             batcher.DrawRectangle
             (
-                SolidColorTextureCache.GetTexture(Color.Black),
+                _borderColor,
                 x - 1,
                 y - 1,
                 Width + 1,

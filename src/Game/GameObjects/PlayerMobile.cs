@@ -34,6 +34,9 @@ using System.Collections.Generic;
 using System.Linq;
 using ClassicUO.Configuration;
 using ClassicUO.Data;
+// ## BEGIN - END ## //
+using ClassicUO.Game.InteropServices.Runtime.External;
+// ## BEGIN - END ## //
 using ClassicUO.Game.Data;
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.UI.Controls;
@@ -48,9 +51,20 @@ namespace ClassicUO.Game.GameObjects
     {
         private readonly Dictionary<BuffIconType, BuffIcon> _buffIcons = new Dictionary<BuffIconType, BuffIcon>();
 
+        // ## BEGIN - END ## //
+        public BandageGump BandageTimer; //##BandageGump##//
+        public int DeathX = 0;
+        public int DeathY = 0;
+        public uint DeathTick = 0;
+        // ## BEGIN - END ## //
+
         public PlayerMobile(uint serial) : base(serial)
         {
             Skills = new Skill[SkillsLoader.Instance.SkillsCount];
+
+            // ## BEGIN - END ## //
+            UIManager.Add(BandageTimer = new BandageGump()); //##BandageGump##//
+            // ## BEGIN - END ## //
 
             for (int i = 0; i < Skills.Length; i++)
             {
@@ -1355,6 +1369,32 @@ namespace ClassicUO.Game.GameObjects
             }
         }
 
+        // ## BEGIN - END ## //
+        public void OpenCorpses(byte range)
+        {
+            foreach (var c in World.Items.Where(t => t.Graphic == 0x2006 && t.Distance <= range))
+            {
+                ManualOpenedCorpses.Add(c.Serial);
+                GameActions.DoubleClickQueued(c.Serial);
+            }
+        }
+        public void OpenCorpsesSafe(byte range)
+        {
+            foreach (var c in World.Items.Where(t => t.Graphic == 0x2006 && t.Distance <= range))
+            {
+                if (c.LootFlag == ProfileManager.CurrentProfile.UOClassicCombatAL_SL_Gray || LootFlag == ProfileManager.CurrentProfile.UOClassicCombatAL_SL_Green || LootFlag == ProfileManager.CurrentProfile.UOClassicCombatAL_SL_Red)
+                {
+                    ManualOpenedCorpses.Add(c.Serial);
+                    GameActions.DoubleClickQueued(c.Serial); 
+                }
+                else
+                {
+                    c.AddMessage(MessageType.Regular, "This is not safe lootable!", 3, 33, true, TextType.OBJECT);
+                    continue;
+                }
+            }
+        }
+        // ## BEGIN - END ## //
 
         protected override void OnDirectionChanged()
         {
