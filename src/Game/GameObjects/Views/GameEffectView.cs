@@ -117,6 +117,11 @@ namespace ClassicUO.Game.GameObjects
                 if (ProfileManager.CurrentProfile.ColorEnergyBolt || ProfileManager.CurrentProfile.EnergyBoltNeonType != 0)
                     Hue = UOClassicCombatCollection.EnergyBoltHue(Hue);
             }
+            if (ProfileManager.CurrentProfile.EnergyBoltArtType != 0)
+            {
+                if (UOClassicCombatCollection.IsChangedEnergyBoltArt(Graphic))
+                    Hue = UOClassicCombatCollection.EnergyBoltHue(Hue);
+            }
             // ## BEGIN - END ## //
 
             ushort hue = Hue;

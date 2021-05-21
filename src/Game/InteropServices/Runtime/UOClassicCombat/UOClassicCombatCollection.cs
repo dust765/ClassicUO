@@ -721,7 +721,7 @@ namespace ClassicUO.Game.InteropServices.Runtime.UOClassicCombat
             return hue;
         }
 
-        //GAME\GAMEOBJECTS\VIEWS\MOVINGEFFECTVIEW.CS
+        //GAME\GAMEOBJECTS\VIEWS\GAMEEFFECTVIEW.CS
         public static ushort EnergyBoltArt(ushort graphic)
         {
             if (ProfileManager.CurrentProfile.EnergyBoltArtType == 1)
@@ -730,6 +730,15 @@ namespace ClassicUO.Game.InteropServices.Runtime.UOClassicCombat
                 graphic = 0x2256;
 
             return graphic;
+        }
+        public static bool IsChangedEnergyBoltArt(ushort graphic)
+        {
+            if (ProfileManager.CurrentProfile.EnergyBoltArtType == 1 & graphic == 0x36FE)
+                return true;
+            else if (ProfileManager.CurrentProfile.EnergyBoltArtType == 2 & graphic == 0x2256)
+                return true;
+
+            return false;
         }
         public static ushort EnergyBoltHue(ushort hue)
         {
