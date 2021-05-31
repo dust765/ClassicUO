@@ -139,7 +139,7 @@ namespace ClassicUO.Game.GameObjects
                 {
                     DrawLandWF
                     (
-                        batcher, Graphic, posX, posY, ref Rectangle, ref Normal0, ref Normal1, ref Normal2, ref Normal3,
+                        batcher, Graphic, posX, posY, ref YOffsets, ref NormalTop, ref NormalRight, ref NormalLeft, ref NormalBottom,
                         ref HueVector, this.TileData.IsImpassable
                     );
                 }
@@ -147,7 +147,7 @@ namespace ClassicUO.Game.GameObjects
                 {
                     DrawLand
                     (
-                        batcher, Graphic, posX, posY, ref Rectangle, ref Normal0, ref Normal1, ref Normal2, ref Normal3,
+                        batcher, Graphic, posX, posY, ref YOffsets, ref NormalTop, ref NormalRight, ref NormalLeft, ref NormalBottom,
                         ref HueVector
                     );
                 }

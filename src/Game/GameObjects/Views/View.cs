@@ -186,11 +186,11 @@ namespace ClassicUO.Game.GameObjects
             ushort graphic,
             int x,
             int y,
-            ref Rectangle rectangle,
-            ref Vector3 n0,
-            ref Vector3 n1,
-            ref Vector3 n2,
-            ref Vector3 n3,
+            ref UltimaBatcher2D.YOffsets yOffsets,
+            ref Vector3 nTop,
+            ref Vector3 nRight,
+            ref Vector3 nLeft,
+            ref Vector3 nBottom,
             ref Vector3 hue,
             bool isImpassable
         )
@@ -201,7 +201,7 @@ namespace ClassicUO.Game.GameObjects
             {
                 texture.Ticks = Time.Ticks;
 
-                batcher.DrawSpriteLand(texture, x, y, ref rectangle, ref n0, ref n1, ref n2, ref n3, ref hue);
+                batcher.DrawSpriteLand(texture, x, y, ref yOffsets, ref nTop, ref nRight, ref nLeft, ref nBottom, ref hue);
             }
             else
             {
