@@ -32,6 +32,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using ClassicUO.IO.Audio;
 using ClassicUO.Game.Data;
 // ## BEGIN - END ## // 
 using ClassicUO.Game.InteropServices.Runtime.UOClassicCombat;
@@ -192,9 +193,10 @@ namespace ClassicUO.Game
             }
 
             //TODO(deccer): refactor this out into _audioPlayer.PlayMusic(...)
-            if (!Client.Game.Scene.Audio.IsMusicPlaying())
+            UOMusic currentMusic = Client.Game.Scene.Audio.GetCurrentMusic();
+            if (currentMusic == null || currentMusic.Index == Client.Game.Scene.Audio.LoginMusicIndex)
             {
-                Client.Game.Scene.Audio.PlayMusic(music, true);
+                Client.Game.Scene.Audio.PlayMusic(music, false);
             }
         }
 
