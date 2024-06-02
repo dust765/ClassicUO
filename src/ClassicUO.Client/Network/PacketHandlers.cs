@@ -1595,6 +1595,7 @@ namespace ClassicUO.Network
                         if (gridContainer != null)
                         {
                             gridContainer.RequestUpdateContents();
+                    
                         }
                         else
                         {
@@ -1614,6 +1615,7 @@ namespace ClassicUO.Network
                         {
                             x = container.ScreenCoordinateX;
                             y = container.ScreenCoordinateY;
+                            
                             container.Dispose();
                         }
                         else
@@ -1758,11 +1760,11 @@ namespace ClassicUO.Network
                                 if (SerialHelper.IsMobile(container.Serial))
                                 {
                                     Console.WriteLine("=== DENY === ADD TO PAPERDOLL");
-
+                                   
                                     World.RemoveItemFromContainer(item);
                                     container.PushToBack(item);
                                     item.Container = container.Serial;
-
+                                     
                                     UIManager.GetGump<PaperDollGump>(item.Container)?.RequestUpdateContents();
                                     UIManager.GetGump<ModernPaperdoll>(item.Container)?.RequestUpdateContents();
                                 }
@@ -1776,7 +1778,7 @@ namespace ClassicUO.Network
                             else
                             {
                                 Console.WriteLine("=== DENY === ADD TO TERRAIN");
-
+                                
                                 World.RemoveItemFromContainer(item);
 
                                 item.SetInWorldTile(item.X, item.Y, item.Z);
@@ -1940,6 +1942,7 @@ namespace ClassicUO.Network
 
             if (item.Graphic != 0 && item.Layer != Layer.Backpack)
             {
+                
                 //ClearContainerAndRemoveItems(item);
                 World.RemoveItemFromContainer(item);
             }
@@ -3057,6 +3060,7 @@ namespace ClassicUO.Network
                 item.Graphic = itemGraphic;
                 item.FixHue(item_hue);
                 item.Amount = 1;
+               
                 World.RemoveItemFromContainer(item);
                 item.Container = serial;
                 item.Layer = (Layer)layer;
@@ -3285,7 +3289,7 @@ namespace ClassicUO.Network
                 if (layer - 1 != Layer.Backpack)
                 {
                     Item item = World.GetOrCreateItem(item_serial);
-
+                    
                     World.RemoveItemFromContainer(item);
                     item.Container = serial;
                     item.Layer = layer - 1;
@@ -4560,7 +4564,8 @@ namespace ClassicUO.Network
 
                         case 0x0C: //container
                             UIManager.GetGump<ContainerGump>(serial)?.Dispose();
-
+                            
+         
                             break;
                     }
 
@@ -6336,7 +6341,7 @@ namespace ClassicUO.Network
             item.X = x;
             item.Y = y;
             item.Z = 0;
-
+            
             World.RemoveItemFromContainer(item);
             item.Container = containerSerial;
             container.PushToBack(item);
@@ -6516,6 +6521,7 @@ namespace ClassicUO.Network
 
                     if (SerialHelper.IsValid(item.Container))
                     {
+                        
                         World.RemoveItemFromContainer(item);
                     }
                 }

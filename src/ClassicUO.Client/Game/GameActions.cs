@@ -353,6 +353,7 @@ namespace ClassicUO.Game
                         g.SetInScreen();
                         g.BringOnTop();
                     }
+                   
                     Socket.Send_DoubleClick(serial);
                 }
                 else

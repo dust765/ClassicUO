@@ -1515,15 +1515,7 @@ namespace ClassicUO.Game.GameObjects
 
         public void CloseRangedGumps()
         {
-            for (int i = 0; i < UIManager.Gumps.Count; i++)
-            {
-                if (UIManager.Gumps.Count > i)
-                    continue;
-
-                Gump gump = UIManager.Gumps.ElementAt(i);
-                //}
-                //foreach (Gump gump in UIManager.Gumps)
-                //{
+            foreach (Gump gump in UIManager.Gumps) { 
                 switch (gump)
                 {
                     case ModernPaperdoll _:
@@ -1628,7 +1620,14 @@ namespace ClassicUO.Game.GameObjects
 
                         if (distance > Constants.MAX_CONTAINER_OPENED_ON_GROUND_RANGE)
                         {
-                            gump.Dispose();
+                            // ## BEGIN - END ## // MISC3 THIEFSUPREME
+                            //gump.Dispose();
+                            // ## BEGIN - END ## // MISC3 THIEFSUPREME
+                            if (!ProfileManager.CurrentProfile.OverrideContainerOpenRange)
+                            {
+                                gump.Dispose();
+                            }
+                            // ## BEGIN - END ## // MISC3 THIEFSUPREME
                         }
 
                         break;
@@ -1672,7 +1671,7 @@ namespace ClassicUO.Game.GameObjects
 
         public bool Walk(Direction direction, bool run)
         {
-            if (Walker.WalkingFailed || Walker.LastStepRequestTime > Time.Ticks || Walker.StepsCount >= Constants.MAX_STEP_COUNT)
+            if (Walker.WalkingFailed || Walker.LastStepRequestTime > Time.Ticks || Walker.StepsCount >= Constants.MAX_STEP_COUNT || Client.Version >= ClientVersion.CV_60142 && IsParalyzed)
             {
                 return false;
             }
@@ -1709,7 +1708,7 @@ namespace ClassicUO.Game.GameObjects
 
             if ((oldDirection & Direction.Mask) == (direction & Direction.Mask))
             {
-                if (isFrozeSet || Client.Version >= ClientVersion.CV_60142 && IsParalyzed) return false;
+                if (isFrozeSet ) return false;
 
                 // ## BEGIN - END ## // ONCASTINGGUMP
                 if (GameActions.iscasting) return false;
