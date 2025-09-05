@@ -114,8 +114,6 @@ namespace ClassicUO.Game.GameObjects
 
         public int DistanceFrom(Vector2 pos)
         {
-            if (pos == null) { return int.MaxValue; }
-
             return Math.Max(Math.Abs(X - (int)pos.X), Math.Abs(Y - (int)pos.Y));
         }
 

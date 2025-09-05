@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Text.Json;
 
 namespace ClassicUO.Game.Managers
 {
@@ -44,8 +44,7 @@ namespace ClassicUO.Game.Managers
             {
                 using (FileStream fs = new FileStream(savePath, FileMode.Create, FileAccess.Write))
                 {
-                    BinaryFormatter bf = new BinaryFormatter();
-                    bf.Serialize(fs, markedTiles);
+                    JsonSerializer.Serialize(fs, markedTiles);
                 }
             }
             catch { Console.WriteLine("Failed to save marked tile data."); }
@@ -58,8 +57,7 @@ namespace ClassicUO.Game.Managers
                 {
                     using (FileStream fs = File.OpenRead(savePath))
                     {
-                        BinaryFormatter bf = new BinaryFormatter();
-                        markedTiles = (Dictionary<string, ushort>)bf.Deserialize(fs);
+                        markedTiles = JsonSerializer.Deserialize<Dictionary<string, ushort>>(fs);
                     }
                 }
                 catch { }

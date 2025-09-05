@@ -1,7 +1,6 @@
 ﻿#region References
 using ClassicUO.Utility.Logging;
 using System;
-using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,6 +8,9 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Emit;
 #endregion
 
 namespace ClassicUO
@@ -32,10 +34,21 @@ namespace ClassicUO
                 CUOEnviroment.ExecutablePath + "/ClassicUO.Renderer.dll",
                 CUOEnviroment.ExecutablePath + "/ClassicUO.Utility.dll",
                 CUOEnviroment.ExecutablePath + "/FNA.dll",
-                CUOEnviroment.ExecutablePath + "/ClassicUO.exe",
-                "System.dll",
-                "System.Core.dll"
+                CUOEnviroment.ExecutablePath + "/ClassicUO.exe"
             };
+
+            // Add all assemblies from the current AppDomain that are not dynamic and have a physical location.
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                try
+                {
+                    if (!assembly.IsDynamic && !string.IsNullOrEmpty(assembly.Location))
+                    {
+                        list.Add(assembly.Location);
+                    }
+                }
+                catch (NotSupportedException) { /* Dynamic assemblies might throw this */ }
+            }
 
             var path = Path.Combine(CUOEnviroment.ExecutablePath, "Data/Assemblies.cfg");
 
@@ -57,40 +70,7 @@ namespace ClassicUO
 
             list.AddRange(m_AdditionalReferences);
 
-            return list.ToArray();
-        }
-
-        public static string GetCompilerOptions(bool debug)
-        {
-            StringBuilder sb = null;
-
-            AppendCompilerOption(ref sb, "/d:ClassicUO");
-
-            AppendCompilerOption(ref sb, "/unsafe");
-
-            if (!debug)
-            {
-                AppendCompilerOption(ref sb, "/optimize");
-            }
-            else
-            {
-                AppendCompilerOption(ref sb, "/debug");
-                AppendCompilerOption(ref sb, "/d:DEBUG");
-                AppendCompilerOption(ref sb, "/d:TRACE");
-            }
-
-            AppendCompilerOption(ref sb, "/langversion:7.3");
-
-#if MONO
-			AppendCompilerOption( ref sb, "/d:MONO" );
-#endif
-
-            if (Environment.Is64BitOperatingSystem)
-            {
-                AppendCompilerOption(ref sb, "/d:x64");
-            }
-
-            return (sb == null ? null : sb.ToString());
+            return list.Distinct().ToArray();
         }
 
         private static void AppendCompilerOption(ref StringBuilder sb, string define)
@@ -210,164 +190,103 @@ namespace ClassicUO
 
             DeleteFiles("Scripts.CS*.dll");
 
-#if !MONO
-            using CodeDomProvider provider = new Microsoft.CodeDom.Providers.DotNetCompilerPlatform.CSharpCodeProvider();
-#else
-            using CSharpCodeProvider provider = new Microsoft.CodeDom.Providers.DotNetCompilerPlatform.CSharpCodeProvider();
-#endif
+            var compilation = CSharpCompilation.Create
+            (
+                "Scripts.CS.dll",
+                syntaxTrees: files.Select(file => CSharpSyntaxTree.ParseText(File.ReadAllText(file))),
+                references: GetReferenceAssemblies().Select(r => MetadataReference.CreateFromFile(r)),
+                options: new CSharpCompilationOptions
+                (
+                    OutputKind.DynamicallyLinkedLibrary,
+                    optimizationLevel: debug ? OptimizationLevel.Debug : OptimizationLevel.Release,
+                    allowUnsafe: true
+                )
+            );
 
-            var path = GetUnusedPath("Scripts.CS");
-
-            var parms = new CompilerParameters(GetReferenceAssemblies(), path, debug);
-
-            var options = GetCompilerOptions(debug);
-
-            if (options != null)
+            using (var ms = new MemoryStream())
             {
-                parms.CompilerOptions = options;
-            }
+                EmitResult results = compilation.Emit(ms);
 
-
-            if (CUOEnviroment.IsUnix)
-            {
-                parms.CompilerOptions = String.Format("{0} /nowarn:169,219,414 /recurse:Scripts/*.cs", parms.CompilerOptions);
-                files = new string[0];
-            }
-
-            var results = provider.CompileAssemblyFromFile(parms, files);
-            provider.Dispose();
-
-            m_AdditionalReferences.Add(path);
-
-            Display(results);
-
-            if (results.Errors.Count > 0 && !CUOEnviroment.IsUnix)
-            {
-                assembly = null;
-                return false;
-            }
-
-            if (results.Errors.Count > 0 && CUOEnviroment.IsUnix)
-            {
-                foreach (CompilerError err in results.Errors)
+                if (!results.Success)
                 {
-                    if (!err.IsWarning)
+                    Display(results.Diagnostics);
+                    assembly = null;
+                    return false;
+                }
+
+                ms.Seek(0, SeekOrigin.Begin);
+                assembly = Assembly.Load(ms.ToArray());
+
+                var path = GetUnusedPath("Scripts.CS");
+
+                File.WriteAllBytes(path, ms.ToArray());
+
+                m_AdditionalReferences.Add(path);
+
+                Console.WriteLine("done");
+
+                if (cache && Path.GetFileName(path) == "Scripts.CS.dll")
+                {
+                    try
                     {
-                        assembly = null;
-                        return false;
+                        var hashCode = GetHashCode(path, files, debug);
+
+                        using var fs = new FileStream("Scripts/Output/Scripts.CS.hash", FileMode.Create, FileAccess.Write, FileShare.None);
+                        using (var bin = new BinaryWriter(fs))
+                        {
+                            bin.Write(hashCode, 0, hashCode.Length);
+                        }
                     }
+                    catch
+                    { }
                 }
             }
 
-            if (cache && Path.GetFileName(path) == "Scripts.CS.dll")
-            {
-                try
-                {
-                    var hashCode = GetHashCode(path, files, debug);
-
-                    using var fs = new FileStream("Scripts/Output/Scripts.CS.hash", FileMode.Create, FileAccess.Write, FileShare.None);
-                    using (var bin = new BinaryWriter(fs))
-                    {
-                        bin.Write(hashCode, 0, hashCode.Length);
-                    }
-                }
-                catch
-                { }
-            }
-
-            assembly = results.CompiledAssembly;
             return true;
         }
 
-        public static void Display(CompilerResults results)
+        public static void Display(IEnumerable<Diagnostic> diagnostics)
         {
-            if (results.Errors.Count > 0)
+            var errors = new List<Diagnostic>();
+            var warnings = new List<Diagnostic>();
+
+            foreach (var diagnostic in diagnostics)
             {
-                var errors = new Dictionary<string, List<CompilerError>>(results.Errors.Count, StringComparer.OrdinalIgnoreCase);
-                var warnings = new Dictionary<string, List<CompilerError>>(results.Errors.Count, StringComparer.OrdinalIgnoreCase);
-
-                foreach (CompilerError e in results.Errors)
+                if (diagnostic.IsWarningAsError || diagnostic.Severity == DiagnosticSeverity.Error)
                 {
-                    var file = e.FileName;
-
-                    // Ridiculous. FileName is null if the warning/error is internally generated in csc.
-                    if (string.IsNullOrEmpty(file))
-                    {
-                        Console.WriteLine("ScriptCompiler: {0}: {1}", e.ErrorNumber, e.ErrorText);
-                        continue;
-                    }
-
-                    var table = (e.IsWarning ? warnings : errors);
-
-                    List<CompilerError> list = null;
-                    table.TryGetValue(file, out list);
-
-                    if (list == null)
-                    {
-                        table[file] = list = new List<CompilerError>();
-                    }
-
-                    list.Add(e);
+                    errors.Add(diagnostic);
                 }
-
-                if (errors.Count > 0)
+                else if (diagnostic.Severity == DiagnosticSeverity.Warning)
                 {
-                    Console.WriteLine("Failed with: {0} errors, {1} warnings", errors.Count, warnings.Count);
+                    warnings.Add(diagnostic);
                 }
-                else
-                {
-                    Console.WriteLine("Finished with: {0} errors, {1} warnings", errors.Count, warnings.Count);
-                }
+            }
 
-                var scriptRoot = Path.GetFullPath(Path.Combine(CUOEnviroment.ExecutablePath, "Scripts" + Path.DirectorySeparatorChar));
-                var scriptRootUri = new Uri(scriptRoot);
-
-                if (warnings.Count > 0)
-                {
-                    Console.WriteLine("Warnings:");
-                }
-
-                foreach (var kvp in warnings)
-                {
-                    var fileName = kvp.Key;
-                    var list = kvp.Value;
-
-                    var fullPath = Path.GetFullPath(fileName);
-                    var usedPath = Uri.UnescapeDataString(scriptRootUri.MakeRelativeUri(new Uri(fullPath)).OriginalString);
-
-                    Console.WriteLine(" + {0}:", usedPath);
-
-                    foreach (var e in list)
-                    {
-                        Console.WriteLine("    {0}: Line {1}: {2}", e.ErrorNumber, e.Line, e.ErrorText);
-                    }
-
-                }
-
-                if (errors.Count > 0)
-                {
-                    Console.WriteLine("Errors:");
-                }
-
-                foreach (var kvp in errors)
-                {
-                    var fileName = kvp.Key;
-                    var list = kvp.Value;
-
-                    var fullPath = Path.GetFullPath(fileName);
-                    var usedPath = Uri.UnescapeDataString(scriptRootUri.MakeRelativeUri(new Uri(fullPath)).OriginalString);
-
-                    Console.WriteLine(" + {0}:", usedPath);
-
-                    foreach (var e in list)
-                    {
-                        Console.WriteLine("    {0}: Line {1}: {2}", e.ErrorNumber, e.Line, e.ErrorText);
-                    }
-                }
+            if (errors.Count > 0)
+            {
+                Console.WriteLine("Failed with: {0} errors, {1} warnings", errors.Count, warnings.Count);
             }
             else
             {
-                Console.WriteLine("Finished with: 0 errors, 0 warnings");
+                Console.WriteLine("Finished with: {0} errors, {1} warnings", errors.Count, warnings.Count);
+            }
+
+            if (warnings.Count > 0)
+            {
+                Console.WriteLine("Warnings:");
+                foreach (var diagnostic in warnings)
+                {
+                    Console.WriteLine("    {0} ({1}): {2}", diagnostic.Id, diagnostic.Location.GetLineSpan().StartLinePosition, diagnostic.GetMessage());
+                }
+            }
+
+            if (errors.Count > 0)
+            {
+                Console.WriteLine("Errors:");
+                foreach (var diagnostic in errors)
+                {
+                    Console.WriteLine("    {0} ({1}): {2}", diagnostic.Id, diagnostic.Location.GetLineSpan().StartLinePosition, diagnostic.GetMessage());
+                }
             }
         }
 
@@ -402,8 +321,6 @@ namespace ClassicUO
             catch
             { }
         }
-
-        private delegate CompilerResults Compiler(bool debug);
 
         public static void Compile()
         {

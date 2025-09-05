@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
+    <TargetFramework>net8.0-windows7.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>

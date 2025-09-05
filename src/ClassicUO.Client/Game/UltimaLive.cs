@@ -45,6 +45,7 @@ using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Runtime.Versioning;
 
 namespace ClassicUO.Game
 {
@@ -652,6 +653,7 @@ namespace ClassicUO.Game
             return null;
         }
         
+        [SupportedOSPlatform("windows")]
         private class ULFileMul : UOFileMul
         {
             public ULFileMul(string file, bool isStaticMul) : base(file)
@@ -663,6 +665,7 @@ namespace ClassicUO.Game
             {
             }
 
+            [SupportedOSPlatform("windows")]
             private unsafe void LoadFile(bool isStaticMul)
             {
                 FileInfo fileInfo = new FileInfo(FilePath);
@@ -980,7 +983,9 @@ namespace ClassicUO.Game
                 // ReSharper disable once RedundantExplicitArraySize
                 byte[] block = new byte[196]
                 {
-                    0x00, 0x00, 0x00, 0x00, //header
+
+
+                       0x00, 0x00, 0x00, 0x00, //header
                     0x44, 0x02, 0x00, 0x44, 0x02, 0x00, 0x44, 0x02, 0x00, 0x44, 0x02, 0x00, 0x44, 0x02, 0x00, 0x44,
                     0x02, 0x00, 0x44, 0x02, 0x00, 0x44, 0x02, 0x00,
                     0x44, 0x02, 0x00, 0x44, 0x02, 0x00, 0x44, 0x02, 0x00, 0x44, 0x02, 0x00, 0x44, 0x02, 0x00, 0x44,
@@ -997,6 +1002,7 @@ namespace ClassicUO.Game
                     0x02, 0x00, 0x44, 0x02, 0x00, 0x44, 0x02, 0x00,
                     0x44, 0x02, 0x00, 0x44, 0x02, 0x00, 0x44, 0x02, 0x00, 0x44, 0x02, 0x00, 0x44, 0x02, 0x00, 0x44,
                     0x02, 0x00, 0x44, 0x02, 0x00, 0x44, 0x02, 0x00
+                 
                 };
 
                 for (int y = 0; y < mapHeightInBlocks; y++)

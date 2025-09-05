@@ -37,9 +37,11 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Runtime.Versioning;
 
 namespace ClassicUO.Game.UI.Controls
 {
+    [SupportedOSPlatform("windows")]
     public class GumpPicExternalUrl : Control
     {
         private Vector3 hueVector;
@@ -63,6 +65,7 @@ namespace ClassicUO.Game.UI.Controls
         public bool Resize { get; }
         public Texture2D imageTexture { get; private set; }
 
+        [SupportedOSPlatform("windows")]
         private void getImageTexture()
         {
             Task.Factory.StartNew(() =>

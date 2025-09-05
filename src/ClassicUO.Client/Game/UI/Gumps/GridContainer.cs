@@ -1,5 +1,7 @@
 ﻿#region license
 
+#nullable enable
+
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
 // 

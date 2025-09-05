@@ -159,7 +159,7 @@ namespace ClassicUO.Game.Managers
                     saveFileDialog1.Title = "Save tooltip override settings";
                     saveFileDialog1.ShowDialog();
 
-                    string result = JsonSerializer.Serialize(allData);
+                    string result = JsonSerializer.Serialize(allData, AppJsonSerializerContext.Default.ToolTipOverrideDataArray);
 
                     // If the file name is not an empty string open it for saving.
                     if (saveFileDialog1.FileName != "")
@@ -205,11 +205,11 @@ namespace ClassicUO.Game.Managers
                                 {
                                     string result = File.ReadAllText(openFileDialog.FileName);
 
-                                    ToolTipOverrideData[] imported = JsonSerializer.Deserialize<ToolTipOverrideData[]>(result);
+                                    ToolTipOverrideData[] imported = JsonSerializer.Deserialize<ToolTipOverrideData[]>(result, AppJsonSerializerContext.Default.ToolTipOverrideDataArray);
 
                                     foreach (ToolTipOverrideData importedData in imported)
                                         //GameActions.Print(importedData.searchText);
-                                        new ToolTipOverrideData(ProfileManager.CurrentProfile.ToolTipOverride_SearchText.Count, importedData.searchText, importedData.FormattedText, importedData.Min1, importedData.Max1, importedData.Min2, importedData.Max2, (byte)importedData.ItemLayer).Save();
+                                        new ToolTipOverrideData(ProfileManager.CurrentProfile.ToolTipOverride_SearchText.Count, importedData.SearchText, importedData.FormattedText, importedData.Min1, importedData.Max1, importedData.Min2, importedData.Max2, (byte)importedData.ItemLayer).Save();
 
                                     ToolTipOverideMenu.Reopen = true;
 
@@ -385,5 +385,12 @@ namespace ClassicUO.Game.Managers
 
             return false;
         }
+    }
+
+    [JsonSerializable(typeof(ToolTipOverrideData[]))]
+    [JsonSerializable(typeof(ToolTipOverrideData))]
+    internal partial class AppJsonSerializerContext : JsonSerializerContext
+    {
+
     }
 }
