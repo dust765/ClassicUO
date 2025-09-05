@@ -1,4 +1,4 @@
-name: TUO-Dev-Deploy
+name: dust765-Dev-Deploy
 
 on:
   workflow_dispatch:
@@ -15,7 +15,7 @@ concurrency:
 env:
   CUO_OUTPUT_PATH: '../../bin/dist'
   CUO_PROJECT_PATH: "src/ClassicUO.Client/ClassicUO.Client.csproj"
-  CUO_ZIP_NAME: "TazUO.zip"
+  CUO_ZIP_NAME: "Dust765UO.zip"
 
   DOTNET_NOLOGO: false
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
@@ -33,7 +33,7 @@ jobs:
       uses: dev-drprasad/delete-tag-and-release@v0.2.1
       with:
         delete_release: true
-        tag_name: TazUO-BleedingEdge
+        tag_name: Dust765UO-BleedingEdge
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   
@@ -84,12 +84,12 @@ jobs:
       uses: ncipollo/release-action@v1
       with:
         artifacts: "upload/${{ runner.os }}${{ env.CUO_ZIP_NAME }}"
-        name: 'TazUO Bleeding Edge'
+        name: 'Dust765UO Bleeding Edge'
         body: 'These are built automatically on the dev branch. These may include features that are still being worked on/not complete.'
         makeLatest: false
         allowUpdates: true
         prerelease: true
-        tag: TazUO-BleedingEdge
+        tag: Dust765UO-BleedingEdge
         token: ${{ secrets.GITHUB_TOKEN }}
         
         
