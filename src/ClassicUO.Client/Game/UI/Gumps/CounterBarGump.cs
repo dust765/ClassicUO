@@ -31,7 +31,6 @@
 #endregion
 
 using System.Collections.Generic;
-using System.IO;
 using System.Xml;
 using ClassicUO.Configuration;
 using ClassicUO.Game.Data;
@@ -446,16 +445,16 @@ namespace ClassicUO.Game.UI.Gumps
                     else if (ProfileManager.CurrentProfile.CastSpellsByOneClick)
                     {
                         Use();
+                        return;
                     }
                 }
                 else if (button == MouseButtonType.Right && Keyboard.Alt && Graphic != 0)
                 {
                     RemoveItem();
+                    return;
                 }
-                else if (Graphic != 0)
-                {
-                    base.OnMouseUp(x, y, button);
-                }
+
+                base.OnMouseUp(x, y, button);
             }
 
             protected override bool OnMouseDoubleClick(int x, int y, MouseButtonType button)

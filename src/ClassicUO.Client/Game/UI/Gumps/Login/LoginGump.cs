@@ -556,6 +556,21 @@ namespace ClassicUO.Game.UI.Gumps.Login
 
         }
 
+        protected override void OnControllerButtonUp(SDL.SDL_GameControllerButton button)
+        {
+            base.OnControllerButtonUp(button);
+            if(button == SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_A)
+            {
+                SaveCheckboxStatus();
+                LoginScene ls = Client.Game.GetScene<LoginScene>();
+
+                if (ls.CurrentLoginStep == LoginSteps.Main)
+                {
+                    ls.Connect(_textboxAccount.Text, _passwordFake.RealText);
+                }
+            }
+        }
+
         public override void OnKeyboardReturn(int textID, string text)
         {
             SaveCheckboxStatus();

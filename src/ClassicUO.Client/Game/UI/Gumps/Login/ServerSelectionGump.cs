@@ -269,6 +269,22 @@ namespace ClassicUO.Game.UI.Gumps.Login
             }
         }
 
+        protected override void OnControllerButtonUp(SDL.SDL_GameControllerButton button)
+        {
+            base.OnControllerButtonUp(button);
+            if (button == SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_A)
+            {
+                LoginScene loginScene = Client.Game.GetScene<LoginScene>();
+
+                if (loginScene.Servers?.Any(s => s != null) ?? false)
+                {
+                    int index = loginScene.GetServerIndexFromSettings();
+
+                    loginScene.SelectServer((byte)loginScene.Servers[index].Index);
+                }
+            }
+        }
+
         protected override void OnKeyDown(SDL.SDL_Keycode key, SDL.SDL_Keymod mod)
         {
             if (key == SDL.SDL_Keycode.SDLK_RETURN || key == SDL.SDL_Keycode.SDLK_KP_ENTER)

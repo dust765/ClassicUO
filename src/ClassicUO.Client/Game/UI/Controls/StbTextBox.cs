@@ -120,7 +120,7 @@ namespace ClassicUO.Game.UI.Controls
             parts[0] == "textentrylimited" ? int.Parse(parts[8]) : byte.MaxValue,
             int.Parse(parts[3]),
             style: FontStyle.BlackBorder | FontStyle.CropTexture,
-            hue: (ushort) (UInt16Converter.Parse(parts[5]) + 1)
+            hue: (ushort)(UInt16Converter.Parse(parts[5]) + 1)
         )
         {
             X = int.Parse(parts[1]);
@@ -263,7 +263,7 @@ namespace ClassicUO.Game.UI.Controls
                         value = value.Substring(0, _maxCharCount);
                     }
                 }
-                
+
                 //Sanitize(ref value);
 
                 _rendererText.Text = value;
@@ -314,7 +314,7 @@ namespace ClassicUO.Game.UI.Controls
                     text,
                     text.Length,
                     _rendererText.Align,
-                    (ushort) _rendererText.FontStyle,
+                    (ushort)_rendererText.FontStyle,
                     _rendererText.MaxWidth,
                     countret
                 );
@@ -326,7 +326,7 @@ namespace ClassicUO.Game.UI.Controls
                 text,
                 text.Length,
                 _rendererText.Align,
-                (ushort) _rendererText.FontStyle,
+                (ushort)_rendererText.FontStyle,
                 _rendererText.MaxWidth,
                 countret
             );
@@ -521,7 +521,7 @@ namespace ClassicUO.Game.UI.Controls
                         UIManager.KeyboardFocusControl = null;
                     }
                     SelectionStart = 0;
-                    SelectionEnd = 0;                    
+                    SelectionEnd = 0;
                     break;
 
                 case SDL.SDL_Keycode.SDLK_INSERT when IsEditable:
@@ -753,6 +753,15 @@ namespace ClassicUO.Game.UI.Controls
             base.OnKeyDown(key, mod);
         }
 
+        protected override void OnControllerButtonDown(SDL.SDL_GameControllerButton button)
+        {
+            base.OnControllerButtonDown(button);
+            if (button == SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_A)
+            {
+                Parent?.InvokeControllerButtonDown(button);
+            }
+        }
+
         public void SetText(string text)
         {
             if (string.IsNullOrEmpty(text))
@@ -898,7 +907,7 @@ namespace ClassicUO.Game.UI.Controls
 
                 batcher.ClipEnd();
             }
-            
+
             return true;
         }
 

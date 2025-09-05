@@ -449,6 +449,7 @@ namespace ClassicUO.Game.Data
         {
             return (_filteredTiles[g] & STATIC_TILES_FILTER_FLAGS.STFF_IGNORECOT) != 0;
         }
-        // ## BEGIN - END ## // MISC2
+       
     }
+    
 }

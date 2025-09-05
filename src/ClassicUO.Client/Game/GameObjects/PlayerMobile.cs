@@ -1677,12 +1677,12 @@ namespace ClassicUO.Game.GameObjects
         //}
         // #############################################
 
-        public bool Walk(Direction direction, bool run, bool swing = false)
+         public bool Walk(Direction direction, bool run)
         {
-            if (!ProfileManager.CurrentProfile.AutoAvoidMobiles || swing)
+            if (!ProfileManager.CurrentProfile.AutoAvoidObstacules)
             {
 
-                return WalkNotAvoid(direction, run, swing);
+                return WalkNotAvoid(direction, run);
             }
 
             else
@@ -1719,12 +1719,11 @@ namespace ClassicUO.Game.GameObjects
                 sbyte oldZ = z;
                 ushort walkTime = Constants.TURN_DELAY;
 
-                // Lógica de verificação para contornar obstáculos em direções cardeais
+  
                 if (IsCardinalDirection(direction))
                 {
                     if (IsObstacle(direction, x, y, z))
                     {
-                        // Tenta evitar o obstáculo
                         Direction newDir = TryToAvoid(direction, x, y, z);
 
                         if (!IsObstacle(newDir, x, y, z))
@@ -1733,20 +1732,16 @@ namespace ClassicUO.Game.GameObjects
                             World.Player.ClearSteps();
 
                             World.Player.SetInWorldTile((ushort)x, (ushort)y, z);
-                            //NetClient.Socket.Send_Resync();
                         }
                         else
                         {
-                            return false; // Não pode evitar o obstáculo
+                            return false; 
                         }
                     }
                 }
 
                 if ((oldDirection & Direction.Mask) == (direction & Direction.Mask))
                 {
-                    // ## BEGIN - END ## // ONCASTINGGUMP
-                    if (GameActions.iscasting) return false;
-                    // ## BEGIN - END ## // ONCASTINGGUMP
 
                     Direction newDir = direction;
                     int newX = x;
@@ -1869,7 +1864,7 @@ namespace ClassicUO.Game.GameObjects
 
         }
 
-        // Funções auxiliares para contornar obstáculos
+        // FunÃ§Ãµes auxiliares para contornar obstÃ¡culos
         bool IsCardinalDirection(Direction direction)
         {
             return direction == Direction.North || direction == Direction.South ||
@@ -1878,13 +1873,13 @@ namespace ClassicUO.Game.GameObjects
 
         bool IsObstacle(Direction direction, int x, int y, sbyte z)
         {
-            // Verifica se há um obstáculo usando a função de caminho
+            // Verifica se hÃ¡ um obstÃ¡culo usando a funÃ§Ã£o de caminho
             return !Pathfinder.CanWalkObstacules(ref direction, ref x, ref y, ref z);
         }
 
         Direction TryToAvoid(Direction direction, int x, int y, sbyte z)
         {
-            // Tenta contornar o obstáculo movendo-se lateralmente
+            // Tenta contornar o obstÃ¡culo movendo-se lateralmente
             switch (direction)
             {
                 case Direction.North:
@@ -1892,27 +1887,20 @@ namespace ClassicUO.Game.GameObjects
                 case Direction.South:
                     return IsObstacle(Direction.East, x, y, z) ? Direction.West : Direction.East;
                 case Direction.East:
-                    return IsObstacle(Direction.North, x, y, z) ? Direction.North : Direction.South;
+                    return IsObstacle(Direction.North, x, y, z) ? Direction.South : Direction.North;
                 case Direction.West:
-                    return IsObstacle(Direction.North, x, y, z) ? Direction.North : Direction.South;
+                    return IsObstacle(Direction.North, x, y, z) ? Direction.South : Direction.North;
                 default:
                     return direction;
             }
         }
 
-        public bool WalkNotAvoid(Direction direction, bool run, bool swing = false)
+        public bool WalkNotAvoid(Direction direction, bool run)
         {
             if (Walker.WalkingFailed || Walker.LastStepRequestTime > Time.Ticks || Walker.StepsCount >= Constants.MAX_STEP_COUNT || Client.Version >= ClientVersion.CV_60142 && IsParalyzed)
             {
                 return false;
             }
-
-
-            if (!swing)
-            {
-                run |= ProfileManager.CurrentProfile.AlwaysRun;
-            }
-           
 
             if (SpeedMode >= CharacterSpeedType.CantRun || Stamina <= 1 && !IsDead || IsHidden && ProfileManager.CurrentProfile.AlwaysRunUnlessHidden)
             {
@@ -1932,7 +1920,7 @@ namespace ClassicUO.Game.GameObjects
                 x = walkStep.X;
                 y = walkStep.Y;
                 z = walkStep.Z;
-                oldDirection = (Direction)walkStep.Direction;
+                oldDirection = (Direction) walkStep.Direction;
             }
 
             sbyte oldZ = z;
@@ -1942,7 +1930,6 @@ namespace ClassicUO.Game.GameObjects
             {
 
                 if (GameActions.iscasting) return false;
-                if (swing) return false;
                 Direction newDir = direction;
                 int newX = x;
                 int newY = y;
@@ -1964,7 +1951,7 @@ namespace ClassicUO.Game.GameObjects
                     y = newY;
                     z = newZ;
 
-                    walkTime = (ushort)MovementSpeed.TimeToCompleteMovement(run, IsMounted || SpeedMode == CharacterSpeedType.FastUnmount || SpeedMode == CharacterSpeedType.FastUnmountAndCantRun || IsFlying);
+                    walkTime = (ushort) MovementSpeed.TimeToCompleteMovement(run, IsMounted || SpeedMode == CharacterSpeedType.FastUnmount || SpeedMode == CharacterSpeedType.FastUnmountAndCantRun || IsFlying);
                 }
             }
             else
@@ -1988,7 +1975,7 @@ namespace ClassicUO.Game.GameObjects
                     y = newY;
                     z = newZ;
 
-                    walkTime = (ushort)MovementSpeed.TimeToCompleteMovement(run, IsMounted || SpeedMode == CharacterSpeedType.FastUnmount || SpeedMode == CharacterSpeedType.FastUnmountAndCantRun || IsFlying);
+                    walkTime = (ushort) MovementSpeed.TimeToCompleteMovement(run, IsMounted || SpeedMode == CharacterSpeedType.FastUnmount || SpeedMode == CharacterSpeedType.FastUnmountAndCantRun || IsFlying);
                 }
 
                 direction = newDir;
@@ -2010,13 +1997,13 @@ namespace ClassicUO.Game.GameObjects
             step.Sequence = Walker.WalkSequence;
             step.Accepted = false;
             step.Running = run;
-            step.OldDirection = (byte)(oldDirection & Direction.Mask);
-            step.Direction = (byte)direction;
+            step.OldDirection = (byte) (oldDirection & Direction.Mask);
+            step.Direction = (byte) direction;
             step.Timer = Time.Ticks;
-            step.X = (ushort)x;
-            step.Y = (ushort)y;
+            step.X = (ushort) x;
+            step.Y = (ushort) y;
             step.Z = z;
-            step.NoRotation = step.OldDirection == (byte)direction && oldZ - z >= 11;
+            step.NoRotation = step.OldDirection == (byte) direction && oldZ - z >= 11;
 
             Walker.StepsCount++;
 
@@ -2027,7 +2014,7 @@ namespace ClassicUO.Game.GameObjects
                     X = x,
                     Y = y,
                     Z = z,
-                    Direction = (byte)direction,
+                    Direction = (byte) direction,
                     Run = run
                 }
             );

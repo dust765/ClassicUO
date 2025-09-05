@@ -132,7 +132,9 @@
       <HintPath>..\..\external\cuoapi\cuoapi.dll</HintPath>
     </Reference>
   </ItemGroup>
-
+  <ItemGroup>
+    <PackageReference Update="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="Dust765\" />

@@ -2039,7 +2039,7 @@ namespace ClassicUO.Network
 
                     if (Pathfinder.CanWalk(ref pdir, ref x, ref y, ref z) && World.Player.Direction != pdir)
                     {
-                        World.Player.Walk(pdir, false, true);
+                        World.Player.Walk(pdir, false);
                     }
                 }
             }
@@ -7351,6 +7351,16 @@ namespace ClassicUO.Network
                 {
                     //This gump is null terminated: Breaking
                     break;
+                }
+                else if (string.Equals(entry, "gumppichued", StringComparison.InvariantCultureIgnoreCase) ||
+                         string.Equals(entry, "gumppicphued", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    if (gparams.Count >= 3)
+                        gump.Add(new GumpPic(gparams));
+                }
+                else if (string.Equals(entry, "togglelimitgumpscale", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    // ??
                 }
                 else
                 {

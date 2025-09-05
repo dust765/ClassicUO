@@ -37,7 +37,6 @@ using ClassicUO.Dust765.Dust765;
 // ## BEGIN - END ## // MISC2
 // ## BEGIN - END ## // VISUAL HELPERS
 using ClassicUO.Assets;
-using ClassicUO.Configuration;
 using ClassicUO.Game.Managers;
 using ClassicUO.Renderer;
 using Microsoft.Xna.Framework;

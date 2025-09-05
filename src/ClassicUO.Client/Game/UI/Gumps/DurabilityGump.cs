@@ -52,7 +52,7 @@ namespace ClassicUO.Game.UI.Gumps
     internal class DurabilitysGump : Gump
     {
         private const int WIDTH = 300, HEIGHT = 400;
-
+        private static int lastX, lastY;
 
         private enum DurabilityColors
         {
@@ -75,8 +75,15 @@ namespace ClassicUO.Game.UI.Gumps
 
             Width = WIDTH;
             Height = HEIGHT;
-            X = Client.Game.Scene.Camera.Bounds.Width - Width - 10;
-            Y = Client.Game.Scene.Camera.Bounds.Y + 10;
+
+            X = lastX;
+            Y = lastY;
+
+            if(lastX == default || lastY == default)
+            {
+                X = lastX = (Client.Game.Scene.Camera.Bounds.Width - Width) / 2;
+                Y = lastY = Client.Game.Scene.Camera.Bounds.Y + 20;
+            }            
 
 
             var _borderControl = new BorderControl
@@ -126,6 +133,13 @@ namespace ClassicUO.Game.UI.Gumps
             a.Height = l.Y + l.Height;
 
             Add(a);
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            lastX = X;
+            lastY = Y;
         }
 
         protected override void UpdateContents()
