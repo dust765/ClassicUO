@@ -79,23 +79,23 @@ namespace ClassicUO.Game.Scenes
             _oldPlayerZ;
         private int _foliageCount;
 
+        // Array-based render lists for cache-friendly iteration
+        private const int INITIAL_RENDER_LIST_SIZE = 2048;
+
         // statics
-        private GameObject _renderListStaticsHead,
-            _renderList;
+        private GameObject[] _renderListStaticsArray = new GameObject[INITIAL_RENDER_LIST_SIZE];
         private int _renderListStaticsCount;
 
-        // lands
-        private GameObject _renderListTransparentObjectsHead,
-            _renderListTransparentObjects;
+        // transparent
+        private GameObject[] _renderListTransparentArray = new GameObject[INITIAL_RENDER_LIST_SIZE];
         private int _renderListTransparentObjectsCount;
 
         // animations
-        private GameObject _renderListAnimationsHead,
-            _renderListAnimations;
+        private GameObject[] _renderListAnimationsArray = new GameObject[INITIAL_RENDER_LIST_SIZE];
         private int _renderListAnimationCount;
 
-        private GameObject _renderListEffectsHead,
-            _renderListEffects;
+        // effects
+        private GameObject[] _renderListEffectsArray = new GameObject[512];
         private int _renderListEffectCount;
 
         public sbyte FoliageIndex { get; private set; }
@@ -685,8 +685,7 @@ namespace ClassicUO.Game.Scenes
 
         private void PushToRenderList(
             GameObject obj,
-            ref GameObject renderList,
-            ref GameObject first,
+            ref GameObject[] renderArray,
             ref int renderListCount,
             bool allowSelection
         )
@@ -719,35 +718,17 @@ namespace ClassicUO.Game.Scenes
 
             if (obj.AlphaHue != byte.MaxValue)
             {
-                if (_renderListTransparentObjectsHead == null)
-                {
-                    _renderListTransparentObjectsHead = _renderListTransparentObjects = obj;
-                }
-                else
-                {
-                    _renderListTransparentObjects.RenderListNext = obj;
-                    _renderListTransparentObjects = obj;
-                }
+                if (_renderListTransparentObjectsCount >= _renderListTransparentArray.Length)
+                    Array.Resize(ref _renderListTransparentArray, _renderListTransparentArray.Length * 2);
 
-                obj.RenderListNext = null;
-
-                ++_renderListTransparentObjectsCount;
+                _renderListTransparentArray[_renderListTransparentObjectsCount++] = obj;
             }
             else
             {
-                if (first == null)
-                {
-                    first = renderList = obj;
-                }
-                else
-                {
-                    renderList.RenderListNext = obj;
-                    renderList = obj;
-                }
+                if (renderListCount >= renderArray.Length)
+                    Array.Resize(ref renderArray, renderArray.Length * 2);
 
-                obj.RenderListNext = null;
-
-                ++renderListCount;
+                renderArray[renderListCount++] = obj;
             }
         }
 
@@ -803,8 +784,7 @@ namespace ClassicUO.Game.Scenes
 
                     PushToRenderList(
                         obj,
-                        ref _renderList,
-                        ref _renderListStaticsHead,
+                        ref _renderListStaticsArray,
                         ref _renderListStaticsCount,
                         true
                     );
@@ -847,11 +827,8 @@ namespace ClassicUO.Game.Scenes
                     // ## BEGIN - END ## // ART / HUE CHANGES
                     //if (itemData.IsFoliage && ProfileManager.CurrentProfile.TreeToStumps)
                     // ## BEGIN - END ## // ART / HUE CHANGES
-                    if (itemData.IsFoliage && ProfileManager.CurrentProfile.TreeType != 0)
+                    // ArtloaderFilters handles tree type conversion, so we don't skip foliage here
                     // ## BEGIN - END ## // ART / HUE CHANGES
-                    {
-                        continue;
-                    }
 
                     if (
                         !itemData.IsMultiMovable
@@ -894,8 +871,7 @@ namespace ClassicUO.Game.Scenes
                     {
                         PushToRenderList(
                             obj,
-                            ref _renderListTransparentObjects,
-                            ref _renderListTransparentObjectsHead,
+                            ref _renderListTransparentArray,
                             ref _renderListTransparentObjectsCount,
                             allowSelection
                         );
@@ -904,8 +880,7 @@ namespace ClassicUO.Game.Scenes
                     {
                         PushToRenderList(
                             obj,
-                            ref _renderList,
-                            ref _renderListStaticsHead,
+                            ref _renderListStaticsArray,
                             ref _renderListStaticsCount,
                             allowSelection
                         );
@@ -941,11 +916,8 @@ namespace ClassicUO.Game.Scenes
                         // ## BEGIN - END ## // ART / HUE CHANGES
                         //if (itemData.IsFoliage && ProfileManager.CurrentProfile.TreeToStumps)
                         // ## BEGIN - END ## // ART / HUE CHANGES
-                        if (itemData.IsFoliage && ProfileManager.CurrentProfile.TreeType != 0)
+                        // ArtloaderFilters handles tree type conversion, so we don't skip foliage here
                         // ## BEGIN - END ## // ART / HUE CHANGES
-                        {
-                            continue;
-                        }
 
                         if (multi.IsVegetation && ProfileManager.CurrentProfile.HideVegetation)
                         {
@@ -985,8 +957,7 @@ namespace ClassicUO.Game.Scenes
                     {
                         PushToRenderList(
                             obj,
-                            ref _renderListTransparentObjects,
-                            ref _renderListTransparentObjectsHead,
+                            ref _renderListTransparentArray,
                             ref _renderListTransparentObjectsCount,
                             allowSelection
                         );
@@ -995,8 +966,7 @@ namespace ClassicUO.Game.Scenes
                     {
                         PushToRenderList(
                             obj,
-                            ref _renderList,
-                            ref _renderListStaticsHead,
+                            ref _renderListStaticsArray,
                             ref _renderListStaticsCount,
                             allowSelection
                         );
@@ -1038,8 +1008,7 @@ namespace ClassicUO.Game.Scenes
 
                     PushToRenderList(
                         obj,
-                        ref _renderListAnimations,
-                        ref _renderListAnimationsHead,
+                        ref _renderListAnimationsArray,
                         ref _renderListAnimationCount,
                         allowSelection
                     );
@@ -1090,11 +1059,9 @@ namespace ClassicUO.Game.Scenes
                     // ## BEGIN - END ## // ART / HUE CHANGES
                     //if (!itemData.IsMultiMovable && itemData.IsFoliage && ProfileManager.CurrentProfile.TreeToStumps)
                     // ## BEGIN - END ## // ART / HUE CHANGES
-                    if (!itemData.IsMultiMovable && itemData.IsFoliage && ProfileManager.CurrentProfile.TreeType != 0)
                     // ## BEGIN - END ## // ART / HUE CHANGES
-                    {
-                        continue;
-                    }
+                    // ArtloaderFilters handles tree type conversion, so we don't skip foliage here
+                    // ## BEGIN - END ## // ART / HUE CHANGES
 
                     byte height = 0;
 
@@ -1122,8 +1089,7 @@ namespace ClassicUO.Game.Scenes
                     {
                         PushToRenderList(
                             obj,
-                            ref _renderListAnimations,
-                            ref _renderListAnimationsHead,
+                            ref _renderListAnimationsArray,
                             ref _renderListAnimationCount,
                             allowSelection
                         );
@@ -1132,8 +1098,7 @@ namespace ClassicUO.Game.Scenes
                     {
                         PushToRenderList(
                             obj,
-                            ref _renderList,
-                            ref _renderListStaticsHead,
+                            ref _renderListStaticsArray,
                             ref _renderListStaticsCount,
                             true
                         );
@@ -1163,12 +1128,11 @@ namespace ClassicUO.Game.Scenes
                     if (effect.IsMoving) // TODO: check for typeof(MovingEffect) ?
                     { }
 
-                    //PushToRenderList(obj, ref _renderList, ref _renderListStaticsHead, ref _renderListStaticsCount, false);
+                    //PushToRenderList(obj, ref _renderListStaticsArray, ref _renderListStaticsCount, false);
 
                     PushToRenderList(
                         obj,
-                        ref _renderListEffects,
-                        ref _renderListEffectsHead,
+                        ref _renderListEffectsArray,
                         ref _renderListEffectCount,
                         false
                     );

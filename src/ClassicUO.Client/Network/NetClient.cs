@@ -34,6 +34,7 @@ using ClassicUO.Network.Encryption;
 using ClassicUO.Utility;
 using ClassicUO.Utility.Logging;
 using System;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
@@ -157,6 +158,8 @@ namespace ClassicUO.Network
     {
         private const int BUFF_SIZE = 0x10000;
         private const int RECEIVE_DRAIN_SIZE = 32768;
+        private const int RECEIVE_BACKPRESSURE_HIGH_WATERMARK_BYTES = 1024 * 1024;
+        private const int RECEIVE_BACKPRESSURE_LOW_WATERMARK_BYTES = 256 * 1024;
 
         private readonly byte[] _compressedBuffer = new byte[4096];
         private readonly byte[] _uncompressedBuffer = new byte[BUFF_SIZE];
@@ -169,6 +172,9 @@ namespace ClassicUO.Network
         private uint? _localIP;
         private readonly CircularBuffer _sendStream;
         private readonly ConcurrentQueue<byte[]> _receiveQueue = new ConcurrentQueue<byte[]>();
+        private long _queuedReceiveBytes;
+        private int _queuedReceiveMessages;
+        private volatile bool _receiveBackpressure;
         private Thread _networkThread;
         private volatile bool _networkRunning;
         private volatile bool _pendingDisconnect;
@@ -205,13 +211,50 @@ namespace ClassicUO.Network
             {
                 try
                 {
+                    long queuedBytes = Interlocked.Read(ref _queuedReceiveBytes);
+
+                    if (_receiveBackpressure)
+                    {
+                        if (queuedBytes <= RECEIVE_BACKPRESSURE_LOW_WATERMARK_BYTES)
+                        {
+                            _receiveBackpressure = false;
+                        }
+                        else
+                        {
+                            ProcessSendFromQueue();
+                            Thread.Sleep(1);
+                            continue;
+                        }
+                    }
+                    else if (queuedBytes >= RECEIVE_BACKPRESSURE_HIGH_WATERMARK_BYTES)
+                    {
+                        _receiveBackpressure = true;
+                        ProcessSendFromQueue();
+                        Thread.Sleep(1);
+                        continue;
+                    }
+
                     int n = _socket.Read(_networkReadBuffer);
                     if (n > 0)
                     {
                         Statistics.TotalBytesReceived += (uint)n;
-                        var copy = new byte[n];
+                        var copy = ArrayPool<byte>.Shared.Rent(n);
                         Array.Copy(_networkReadBuffer, copy, n);
-                        _receiveQueue.Enqueue(copy);
+
+                        Span<byte> span = copy.AsSpan(0, n);
+                        ProcessEncryption(span);
+                        Span<byte> decompressed = DecompressBuffer(span);
+
+                        ArrayPool<byte>.Shared.Return(copy);
+
+                        if (!decompressed.IsEmpty)
+                        {
+                            byte[] message = new byte[decompressed.Length];
+                            decompressed.CopyTo(message.AsSpan());
+                            _receiveQueue.Enqueue(message);
+                            Interlocked.Add(ref _queuedReceiveBytes, message.Length);
+                            Interlocked.Increment(ref _queuedReceiveMessages);
+                        }
                     }
                     else if (n == 0)
                     {
@@ -219,7 +262,7 @@ namespace ClassicUO.Network
                     }
                     else
                     {
-                        Thread.Sleep(1);
+                        Thread.SpinWait(100);
                     }
                 }
                 catch (SocketException ex)
@@ -245,7 +288,7 @@ namespace ClassicUO.Network
 
                 ProcessSendFromQueue();
                 if (_receiveQueue.IsEmpty && _sendStream.Length == 0)
-                    Thread.Sleep(0);
+                    Thread.SpinWait(50);
             }
             _networkRunning = false;
         }
@@ -329,16 +372,19 @@ namespace ClassicUO.Network
 
         public event EventHandler Connected;
         public event EventHandler<SocketError> Disconnected;
+    public long QueuedReceiveBytes => Interlocked.Read(ref _queuedReceiveBytes);
+    public int QueuedReceiveMessages => Volatile.Read(ref _queuedReceiveMessages);
 
 
 
         public void Connect(string ip, ushort port)
         {
             _sendStream.Clear();
-            while (_receiveQueue.TryDequeue(out _)) { }
+            ClearReceiveQueue();
             _huffman.Reset();
             Statistics.Reset();
             _pendingDisconnect = false;
+            _receiveBackpressure = false;
 
             _socket.Connect(ip, port);
         }
@@ -348,7 +394,15 @@ namespace ClassicUO.Network
             _networkRunning = false;
             _isCompressionEnabled = false;
             Statistics.Reset();
+            ClearReceiveQueue();
             _socket.Disconnect();
+        }
+
+        private void ClearReceiveQueue()
+        {
+            while (_receiveQueue.TryDequeue(out _)) { }
+            Interlocked.Exchange(ref _queuedReceiveBytes, 0);
+            Interlocked.Exchange(ref _queuedReceiveMessages, 0);
         }
 
         public void EnableCompression()
@@ -368,59 +422,62 @@ namespace ClassicUO.Network
                 return Span<byte>.Empty;
             }
 
-            try
-            {
-                int totalLen = 0;
-                var overflow = default(System.Collections.Generic.List<byte[]>);
-                while (_receiveQueue.TryDequeue(out byte[] chunk))
-                {
-                    if (totalLen + chunk.Length <= _receiveDrainBuffer.Length)
-                    {
-                        Array.Copy(chunk, 0, _receiveDrainBuffer, totalLen, chunk.Length);
-                        totalLen += chunk.Length;
-                    }
-                    else
-                    {
-                        (overflow ??= new System.Collections.Generic.List<byte[]>()).Add(chunk);
-                    }
-                }
-                if (overflow != null)
-                {
-                    foreach (var c in overflow)
-                        _receiveQueue.Enqueue(c);
-                }
+            int totalLen = 0;
+            var overflow = default(System.Collections.Generic.List<byte[]>);
 
-                if (totalLen <= 0)
-                    return Span<byte>.Empty;
+            while (_receiveQueue.TryDequeue(out byte[] chunk))
+            {
+                Interlocked.Add(ref _queuedReceiveBytes, -chunk.Length);
+                Interlocked.Decrement(ref _queuedReceiveMessages);
 
-                var span = _receiveDrainBuffer.AsSpan(0, totalLen);
-                ProcessEncryption(span);
-                return DecompressBuffer(span);
-            }
-            catch (SocketException ex)
-            {
-                Log.Error("socket error when receiving:\n" + ex);
-                Disconnect();
-                Disconnected?.Invoke(this, ex.SocketErrorCode);
-            }
-            catch (Exception ex)
-            {
-                if (ex.InnerException is SocketException socketEx)
+                if (totalLen + chunk.Length <= _receiveDrainBuffer.Length)
                 {
-                    Log.Error("socket error when receiving:\n" + socketEx);
-                    Disconnect();
-                    Disconnected?.Invoke(this, socketEx.SocketErrorCode);
+                    Array.Copy(chunk, 0, _receiveDrainBuffer, totalLen, chunk.Length);
+                    totalLen += chunk.Length;
                 }
                 else
                 {
-                    Log.Error("fatal error when receiving:\n" + ex);
-                    Disconnect();
-                    Disconnected?.Invoke(this, SocketError.SocketError);
-                    throw;
+                    (overflow ??= new System.Collections.Generic.List<byte[]>()).Add(chunk);
                 }
             }
 
-            return Span<byte>.Empty;
+            if (overflow != null)
+            {
+                foreach (var c in overflow)
+                {
+                    _receiveQueue.Enqueue(c);
+                    Interlocked.Add(ref _queuedReceiveBytes, c.Length);
+                    Interlocked.Increment(ref _queuedReceiveMessages);
+                }
+            }
+
+            if (totalLen <= 0)
+                return Span<byte>.Empty;
+
+            return _receiveDrainBuffer.AsSpan(0, totalLen);
+        }
+
+        public bool TryDequeuePacket(out byte[] packet)
+        {
+            packet = null;
+
+            if (_pendingDisconnect)
+            {
+                _pendingDisconnect = false;
+                Disconnect();
+                Disconnected?.Invoke(this, _pendingDisconnectError);
+                return false;
+            }
+
+            if (!_receiveQueue.TryDequeue(out packet))
+            {
+                return false;
+            }
+
+            Interlocked.Add(ref _queuedReceiveBytes, -packet.Length);
+            Interlocked.Decrement(ref _queuedReceiveMessages);
+
+            return true;
         }
 
         public void Flush()

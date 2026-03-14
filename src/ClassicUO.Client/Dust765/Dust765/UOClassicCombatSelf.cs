@@ -1451,7 +1451,7 @@ namespace ClassicUO.Dust765.Dust765
                                     _tickWaitForTarget = 0;
                                     GameActions.Print("UCC Self: Old Bandies applyed to self.");
                                     // ## BEGIN - END ## // VISUALRESPONSEMANAGER
-                                    //World.VisualResponseManager.DrawArt(0x0E21);
+                                    World.VisualResponseManager.DrawArt(0x0E21);
                                     // ## BEGIN - END ## // VISUALRESPONSEMANAGER
                                 }
                             }
@@ -1468,7 +1468,7 @@ namespace ClassicUO.Dust765.Dust765
                                         _tickLastActionTime = Time.Ticks;
                                         GameActions.Print("UCC Self: Old Bandies applyed to self.");
                                         // ## BEGIN - END ## // VISUALRESPONSEMANAGER
-                                        //World.VisualResponseManager.DrawArt(0x0E21);
+                                        World.VisualResponseManager.DrawArt(0x0E21);
                                         // ## BEGIN - END ## // VISUALRESPONSEMANAGER
                                     }
                                 }
@@ -1493,7 +1493,7 @@ namespace ClassicUO.Dust765.Dust765
                                     _tickLastActionTime = Time.Ticks;
                                     GameActions.Print("UCC Self: Bandies applyed to self.");
                                     // ## BEGIN - END ## // VISUALRESPONSEMANAGER
-                                    //World.VisualResponseManager.DrawArt(0x0E21);
+                                    World.VisualResponseManager.DrawArt(0x0E21);
                                     // ## BEGIN - END ## // VISUALRESPONSEMANAGER
                                 }
                             }
@@ -1531,7 +1531,7 @@ namespace ClassicUO.Dust765.Dust765
                         GameActions.DoubleClick(apple);
                         GameActions.Print("UCC Self: Apple Enhanced Used.");
                         // ## BEGIN - END ## // VISUALRESPONSEMANAGER
-                        //World.VisualResponseManager.DrawArt(0x2fd8);
+                        World.VisualResponseManager.DrawArt(0x2fd8);
                         // ## BEGIN - END ## // VISUALRESPONSEMANAGER
                         _tickLastActionTime = Time.Ticks;
                         //_tickStartAutoEApple = Time.Ticks;  //triggered from cliloc as you can fail
@@ -1636,7 +1636,7 @@ namespace ClassicUO.Dust765.Dust765
                             GameActions.DoubleClick(redpouche);
                             GameActions.Print("UCC Self: Pouche used.");
                             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
-                            //World.VisualResponseManager.DrawArt(0x0E79);
+                            World.VisualResponseManager.DrawArt(0x0E79);
                             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
                             _tickLastActionTime = Time.Ticks;
                             _tickStartAutoPouche = Time.Ticks;
@@ -1679,7 +1679,7 @@ namespace ClassicUO.Dust765.Dust765
                         }
                     }
 
-                    var curepotion = World.Player.FindItemByGraphic(0x0F07);
+                    var curepotion = FindPotionByGraphicOrCliloc(0x0F07, stackalloc int[3] { 1041317, 1041316, 1041315 });
 
                     if (curepotion != null)
                     {
@@ -1696,7 +1696,7 @@ namespace ClassicUO.Dust765.Dust765
                             GameActions.DoubleClick(curepotion);
                             GameActions.Print("UCC Self: Curing Poison.");
                             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
-                            //World.VisualResponseManager.DrawArt(0x0F07);
+                            World.VisualResponseManager.DrawArt(0x0F07);
                             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
                             _tickLastActionTime = Time.Ticks;
                             _tickStartAutoCurepot = Time.Ticks;
@@ -1708,11 +1708,6 @@ namespace ClassicUO.Dust765.Dust765
                     }
                     else
                     {
-                        UCCS_AutoCurepot = false;
-                        ProfileManager.CurrentProfile.UOClassicCombatSelf_AutoCurepot = false;
-
-                        UpdateVars();
-
                         _lastMacroPot = 0;
                     }
                 }
@@ -1742,7 +1737,7 @@ namespace ClassicUO.Dust765.Dust765
                         }
                     }
 
-                    var healpotion = World.Player.FindItemByGraphic(0x0F0C);
+                    var healpotion = FindPotionByGraphicOrCliloc(0x0F0C, stackalloc int[3] { 1041330, 1041329, 1041328 });
                     if (healpotion != null)
                     {
                         if ((_tickLastActionTime + UCCS_ActionCooldown) <= Time.Ticks && (_tickStartAutoHealpot + UCCS_HealpotCooldown) <= Time.Ticks)
@@ -1758,7 +1753,7 @@ namespace ClassicUO.Dust765.Dust765
                             GameActions.DoubleClick(healpotion);
                             GameActions.Print("UCC Self: Healing Damage.");
                             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
-                           // World.VisualResponseManager.DrawArt(0x0F0C);
+                            World.VisualResponseManager.DrawArt(0x0F0C);
                             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
                             _tickLastActionTime = Time.Ticks;
                             _tickStartAutoHealpot = Time.Ticks;
@@ -1770,11 +1765,6 @@ namespace ClassicUO.Dust765.Dust765
                     }
                     else
                     {
-                        UCCS_AutoHealpot = false;
-                        ProfileManager.CurrentProfile.UOClassicCombatSelf_AutoHealpot = false;
-
-                        UpdateVars();
-
                         _lastMacroPot = 0;
                     }
                 }
@@ -1804,7 +1794,7 @@ namespace ClassicUO.Dust765.Dust765
                         }
                     }
 
-                    var refreshpotion = World.Player.FindItemByGraphic(0xF0B);
+                    var refreshpotion = FindPotionByGraphicOrCliloc(0xF0B, stackalloc int[2] { 1041327, 1041326 });
                     if (refreshpotion != null)
                     {
                         if ((_tickLastActionTime + UCCS_ActionCooldown) <= Time.Ticks && (_tickStartAutoRefreshpot + UCCS_RefreshpotCooldown) <= Time.Ticks)
@@ -1820,7 +1810,7 @@ namespace ClassicUO.Dust765.Dust765
                             GameActions.DoubleClick(refreshpotion);
                             GameActions.Print("UCC Self: Refresh Potion.");
                             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
-                            //World.VisualResponseManager.DrawArt(0xF0B);
+                            World.VisualResponseManager.DrawArt(0xF0B);
                             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
                             _tickLastActionTime = Time.Ticks;
                             _tickStartAutoRefreshpot = Time.Ticks;
@@ -1832,11 +1822,6 @@ namespace ClassicUO.Dust765.Dust765
                     }
                     else
                     {
-                        UCCS_AutoRefreshpot = false;
-                        ProfileManager.CurrentProfile.UOClassicCombatSelf_AutoRefreshpot = false;
-
-                        UpdateVars();
-
                         _lastMacroPot = 0;
                     }
                 }
@@ -1883,7 +1868,7 @@ namespace ClassicUO.Dust765.Dust765
                             GameActions.DoubleClick(strengthpotion);
                             GameActions.Print("UCC Self: Strength Potion.");
                             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
-                            //World.VisualResponseManager.DrawArt(0x0F09);
+                            World.VisualResponseManager.DrawArt(0x0F09);
                             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
                             _tickLastActionTime = Time.Ticks;
                             _tickStartStrengthpot = Time.Ticks;
@@ -1943,7 +1928,7 @@ namespace ClassicUO.Dust765.Dust765
                             GameActions.DoubleClick(dexpotion);
                             GameActions.Print("UCC Self: Agility Potion.");
                             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
-                            //World.VisualResponseManager.DrawArt(0x0F08);
+                            World.VisualResponseManager.DrawArt(0x0F08);
                             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
                             _tickLastActionTime = Time.Ticks;
                             _tickStartDexpot = Time.Ticks;
@@ -2634,6 +2619,19 @@ namespace ClassicUO.Dust765.Dust765
                     break;
             }
         }
+
+        private static Item FindPotionByGraphicOrCliloc(ushort graphic, Span<int> clilocs)
+        {
+            Item potion = World.Player.FindItemByGraphic(graphic);
+
+            if (potion != null)
+            {
+                return potion;
+            }
+
+            return World.Player.FindPreferredItemByCliloc(clilocs);
+        }
+
         //MISC
         // Generate a random number between two numbers  
         public int RandomNumber(int min, int max)
