@@ -7,8 +7,8 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>ClassicUO</AssemblyName>
     <RootNamespace>ClassicUO</RootNamespace>
-    <AssemblyVersion>3.0.3</AssemblyVersion>
-    <FileVersion>3.0.3</FileVersion>
+    <AssemblyVersion>3.0.7</AssemblyVersion>
+    <FileVersion>3.0.7</FileVersion>
     <Copyright>Dust765</Copyright>
     <StartupObject></StartupObject>
     <PlatformTarget>x64</PlatformTarget>
