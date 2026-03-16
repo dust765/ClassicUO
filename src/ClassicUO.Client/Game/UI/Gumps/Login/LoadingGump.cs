@@ -54,14 +54,16 @@ namespace ClassicUO.Game.UI.Gumps.Login
 
     internal class LoadingGump : Gump
     {
-        private const int ModalWidth = 460;
-        private const int ModalHeight = 260;
-        private const int LabelMaxWidth = 400;
-        private const int ButtonWidth = 120;
+        private const int ModalWidth = 500;
+        private const int ModalHeight = 280;
+        private const int LabelMaxWidth = 440;
+        private const int ButtonWidth = 140;
         private const int ButtonHeight = 40;
         private const uint LoadingDotIntervalMs = 400;
-        private static readonly Color ModalBgColor = Color.FromNonPremultiplied(25, 8, 8, 255);
-        private static readonly Color AccentColor = Color.FromNonPremultiplied(180, 50, 50, 255);
+        private static readonly Color ModalBgColor     = Color.FromNonPremultiplied(42, 14, 14, 255);
+        private static readonly Color ModalBorderColor  = Color.FromNonPremultiplied(100, 32, 32, 255);
+        private static readonly Color AccentColor       = Color.FromNonPremultiplied(215, 68, 68, 255);
+        private static readonly Color AccentDimColor    = Color.FromNonPremultiplied(88, 25, 25, 255);
 
         private readonly Action<int> _buttonClick;
         private readonly UOLabel _label;
@@ -91,14 +93,23 @@ namespace ClassicUO.Game.UI.Gumps.Login
             int panelX = LoginLayoutHelper.CenterOffsetX(ModalWidth);
             int panelY = LoginLayoutHelper.CenterOffsetY(ModalHeight);
 
+            // Borda externa do painel (1px maior)
+            Add(new RoundedColorBox(ModalWidth + 2, ModalHeight + 2, ModalBorderColor, 13)
+            {
+                X = panelX - 1,
+                Y = panelY - 1
+            });
+
+            // Fundo do painel
             Add(new RoundedColorBox(ModalWidth, ModalHeight, ModalBgColor, 12)
             {
                 X = panelX,
                 Y = panelY
             });
 
-            const int LogoMaxWidth = 180;
-            const int LogoMaxHeight = 40;
+            // Logo maior
+            const int LogoMaxWidth  = 280;
+            const int LogoMaxHeight = 68;
             string logoPath = Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Client", "logodust.png");
             _logoTexture = PNGLoader.Instance.GetImageTexture(logoPath);
             if (_logoTexture != null)
@@ -107,26 +118,35 @@ namespace ClassicUO.Game.UI.Gumps.Login
                 int logoW = (int)(_logoTexture.Width * scale);
                 int logoH = (int)(_logoTexture.Height * scale);
                 int logoX = panelX + ((ModalWidth - logoW) >> 1);
-                int logoY = panelY + 12;
+                int logoY = panelY + 16;
                 Add(new CustomGumpPic(logoX, logoY, _logoTexture, logoW, logoH, 0));
             }
 
-            Add(new RoundedColorBox(ModalWidth, 2, AccentColor, 0)
+            // Linha de acento superior (3px, brilhante)
+            Add(new RoundedColorBox(ModalWidth, 3, AccentColor, 0)
             {
                 X = panelX,
-                Y = panelY + 52,
-                Alpha = 0.85f
+                Y = panelY + 92
             });
 
+            // Label de status com texto branco legível
             string initialLabel = _baseLabelText + ".";
-            _label = new UOLabel(initialLabel, 1, 0x0481, TEXT_ALIGN_TYPE.TS_CENTER, LabelMaxWidth)
+            _label = new UOLabel(initialLabel, 1, 0xFFFF, TEXT_ALIGN_TYPE.TS_CENTER, LabelMaxWidth, FontStyle.BlackBorder)
             {
-                X = panelX + (ModalWidth >> 1) - (LabelMaxWidth >> 1),
-                Y = panelY + 68
+                X = panelX + ((ModalWidth - LabelMaxWidth) >> 1),
+                Y = panelY + 110
             };
             Add(_label);
             _lastDotTicks = Time.Ticks;
             _loadingDotPhase = 1;
+
+            // Linha de acento inferior (sutil)
+            Add(new RoundedColorBox(ModalWidth, 2, AccentDimColor, 0)
+            {
+                X = panelX,
+                Y = panelY + ModalHeight - 2,
+                Alpha = 0.9f
+            });
 
             int buttonY = panelY + ModalHeight - ButtonHeight - 24;
 
