@@ -44,7 +44,7 @@ namespace ClassicUO.Dust765.UI.Gumps
             });
             startY += 22;
 
-            Add(new Label($"Version: {CUOEnviroment.Version}", false, HUE_TEXT, WIDTH - 30, 1, FontStyle.None)
+            Add(new Label($"Version: {CUOEnviroment.Version}", true, HUE_TITLE, WIDTH - 30, 1, FontStyle.None)
             {
                 X = 20,
                 Y = startY
@@ -67,34 +67,14 @@ namespace ClassicUO.Dust765.UI.Gumps
             int contentY = 0;
             string[] sections =
             {
-                "/c[yellow]v3.0.3/cd",
+                "/c[yellow]v3.0.7/cd",
                 "",
                 "/c[yellow]Features/cd",
-                "- Add flag to override gargoyle fly state",
-                "- Glowing Weapons: restricted to weapons only",
-                "- Highlight Friends and Guild members",
-                "- Highlight Last Target when stunned",
-                "- Highlight Last Target when mortalled (yellow hits)",
-                "- Show active spell icon on cursor",
-                "- Swing line for ranged weapons",
-                "- Sync position on attack (rubberband correction)",
-                "- Disarm line indicator",
-                "- Custom gargoyle walk animation while flying",
-                "- Status bars (HP/Mana/Stamina) in custom window title bar (UOS/Orion style)",
-                "- Last Target gump in Dust options panel",
-                "- Fast rotation support",
-                "- New crash log with extended info",
-                "- Frame rendering improvements",
-                "- Custom house rendering adjustments",
-                "",
+                "- Add splash loading with loading mul files (instead of loading from uo files)",
+
                 "/c[yellow]Fixes/cd",
-                "- Fix manifest for run from razor enhanced plugin",
-                "- Fixed options not applying correctly in Dust menu",
-                "- Removed party chat display overhead",
-                "- Fixed UCC self-cast not working",
-                "- Fixed RazorEnhanced plugin crash (exception guard on hotkey handler)",
-                "- Fixed OnCasting gump not triggering correctly",
-                "- Fixed Bandage gump target tracking",
+                "- Fix BorderControl disappearing around the game window",
+                "- Fixed start from uostealth",
             };
 
             foreach (string line in sections)

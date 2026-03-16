@@ -528,6 +528,7 @@ namespace ClassicUO.Game.Scenes
                 LastCharacterManager.Save(Account, World.ServerName, Characters[index]);
 
                 CurrentLoginStep = LoginSteps.EnteringBritania;
+
                 NetClient.Socket.Send_SelectCharacter(index, Characters[index], NetClient.Socket.LocalIP);
             }
         }
