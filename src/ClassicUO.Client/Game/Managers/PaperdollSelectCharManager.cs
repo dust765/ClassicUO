@@ -31,7 +31,13 @@ namespace ClassicUO.Game.Managers
 
         //private string savePath = Path.Combine(ProfileManager.ProfilePath, "paperdollSelectCharManager.json");
 
-        private string savePath = Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Profiles", Settings.GlobalSettings.Username, World.ServerName, World.Player.Name, "paperdollSelectCharManager.json");
+        private string savePath => ProfileManager.ProfilePath != null
+            ? Path.Combine(ProfileManager.ProfilePath, "paperdollSelectCharManager.json")
+            : Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Profiles",
+                Settings.GlobalSettings.Username ?? "default",
+                World.ServerName ?? "server",
+                World.Player?.Name ?? "player",
+                "paperdollSelectCharManager.json");
 
         private static PaperdollSelectCharManager instance;
 
@@ -122,7 +128,6 @@ namespace ClassicUO.Game.Managers
         {
             try
             {
-                savePath = Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Profiles", Settings.GlobalSettings.Username, World.ServerName, World.Player.Name, "paperdollSelectCharManager.json");
                 string directoryPath = Path.GetDirectoryName(savePath);
                 if (!Directory.Exists(directoryPath))
                 {
@@ -159,11 +164,6 @@ namespace ClassicUO.Game.Managers
 
         public void Load()
         {
-            if (World.Player != null && !string.IsNullOrEmpty(World.Player.Name))
-            {
-                savePath = Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Profiles", Settings.GlobalSettings.Username, World.ServerName, World.Player.Name, "paperdollSelectCharManager.json");
-            }
-
             if (File.Exists(savePath))
             {
                 try
