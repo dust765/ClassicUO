@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -100,8 +100,8 @@ namespace ClassicUO.Game.Managers
             {
                 return ((World.ClientFeatures.Flags & CharacterListFlags.CLF_NEW_MOVEMENT_SYSTEM) == 0 || _ackReceived) &&
                         EncryptionHelper.Type == 0 &&
-                        ProfileManager.CurrentProfile != null && ProfileManager.CurrentProfile.WorldMapShowParty && 
-                        UIManager.GetGump<WorldMapGump>() != null; // horrible, but works
+                        ProfileManager.CurrentProfile != null && (ProfileManager.CurrentProfile.WorldMapShowParty || ProfileManager.CurrentProfile.WorldMapShowGuild) &&
+                        UIManager.GetGump<WorldMapGump>() != null;
             }
         }
 
