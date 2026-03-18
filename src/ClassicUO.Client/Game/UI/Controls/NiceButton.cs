@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -84,6 +84,8 @@ namespace ClassicUO.Game.UI.Controls
         internal Label TextLabel { get; }
 
         public int ButtonParameter { get; set; }
+
+        public bool IsSwitchPage => _action == ButtonAction.SwitchPage;
 
         public bool IsSelectable { get; set; } = true;
 

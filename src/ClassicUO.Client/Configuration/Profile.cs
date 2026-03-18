@@ -413,6 +413,7 @@ namespace ClassicUO.Configuration
         public int TreeType { get; set; } = 0; // 0 = off, 1 = stump, 2 = tile
         public bool ColorTreeTile { get; set; }
         public ushort TreeTileHue { get; set; } = 0x0044;
+        public bool EnlargeJewelryOnPaperdoll { get; set; }
         // ## BEGIN - END ## // ART / HUE CHANGES
         // ## BEGIN - END ## // VISUAL HELPERS
         public bool HighlightTileAtRange { get; set; }
@@ -525,7 +526,6 @@ namespace ClassicUO.Configuration
         public bool ShowDeathOnWorldmap { get; set; } = false;
         public bool ForceGargoyleWalk { get; set; } = true;
 
-        public bool ShowMapCloseFriend { get; set; } = true;
         public bool AutoAvoidMobiles { get; set; } = false;
         // ## BEGIN - END ## // MISC2
         // ## BEGIN - END ## // MACROS
@@ -741,7 +741,7 @@ namespace ClassicUO.Configuration
         public bool WorldMapTopMost { get; set; }
         public bool WorldMapFreeView { get; set; }
         public bool WorldMapShowParty { get; set; } = true;
-        public bool WorldMapShowGuild { get; set; }
+        public bool WorldMapShowGuild { get; set; } = true;
         public int WorldMapZoomIndex { get; set; } = 4;
         public bool WorldMapShowCoordinates { get; set; } = true;
         public bool WorldMapShowMouseCoordinates { get; set; } = true;

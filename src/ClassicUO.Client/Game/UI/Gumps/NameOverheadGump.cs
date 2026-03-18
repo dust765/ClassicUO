@@ -56,6 +56,7 @@ namespace ClassicUO.Game.UI.Gumps
             _isLastTarget,
             _needsNameUpdate;
         private bool _hasBarsBelow;
+        private bool _otherPlayerSingleHpBar;
         private bool _lastNamePlateHealthBar;
         private UOLabel _text;
         private Texture2D _borderColor = SolidColorTextureCache.GetTexture(Color.Black);
@@ -77,6 +78,75 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 currentHeight = value;
             }
+        }
+
+        public static int GetFloatingTextVerticalReserve(uint serial)
+        {
+            if (!NameOverHeadManager.IsShowing)
+            {
+                return 0;
+            }
+
+            NameOverheadGump g = UIManager.GetGump<NameOverheadGump>(serial);
+
+            if (g == null || g.IsDisposed || !g._hasBarsBelow)
+            {
+                return 0;
+            }
+
+            if (g.NamePlateSuppressedByProfile())
+            {
+                return 0;
+            }
+
+            int h = g.Height;
+            int nameH = g._text != null ? g._text.Height : 18;
+            if (g._otherPlayerSingleHpBar)
+            {
+                int pull = 36;
+                int target = h - pull;
+                int floor = Math.Max(10, nameH - 6);
+                return Math.Max(floor, target);
+            }
+
+            int pullCloser = 28;
+            int t2 = h - pullCloser;
+            int floor2 = Math.Max(12, nameH);
+            return Math.Max(floor2, t2);
+        }
+
+        private bool NamePlateSuppressedByProfile()
+        {
+            if (!SerialHelper.IsMobile(LocalSerial))
+            {
+                return false;
+            }
+
+            Mobile m = World.Mobiles.Get(LocalSerial);
+
+            if (m == null)
+            {
+                return true;
+            }
+
+            Profile current = ProfileManager.CurrentProfile;
+
+            if (current == null)
+            {
+                return false;
+            }
+
+            if (current.NamePlateHideAtFullHealthInWarmode && !(World.Player != null && World.Player.InWarMode))
+            {
+                return true;
+            }
+
+            if (current.NamePlateHideAtFullHealth && m.HitsMax > 0 && m.Hits >= m.HitsMax)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         public NameOverheadGump(uint serial) : base(serial, 0)
@@ -149,6 +219,8 @@ namespace ClassicUO.Game.UI.Gumps
 
                 Width = _background.Width = _text.Width + 4;
                 Height = _background.Height = CurrentHeight = _text.Height;
+                _hasBarsBelow = false;
+                _otherPlayerSingleHpBar = false;
                 _textDrawOffset.X = (Width - _text.Width - 4) >> 1;
                 _textDrawOffset.Y = (Height - _text.Height) >> 1;
                 WantUpdateSize = false;
@@ -169,6 +241,8 @@ namespace ClassicUO.Game.UI.Gumps
                     && ProfileManager.CurrentProfile.NamePlateHealthBar;
                 bool hasSelfBarsBelow = isSelfOrParty && ProfileManager.CurrentProfile.NamePlateHealthBar;
                 int barExtra = hasOtherBarBelow ? 8 : hasSelfBarsBelow ? 20 : 0;
+                _hasBarsBelow = hasOtherBarBelow || hasSelfBarsBelow;
+                _otherPlayerSingleHpBar = hasOtherBarBelow;
                 Width = _background.Width = _text.Width + 4;
                 Height = _background.Height = baseHeight + barExtra;
                 CurrentHeight = Height;

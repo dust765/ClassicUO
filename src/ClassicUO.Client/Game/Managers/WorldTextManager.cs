@@ -129,7 +129,7 @@ namespace ClassicUO.Game.Managers
                 Entity entity = World.Get(TargetManager.LastAttack);
                 if (entity != null && !entity.IsDestroyed)
                 {
-                    int offY = -NameOverheadGump.CurrentHeight;
+                    int offY = -NameOverheadGump.GetFloatingTextVerticalReserve(entity.Serial);
                     Point p = new Point(entity.RealScreenPosition.X, entity.RealScreenPosition.Y);
                     if (entity is Mobile m)
                     {

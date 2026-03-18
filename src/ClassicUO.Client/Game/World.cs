@@ -313,7 +313,7 @@ namespace ClassicUO.Game
                     else
                     {
                         WMapEntity wme = WMapManager.GetEntity(mob.Serial);
-                        if (mob.NotorietyFlag == NotorietyFlag.Ally || wme != null && wme.IsGuild && ProfileManager.CurrentProfile.ShowMapCloseFriend)
+                        if (mob.NotorietyFlag == NotorietyFlag.Ally || wme != null && wme.IsGuild)
                         {
                             WMapManager.AddOrUpdate
                             (
