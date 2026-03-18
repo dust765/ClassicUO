@@ -6719,10 +6719,7 @@ namespace ClassicUO.Network
                 World.Player.Flags = flags;
                 World.Player.Walker.DenyWalk(0xFF, -1, -1, -1);
 
-                bool isFrozen = (flags & Flags.Frozen) == Flags.Frozen;
-                World.Player.IsParalyzed = isFrozen;
-
-               GameScene gs = Client.Game.GetScene<GameScene>();
+                GameScene gs = Client.Game.GetScene<GameScene>();
 
                 if (gs != null)
                 {
@@ -6755,6 +6752,13 @@ namespace ClassicUO.Network
                 World.Player.CloseRangedGumps();
                 World.Player.SetInWorldTile(x, y, z);
                 World.Player.UpdateAbilities();
+                // ## BEGIN - END ## // ONCASTINGGUMP
+                if (ProfileManager.CurrentProfile.OnCastingGump) {
+                    GameActions.iscasting = false;
+                    World.Player.OnCasting?.Stop();
+                }
+                // ## BEGIN - END ## // ONCASTINGGUMP
+
             }
         }
 

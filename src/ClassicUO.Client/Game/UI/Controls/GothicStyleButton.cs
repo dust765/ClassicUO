@@ -217,9 +217,11 @@ namespace ClassicUO.Game.UI.Controls
         {
             if (button == ClassicUO.Input.MouseButtonType.Left)
             {
+                bool wasPressed = _isPressed;
+                bool releasedOnButton = x >= 0 && y >= 0 && x < Width && y < Height;
                 _isPressed = false;
 
-                if (MouseIsOver)
+                if (wasPressed && releasedOnButton)
                 {
                     OnClick?.Invoke();
                 }

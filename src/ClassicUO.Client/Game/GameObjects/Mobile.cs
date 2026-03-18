@@ -955,7 +955,7 @@ namespace ClassicUO.Game.GameObjects
                 return;
             }
 
-            int offY = NameOverheadGump.CurrentHeight;
+            int offY = NameOverheadGump.GetFloatingTextVerticalReserve(Serial);
 
             bool health = ProfileManager.CurrentProfile.ShowMobilesHP;
             int alwaysHP = ProfileManager.CurrentProfile.MobileHPShowWhen;

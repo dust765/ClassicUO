@@ -437,6 +437,16 @@ namespace ClassicUO.Game.UI.Gumps
                     GameActions.Say("[guildtracking", ProfileManager.CurrentProfile?.SpeechHue ?? 0);
                     World.WMapManager.SetEnable(_showPartyMembers || _showGuildMembers);
                     SaveSettings();
+                    UIManager.Add(
+                        new MessageBoxGump(
+                            380,
+                            150,
+                            _showGuildMembers
+                                ? "Guild tracking is ENABLED.\nThe world map will show guild members when the server sends their positions."
+                                : "Guild tracking is DISABLED.\nGuild members will no longer be updated on the world map.",
+                            null
+                        )
+                    );
                 },
                 true,
                 _showGuildMembers

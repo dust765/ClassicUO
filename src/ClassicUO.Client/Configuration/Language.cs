@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -809,7 +809,6 @@ namespace ClassicUO.Configuration
         public string OffscreenTargeting { get; set; } = "Offscreen targeting (always on)";
         public string SetTargetOutRange { get; set; } = "Set target with is out range";
         public string OverrideContainerOpenRange { get; set; } = "Override container open range";
-        public string ShowCloseFriendInWordMapGump { get; set; } = "Show Close Friend in WordMapGump";
         public string AutoAvoidObstaculesAndMobiles { get; set; } = "Auto avoid obstacules and mobiles";
         public string RazorTargetToLasttargetString { get; set; } = "Razor * Target * to lasttarget string";
         public string TextForTargetMsgHead { get; set; } = "Text for Target Msg Head: ";

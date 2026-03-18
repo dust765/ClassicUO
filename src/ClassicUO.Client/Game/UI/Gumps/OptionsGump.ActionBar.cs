@@ -30,7 +30,7 @@ namespace ClassicUO.Game.UI.Gumps
                     profile.ActionBarSlots.Add(new ActionBarSlotData());
             }
 
-            ScrollArea rightArea = new ScrollArea(190, 20, WIDTH - 210, 550, true);
+            ScrollArea rightArea = new ScrollArea(190, OptionsScrollY, WIDTH - 210, OptionsScrollHeight, true);
             rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
             int startX = 5;
             int startY = 5;

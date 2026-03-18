@@ -244,10 +244,18 @@ namespace ClassicUO.Game.GameObjects
                 overridedHue = CombatCollection.LastFriendHue(this, overridedHue);
                 hueVec.Y = 1;
             }
-            if (ProfileManager.CurrentProfile.HighlightLastTargetType != 0 && (isLastTarget || isAttack))
+            if (isLastTarget || isAttack)
             {
-                overridedHue = CombatCollection.LastTargetHue(this, overridedHue);
-                hueVec.Y = 1;
+                if (ProfileManager.CurrentProfile.HighlightLastTargetType != 0)
+                {
+                    overridedHue = CombatCollection.LastTargetHue(this, overridedHue);
+                    hueVec.Y = 1;
+                }
+                else
+                {
+                    overridedHue = Notoriety.GetHue(NotorietyFlag);
+                    hueVec.Y = 1;
+                }
             }
             if (ProfileManager.CurrentProfile.PreviewFields)
             {

@@ -848,9 +848,19 @@ namespace ClassicUO.Game.UI.Gumps
             private ItemGumpFixed _itemGump;
             private Label _durabilityExclamation;
             private readonly PaperDollGump _paperDollGump;
+            private bool _jewelrySlotBuiltLarge;
 
             private Control bg, border;
             private double forcedScale = 1f;
+
+            private static bool IsJewelryPaperdollLayer(Layer layer)
+            {
+                return layer == Layer.Ring
+                    || layer == Layer.Bracelet
+                    || layer == Layer.Earrings
+                    || layer == Layer.Necklace
+                    || layer == Layer.Talisman;
+            }
 
             public EquipmentSlot(
                 uint serial,
@@ -910,6 +920,16 @@ namespace ClassicUO.Game.UI.Gumps
                 if (mobile != null)
                 {
                     Item it_at_layer = mobile.FindItemByLayer(Layer);
+                    bool jewelryLayer = IsJewelryPaperdollLayer(Layer);
+                    bool wantLargeJewelry =
+                        jewelryLayer
+                        && ProfileManager.CurrentProfile?.EnlargeJewelryOnPaperdoll == true;
+
+                    if (_itemGump != null && jewelryLayer && wantLargeJewelry != _jewelrySlotBuiltLarge)
+                    {
+                        _itemGump.Dispose();
+                        _itemGump = null;
+                    }
 
                     if ((it_at_layer != null && _itemGump != null && _itemGump.Graphic != it_at_layer.DisplayedGraphic) || _itemGump == null)
                     {
@@ -925,13 +945,28 @@ namespace ClassicUO.Game.UI.Gumps
                         {
                             LocalSerial = it_at_layer.Serial;
 
+                            int fw = 18;
+                            int fh = 18;
+                            int fx = 0;
+                            int fy = 0;
+                            if (wantLargeJewelry)
+                            {
+                                fw = fh = 36;
+                                fx = fy = -9;
+                                _jewelrySlotBuiltLarge = true;
+                            }
+                            else
+                            {
+                                _jewelrySlotBuiltLarge = false;
+                            }
+
                             Add(
-                                _itemGump = new ItemGumpFixed(item, 18, 18)
+                                _itemGump = new ItemGumpFixed(item, fw, fh)
                                 {
-                                    X = 0,
-                                    Y = 0,
-                                    Width = 18,
-                                    Height = 18,
+                                    X = fx,
+                                    Y = fy,
+                                    Width = fw,
+                                    Height = fh,
                                     HighlightOnMouseOver = false,
                                     CanPickUp =
                                         World.InGame

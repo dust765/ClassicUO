@@ -66,6 +66,12 @@ namespace ClassicUO.Game.UI.Gumps
         private static int WIDTH => LoginLayoutHelper.OptionsWidth;
         private static int HEIGHT => LoginLayoutHelper.OptionsHeight;
         private const int TEXTBOX_HEIGHT = 25;
+        private const int OptionsTabStartY = 10;
+        private const int OptionsSearchRowHeight = 26;
+        private const int OptionsSearchToContentGap = 2;
+        private static int OptionsScrollY =>
+            OptionsTabStartY + OptionsSearchRowHeight + OptionsSearchToContentGap;
+        private static int OptionsScrollHeight => HEIGHT - 60 - OptionsScrollY;
         private static readonly string[] WINDOW_TITLE_STYLE_LABELS =
         {
             "Like CUO (native)",
@@ -210,7 +216,7 @@ namespace ClassicUO.Game.UI.Gumps
         private Checkbox _titleBarStatsModePercent;
         private Checkbox _titleBarStatsModeProgressBar;
         // ## BEGIN - END ## // ART / HUE CHANGES
-        private Checkbox _colorStealth, _colorEnergyBolt, _colorGold, _colorTreeTile, _colorBlockerTile;
+        private Checkbox _colorStealth, _colorEnergyBolt, _colorGold, _colorTreeTile, _colorBlockerTile, _enlargeJewelryPaperdoll;
         private ModernColorPicker.HueDisplay _stealthColorPickerBox, _energyBoltColorPickerBox, _goldColorPickerBox, _treeTileColorPickerBox, _blockerTileColorPickerBox;
         private Combobox _goldType, _treeType, _blockerType, _stealthNeonType, _energyBoltNeonType, _energyBoltArtType;
         // ## BEGIN - END ## // ART / HUE CHANGES
@@ -239,7 +245,7 @@ namespace ClassicUO.Game.UI.Gumps
         private InputField _SpecialSetLastTargetClilocText, _blockWoSArt, _blockEnergyFArt;
         // ## BEGIN - END ## // MISC
         // ## BEGIN - END ## // MISC2
-        private Checkbox _wireframeView, _hueImpassableView, _transparentHouses, _invisibleHouses, _ignoreCoT, _showDeathOnWorldmap, _showMapCloseFriend, _drawMobilesWithSurfaceOverhead, _autoAvoidMobiles, _scaleMonstersEnabled, _forceGargoyleWalk;
+        private Checkbox _wireframeView, _hueImpassableView, _transparentHouses, _invisibleHouses, _ignoreCoT, _showDeathOnWorldmap, _drawMobilesWithSurfaceOverhead, _autoAvoidMobiles, _scaleMonstersEnabled, _forceGargoyleWalk;
         private HSliderBar _transparentHousesZ, _transparentHousesTransparency, _invisibleHousesZ, _dontRemoveHouseBelowZ;
         // ## BEGIN - END ## // MISC2
         // ## BEGIN - END ## // MACROS
@@ -325,6 +331,13 @@ namespace ClassicUO.Game.UI.Gumps
         private Profile _currentProfile = ProfileManager.CurrentProfile;
         private OptionsGumpLanguage _lang = Language.Instance.GetOptionsGumpLanguage;
         private Dust765Language _langDust = Language.Instance.GetDust765;
+        private InputField _optionsSearchField;
+        private Label _optionsSearchLabel;
+        private GothicStyleButton _optionsSearchClearBtn;
+        private GothicStyleButton _optionsSearchSubmitBtn;
+        private string _optionsSearchAppliedTerm = string.Empty;
+        private readonly List<Control> _optionsSearchMatches = new List<Control>();
+        private readonly HashSet<int> _optionsSearchPagesWithHits = new HashSet<int>();
 
         public OptionsGump() : base(0, 0)
         {
@@ -343,12 +356,13 @@ namespace ClassicUO.Game.UI.Gumps
 
             int i = 0;
 
+            int tabY = OptionsTabStartY;
             Add
             (
                 new NiceButton
                 (
                     10,
-                    10 + 30 * i++,
+                    tabY + 30 * i++,
                     140,
                     25,
                     ButtonAction.SwitchPage,
@@ -362,7 +376,7 @@ namespace ClassicUO.Game.UI.Gumps
                 new NiceButton
                 (
                     10,
-                    10 + 30 * i++,
+                    tabY + 30 * i++,
                     140,
                     25,
                     ButtonAction.SwitchPage,
@@ -376,7 +390,7 @@ namespace ClassicUO.Game.UI.Gumps
                 new NiceButton
                 (
                     10,
-                    10 + 30 * i++,
+                    tabY + 30 * i++,
                     140,
                     25,
                     ButtonAction.SwitchPage,
@@ -390,7 +404,7 @@ namespace ClassicUO.Game.UI.Gumps
                 new NiceButton
                 (
                     10,
-                    10 + 30 * i++,
+                    tabY + 30 * i++,
                     140,
                     25,
                     ButtonAction.SwitchPage,
@@ -404,7 +418,7 @@ namespace ClassicUO.Game.UI.Gumps
                 new NiceButton
                 (
                     10,
-                    10 + 30 * i++,
+                    tabY + 30 * i++,
                     140,
                     25,
                     ButtonAction.SwitchPage,
@@ -418,7 +432,7 @@ namespace ClassicUO.Game.UI.Gumps
                 new NiceButton
                 (
                     10,
-                    10 + 30 * i++,
+                    tabY + 30 * i++,
                     140,
                     25,
                     ButtonAction.SwitchPage,
@@ -432,7 +446,7 @@ namespace ClassicUO.Game.UI.Gumps
                 new NiceButton
                 (
                     10,
-                    10 + 30 * i++,
+                    tabY + 30 * i++,
                     140,
                     25,
                     ButtonAction.SwitchPage,
@@ -446,7 +460,7 @@ namespace ClassicUO.Game.UI.Gumps
                 new NiceButton
                 (
                     10,
-                    10 + 30 * i++,
+                    tabY + 30 * i++,
                     140,
                     25,
                     ButtonAction.SwitchPage,
@@ -460,7 +474,7 @@ namespace ClassicUO.Game.UI.Gumps
                 new NiceButton
                 (
                     10,
-                    10 + 30 * i++,
+                    tabY + 30 * i++,
                     140,
                     25,
                     ButtonAction.SwitchPage,
@@ -474,7 +488,7 @@ namespace ClassicUO.Game.UI.Gumps
                 new NiceButton
                 (
                     10,
-                    10 + 30 * i++,
+                    tabY + 30 * i++,
                     140,
                     25,
                     ButtonAction.SwitchPage,
@@ -488,7 +502,7 @@ namespace ClassicUO.Game.UI.Gumps
                 new NiceButton
                 (
                     10,
-                    10 + 30 * i++,
+                    tabY + 30 * i++,
                     140,
                     25,
                     ButtonAction.SwitchPage,
@@ -502,7 +516,7 @@ namespace ClassicUO.Game.UI.Gumps
                 new NiceButton
                 (
                     10,
-                    10 + 30 * i++,
+                    tabY + 30 * i++,
                     140,
                     25,
                     ButtonAction.SwitchPage,
@@ -516,7 +530,7 @@ namespace ClassicUO.Game.UI.Gumps
                 new NiceButton
                 (
                     10,
-                    10 + 30 * i++,
+                    tabY + 30 * i++,
                     140,
                     25,
                     ButtonAction.SwitchPage,
@@ -530,7 +544,7 @@ namespace ClassicUO.Game.UI.Gumps
                 new NiceButton
                 (
                     10,
-                    10 + 30 * i++,
+                    tabY + 30 * i++,
                     140,
                     25,
                     ButtonAction.Activate,
@@ -542,9 +556,9 @@ namespace ClassicUO.Game.UI.Gumps
             );
 
             // ## BEGIN - END ## // BASICSETUP
-            Add(new NiceButton(10, 10 + 30 * i++, 140, 25, ButtonAction.SwitchPage, "Dust") { ButtonParameter = 16 });
-            Add(new NiceButton(10, 10 + 30 * i++, 140, 25, ButtonAction.SwitchPage, "765") { ButtonParameter = 17 });
-            Add(new NiceButton(10, 10 + 30 * i++, 140, 25, ButtonAction.SwitchPage, "Mods") { ButtonParameter = 18 });
+            Add(new NiceButton(10, tabY + 30 * i++, 140, 25, ButtonAction.SwitchPage, "Dust") { ButtonParameter = 16 });
+            Add(new NiceButton(10, tabY + 30 * i++, 140, 25, ButtonAction.SwitchPage, "765") { ButtonParameter = 17 });
+            Add(new NiceButton(10, tabY + 30 * i++, 140, 25, ButtonAction.SwitchPage, "Mods") { ButtonParameter = 18 });
             // ## BEGIN - END ## // BASICSETUP
 
             Add
@@ -552,7 +566,7 @@ namespace ClassicUO.Game.UI.Gumps
                 new NiceButton
                 (
                     10,
-                    10 + 30 * i++,
+                    tabY + 30 * i++,
                     140,
                     25,
                     ButtonAction.SwitchPage,
@@ -568,7 +582,7 @@ namespace ClassicUO.Game.UI.Gumps
                 new NiceButton
                 (
                     10,
-                    10 + 30 * i++,
+                    tabY + 30 * i++,
                     140,
                     25,
                     ButtonAction.SwitchPage,
@@ -584,7 +598,7 @@ namespace ClassicUO.Game.UI.Gumps
                 new NiceButton
                 (
                     10,
-                    10 + 30 * i++,
+                    tabY + 30 * i++,
                     140,
                     25,
                     ButtonAction.SwitchPage,
@@ -600,7 +614,7 @@ namespace ClassicUO.Game.UI.Gumps
                 new NiceButton
                 (
                     10,
-                    10 + 30 * i++,
+                    tabY + 30 * i++,
                     140,
                     25,
                     ButtonAction.SwitchPage,
@@ -690,6 +704,238 @@ namespace ClassicUO.Game.UI.Gumps
             // ## BEGIN - END ## // BASICSETUP
 
             ChangePage(1);
+
+            const int searchFieldMaxW = 380;
+            int searchRowY = OptionsTabStartY + 1;
+            int contentLeft = 168;
+            _optionsSearchLabel = new Label("Search:", true, HUE_FONT, font: FONT)
+            {
+                X = contentLeft,
+                Y = searchRowY + 3
+            };
+            Add(_optionsSearchLabel, 0);
+            const int clearBtnW = 56;
+            const int searchBtnW = 78;
+            const int btnGap = 6;
+            int fieldX = _optionsSearchLabel.X + _optionsSearchLabel.Width + 10;
+            int fieldW = Math.Min(
+                searchFieldMaxW,
+                Math.Max(140, WIDTH - fieldX - clearBtnW - searchBtnW - btnGap * 2 - 12)
+            );
+            _optionsSearchField = new InputField(0x0BB8, FONT, HUE_FONT, true, fieldW, TEXTBOX_HEIGHT, 0, 256)
+            {
+                X = fieldX,
+                Y = searchRowY
+            };
+            Add(_optionsSearchField, 0);
+            int clearX = fieldX + fieldW + btnGap;
+            _optionsSearchClearBtn = new GothicStyleButton(clearX, searchRowY - 1, clearBtnW, TEXTBOX_HEIGHT + 2, "Clear");
+            _optionsSearchClearBtn.BaseColor = new Color(100, 100, 100);
+            _optionsSearchClearBtn.HighlightColor = new Color(155, 155, 155);
+            _optionsSearchClearBtn.ShadowColor = new Color(60, 60, 60);
+            _optionsSearchClearBtn.OnClick += ClearOptionsSearch;
+            Add(_optionsSearchClearBtn, 0);
+            _optionsSearchSubmitBtn = new GothicStyleButton(
+                clearX + clearBtnW + btnGap,
+                searchRowY - 1,
+                searchBtnW,
+                TEXTBOX_HEIGHT + 2,
+                "Search"
+            );
+            _optionsSearchSubmitBtn.BaseColor = new Color(100, 100, 100);
+            _optionsSearchSubmitBtn.HighlightColor = new Color(155, 155, 155);
+            _optionsSearchSubmitBtn.ShadowColor = new Color(60, 60, 60);
+            _optionsSearchSubmitBtn.OnClick += RunOptionsSearch;
+            Add(_optionsSearchSubmitBtn, 0);
+        }
+
+        private void ClearOptionsSearch()
+        {
+            if (_optionsSearchField != null)
+            {
+                _optionsSearchField.SetText(string.Empty);
+            }
+
+            _optionsSearchAppliedTerm = string.Empty;
+            _optionsSearchMatches.Clear();
+            _optionsSearchPagesWithHits.Clear();
+        }
+
+        private void RunOptionsSearch()
+        {
+            _optionsSearchAppliedTerm = _optionsSearchField?.Text?.Trim() ?? string.Empty;
+            RebuildOptionsSearchMatches();
+        }
+
+        private bool IsOptionsSearchChrome(Control c)
+        {
+            for (; c != null; c = c.Parent)
+            {
+                if (
+                    c == _optionsSearchField
+                    || c == _optionsSearchClearBtn
+                    || c == _optionsSearchSubmitBtn
+                    || c == _optionsSearchLabel
+                )
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private int OptionsSearchContentPage(Control c)
+        {
+            for (Control w = c; w != null; w = w.Parent)
+            {
+                if (w.Parent == this)
+                {
+                    return w.Page;
+                }
+            }
+
+            return 0;
+        }
+
+        private static void GetControlPositionInOptionsGump(OptionsGump gump, Control c, out int gx, out int gy)
+        {
+            if (c.Parent == gump)
+            {
+                gx = c.X;
+                gy = c.Y;
+                return;
+            }
+
+            GetControlPositionInOptionsGump(gump, c.Parent, out gx, out gy);
+            if (c.Parent is ScrollArea sa)
+            {
+                int idx = sa.Children.IndexOf(c);
+                if (idx > 0)
+                {
+                    gx += c.X;
+                    gy += c.Y - sa.ScrollValue + sa.ScissorRectangle.Y;
+                    return;
+                }
+            }
+
+            gx += c.X;
+            gy += c.Y;
+        }
+
+        private void RebuildOptionsSearchMatches()
+        {
+            _optionsSearchMatches.Clear();
+            _optionsSearchPagesWithHits.Clear();
+            if (_optionsSearchField == null || string.IsNullOrEmpty(_optionsSearchAppliedTerm) || _optionsSearchAppliedTerm.Length < 2)
+            {
+                return;
+            }
+
+            string term = _optionsSearchAppliedTerm;
+            CollectOptionsSearchMatches(this, term);
+        }
+
+        private void CollectOptionsSearchMatches(Control root, string term)
+        {
+            for (int i = 0; i < root.Children.Count; i++)
+            {
+                Control ch = root.Children[i];
+                if (ch == null || ch.IsDisposed)
+                {
+                    continue;
+                }
+
+                CollectOptionsSearchMatches(ch, term);
+            }
+
+            if (root == this || IsOptionsSearchChrome(root))
+            {
+                return;
+            }
+
+            if (root is Checkbox cb && !string.IsNullOrEmpty(cb.Text) && cb.Text.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                _optionsSearchMatches.Add(root);
+                int pg = OptionsSearchContentPage(root);
+                if (pg > 0)
+                {
+                    _optionsSearchPagesWithHits.Add(pg);
+                }
+
+                return;
+            }
+
+            if (root is Label lb && lb.Text != null && lb.Text.Length >= 2 && lb.Text.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                _optionsSearchMatches.Add(root);
+                int pg = OptionsSearchContentPage(root);
+                if (pg > 0)
+                {
+                    _optionsSearchPagesWithHits.Add(pg);
+                }
+
+                return;
+            }
+
+            if (root is Combobox combo && combo.MatchesSearch(term))
+            {
+                _optionsSearchMatches.Add(root);
+                int pg = OptionsSearchContentPage(root);
+                if (pg > 0)
+                {
+                    _optionsSearchPagesWithHits.Add(pg);
+                }
+            }
+        }
+
+        private static ScrollArea FindOptionsSearchScrollParent(Control c)
+        {
+            Control w = c;
+            while (w?.Parent != null)
+            {
+                Control par = w.Parent;
+                if (par is ScrollArea sa && sa.Children.IndexOf(w) > 0)
+                {
+                    return sa;
+                }
+
+                w = par;
+            }
+
+            return null;
+        }
+
+        private bool OptionsSearchHighlightVisible(Control c, int gx, int gy, int bw, int bh)
+        {
+            ScrollArea sa = FindOptionsSearchScrollParent(c);
+            if (sa == null)
+            {
+                return true;
+            }
+
+            GetControlPositionInOptionsGump(this, sa, out int sx, out int sy);
+            int v0 = sy + sa.ScissorRectangle.Y;
+            int v1 = v0 + sa.Height;
+            if (gy + bh <= v0 || gy >= v1)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private static void DrawOptionsSearchHighlightBorder(UltimaBatcher2D batcher, Texture2D tex, Vector3 hueVec, int x, int y, int w, int h, int t)
+        {
+            if (w < 1 || h < 1)
+            {
+                return;
+            }
+
+            batcher.DrawRectangle(tex, x, y, w, t, hueVec);
+            batcher.DrawRectangle(tex, x, y + h - t, w, t, hueVec);
+            batcher.DrawRectangle(tex, x, y, t, h, hueVec);
+            batcher.DrawRectangle(tex, x + w - t, y, t, h, hueVec);
         }
 
         private static Texture2D LogoTexture
@@ -719,9 +965,9 @@ namespace ClassicUO.Game.UI.Gumps
             ScrollArea rightArea = new ScrollArea
             (
                 165,
-                20,
+                OptionsScrollY,
                 WIDTH - 185,
-                HEIGHT - 80,
+                OptionsScrollHeight,
                 true
             );
             rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
@@ -1675,9 +1921,9 @@ namespace ClassicUO.Game.UI.Gumps
             ScrollArea rightArea = new ScrollArea
             (
                 165,
-                20,
+                OptionsScrollY,
                 WIDTH - 185,
-                HEIGHT - 80,
+                OptionsScrollHeight,
                 true
             );
             rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
@@ -1796,9 +2042,9 @@ namespace ClassicUO.Game.UI.Gumps
             ScrollArea rightArea = new ScrollArea
             (
                 165,
-                20,
+                OptionsScrollY,
                 WIDTH - 185,
-                HEIGHT - 80,
+                OptionsScrollHeight,
                 true
             );
 
@@ -2203,7 +2449,7 @@ namespace ClassicUO.Game.UI.Gumps
         {
             const int PAGE = 4;
 
-            ScrollArea rightArea = new ScrollArea(165, 20, WIDTH - 185, HEIGHT - 80, true);
+            ScrollArea rightArea = new ScrollArea(165, OptionsScrollY, WIDTH - 185, OptionsScrollHeight, true);
             rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
 
             int startX = 5;
@@ -2445,9 +2691,9 @@ namespace ClassicUO.Game.UI.Gumps
             ScrollArea rightArea = new ScrollArea
             (
                 165,
-                20,
+                OptionsScrollY,
                 WIDTH - 185,
-                HEIGHT - 80,
+                OptionsScrollHeight,
                 true
             );
             rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
@@ -2537,9 +2783,9 @@ namespace ClassicUO.Game.UI.Gumps
             ScrollArea rightArea = new ScrollArea
             (
                 165,
-                20,
+                OptionsScrollY,
                 WIDTH - 185,
-                HEIGHT - 80,
+                OptionsScrollHeight,
                 true
             );
             rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
@@ -2607,9 +2853,9 @@ namespace ClassicUO.Game.UI.Gumps
             ScrollArea rightArea = new ScrollArea
             (
                 165,
-                20,
+                OptionsScrollY,
                 WIDTH - 185,
-                HEIGHT - 80,
+                OptionsScrollHeight,
                 true
             );
             rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
@@ -2863,9 +3109,9 @@ namespace ClassicUO.Game.UI.Gumps
             ScrollArea rightArea = new ScrollArea
             (
                 165,
-                20,
+                OptionsScrollY,
                 WIDTH - 185,
-                HEIGHT - 80,
+                OptionsScrollHeight,
                 true
             );
             rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
@@ -3096,9 +3342,9 @@ namespace ClassicUO.Game.UI.Gumps
             ScrollArea rightArea = new ScrollArea
             (
                 165,
-                20,
+                OptionsScrollY,
                 WIDTH - 185,
-                HEIGHT - 80,
+                OptionsScrollHeight,
                 true
             );
 
@@ -3262,9 +3508,9 @@ namespace ClassicUO.Game.UI.Gumps
             ScrollArea rightArea = new ScrollArea
             (
                 165,
-                20,
+                OptionsScrollY,
                 WIDTH - 185,
-                HEIGHT - 80,
+                OptionsScrollHeight,
                 true
             );
             rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
@@ -3338,9 +3584,9 @@ namespace ClassicUO.Game.UI.Gumps
             ScrollArea rightArea = new ScrollArea
             (
                 165,
-                20,
+                OptionsScrollY,
                 WIDTH - 185,
-                HEIGHT - 80,
+                OptionsScrollHeight,
                 true
             );
             rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
@@ -3481,9 +3727,9 @@ namespace ClassicUO.Game.UI.Gumps
             ScrollArea rightArea = new ScrollArea
             (
                 165,
-                20,
+                OptionsScrollY,
                 WIDTH - 185,
-                HEIGHT - 80,
+                OptionsScrollHeight,
                 true
             );
 
@@ -3662,7 +3908,8 @@ namespace ClassicUO.Game.UI.Gumps
         private void BuildNameOverhead()
         {
             const int PAGE = 13;
-            int topButtonY = 52 + 25 + 4;
+            int top = OptionsScrollY;
+            int topButtonY = top + 52 + 25 + 4;
             int bottomSeparatorY = HEIGHT - 51;
 
             ScrollArea rightArea = new ScrollArea
@@ -3679,7 +3926,7 @@ namespace ClassicUO.Game.UI.Gumps
                 new Line
                 (
                     165,
-                    52 + 25 + 2,
+                    top + 52 + 25 + 2,
                     WIDTH - 165,
                     1,
                     Color.Gray.PackedValue
@@ -3692,9 +3939,9 @@ namespace ClassicUO.Game.UI.Gumps
                 new Line
                 (
                     165 + 150,
-                    21,
+                    top + 21,
                     1,
-                    bottomSeparatorY - 21,
+                    bottomSeparatorY - top - 21,
                     Color.Gray.PackedValue
                 ),
                 PAGE
@@ -3703,7 +3950,7 @@ namespace ClassicUO.Game.UI.Gumps
             NiceButton addButton = new NiceButton
             (
                 165,
-                20,
+                OptionsScrollY,
                 130,
                 20,
                 ButtonAction.Activate,
@@ -3716,7 +3963,7 @@ namespace ClassicUO.Game.UI.Gumps
             NiceButton delButton = new NiceButton
             (
                 165,
-                52,
+                OptionsScrollY + 32,
                 130,
                 20,
                 ButtonAction.Activate,
@@ -3877,7 +4124,7 @@ namespace ClassicUO.Game.UI.Gumps
             // ## BEGIN - END ## // TAZUO
             //ScrollArea rightArea = new ScrollArea(190, 20, WIDTH - 210, 420, true);
             // ## BEGIN - END ## // TAZUO
-            ScrollArea rightArea = new ScrollArea(165, 20, WIDTH - 185, HEIGHT - 80, true);
+            ScrollArea rightArea = new ScrollArea(165, OptionsScrollY, WIDTH - 185, OptionsScrollHeight, true);
             rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
             // ## BEGIN - END ## // TAZUO
 
@@ -3889,7 +4136,7 @@ namespace ClassicUO.Game.UI.Gumps
             rightArea.Add(box);
 
             // ## BEGIN - END ## // UI/GUMPS
-            SettingsSection section = AddSettingsSection(box, "-----UI / Gumps-----");
+            SettingsSection section = AddSettingsSection(box, "UI GUMPS");
 
             section.Add(_uccEnableLTBar = AddCheckBox(null, "Enable UCC - LastTarget Bar", _currentProfile.UOClassicCombatLTBar, startX, startY));
             startY += _uccEnableLTBar.Height + 2;
@@ -3955,7 +4202,7 @@ namespace ClassicUO.Game.UI.Gumps
             startY += _visualResponseManager.Height + 2;
             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
             // ## BEGIN - END ## // LINES
-            SettingsSection section3 = AddSettingsSection(box, "-----LINES (LINES UI)-----");
+            SettingsSection section3 = AddSettingsSection(box, "LINES UI");
             section3.Y = section.Bounds.Bottom + 40;
 
             startY = section.Bounds.Bottom + 40;
@@ -3964,7 +4211,7 @@ namespace ClassicUO.Game.UI.Gumps
             startY += _uccEnableLines.Height + 2;
             // ## BEGIN - END ## // LINES
             // ## BEGIN - END ## // AUTOLOOT
-            SettingsSection section4 = AddSettingsSection(box, "-----AUTOLOOT (AL UI)-----");
+            SettingsSection section4 = AddSettingsSection(box, "AUTOLOOT UI");
             section4.Y = section3.Bounds.Bottom + 40;
 
             startY = section3.Bounds.Bottom + 40;
@@ -3976,7 +4223,7 @@ namespace ClassicUO.Game.UI.Gumps
             section4.Add(_uccBEnableLootAboveID = AddCheckBox(null, "Enable LootAboveID", _currentProfile.UOClassicCombatAL_EnableLootAboveID, startX, startY));
             startY += _uccBEnableLootAboveID.Height + 2;
 
-            SettingsSection section6 = AddSettingsSection(box, "-----BUFFBAR (COOLDOWN UI)-----");
+            SettingsSection section6 = AddSettingsSection(box, "COOLDOWN UI");
             section6.Y = section4.Bounds.Bottom + 40;
 
             startY = section4.Bounds.Bottom + 40;
@@ -3987,7 +4234,7 @@ namespace ClassicUO.Game.UI.Gumps
             section6.Add(_uccEnableSelf = AddCheckBox(null, "Enable UCC - Self", _currentProfile.UOClassicCombatSelf, startX, startY));
             startY += _uccEnableSelf.Height + 2;
 
-            section6.Add(AddLabel(null, "-----DISABLE / ENABLE BUFFBAR ON CHANGES BELOW-----", startX, startY));
+            section6.Add(AddLabel(null, "DISABLE / ENABLE BUFFBAR ON CHANGES BELOW", startX, startY));
 
             section6.Add(_uccSwing = AddCheckBox(null, "Show Swing Line", _currentProfile.UOClassicCombatBuffbar_SwingEnabled, startX, startY));
             startY += _uccSwing.Height + 2;
@@ -3999,7 +4246,7 @@ namespace ClassicUO.Game.UI.Gumps
             startY += _uccLocked.Height + 2;
             // ## BEGIN - END ## // BUFFBAR/UCCSETTINGS
             // ## BEGIN - END ## // BUFFBAR/UCCSETTINGS
-            SettingsSection section7 = AddSettingsSection(box, "-----SETTINGS (BUFFBAR AND SELF)-----");
+            SettingsSection section7 = AddSettingsSection(box, "BUFFBAR AND SELF SETTINGS");
             section7.Y = section6.Bounds.Bottom + 40;
 
             startY = section6.Bounds.Bottom + 40;
@@ -4062,7 +4309,7 @@ namespace ClassicUO.Game.UI.Gumps
             _uccDisarmAttemptCooldown.SetText(_currentProfile.UOClassicCombatSelf_DisarmAttemptCooldown.ToString());
             // ## BEGIN - END ## // BUFFBAR/UCCSETTINGS
             //TRESHOLD SETTINGS
-            SettingsSection section10 = AddSettingsSection(box, "-----SETTINGS (TRESHOLDS)-----");
+            SettingsSection section10 = AddSettingsSection(box, " SETTINGS (TRESHOLDS");
             section10.Y = section7.Bounds.Bottom + 40;
 
             startY = section7.Bounds.Bottom + 40;
@@ -4147,7 +4394,7 @@ namespace ClassicUO.Game.UI.Gumps
             _uccRefreshpotStamTreshold.SetText(_currentProfile.UOClassicCombatSelf_RefreshpotStamTreshold.ToString());
 
             //MISC SETTINGS AREA
-            SettingsSection section11 = AddSettingsSection(box, "-----SETTINGS (MISC)-----");
+            SettingsSection section11 = AddSettingsSection(box, "SETTINGS (MISC)");
             section11.Y = section10.Bounds.Bottom + 40;
 
             startY = section10.Bounds.Bottom + 40;
@@ -4253,7 +4500,7 @@ namespace ClassicUO.Game.UI.Gumps
             // ## BEGIN - END ## // SELF
             // ## BEGIN - END ## // TABGRID // PKRION
             //TABGRID SETTINGS AREA
-            SettingsSection section12 = AddSettingsSection(box, "-----TABGRID-----");
+            SettingsSection section12 = AddSettingsSection(box, "TABGRID");
             section12.Y = section11.Bounds.Bottom + 40;
 
             startY = section11.Bounds.Bottom + 40;
@@ -4327,9 +4574,9 @@ namespace ClassicUO.Game.UI.Gumps
             ScrollArea rightArea = new ScrollArea
             (
                 165,
-                20,
+                OptionsScrollY,
                 WIDTH - 185,
-                HEIGHT - 80,
+                OptionsScrollHeight,
                 true
             );
 
@@ -4391,7 +4638,7 @@ namespace ClassicUO.Game.UI.Gumps
         private void BuildGridContainer()
         {
             const int PAGE = 8788;
-            ScrollArea rightArea = new ScrollArea(165, 20, WIDTH - 185, HEIGHT - 80, true);
+            ScrollArea rightArea = new ScrollArea(165, OptionsScrollY, WIDTH - 185, OptionsScrollHeight, true);
             rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
 
             SettingsSection gridSection = new SettingsSection("Grid Containers", rightArea.Width);
@@ -4662,7 +4909,7 @@ namespace ClassicUO.Game.UI.Gumps
         {
             const int PAGE = 8789;
 
-            ScrollArea rightArea = new ScrollArea(165, 20, WIDTH - 185, HEIGHT - 80, true);
+            ScrollArea rightArea = new ScrollArea(165, OptionsScrollY, WIDTH - 185, OptionsScrollHeight, true);
             rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
 
             int startX = 5;
@@ -4672,7 +4919,7 @@ namespace ClassicUO.Game.UI.Gumps
             box.WantUpdateSize = true;
             rightArea.Add(box);
 
-            SettingsSection section = AddSettingsSection(box, "-----PROFILE MANAGEMENT-----");
+            SettingsSection section = AddSettingsSection(box, "PROFILE MANAGEMENT");
 
             section.Add(AddLabel(null, "Use these options to share your current settings", startX, startY));
             startY += 20;
@@ -4743,7 +4990,7 @@ namespace ClassicUO.Game.UI.Gumps
             // ## BEGIN - END ## // TAZUO
             //ScrollArea rightArea = new ScrollArea(190, 20, WIDTH - 210, 420, true);
             // ## BEGIN - END ## // TAZUO
-            ScrollArea rightArea = new ScrollArea(165, 20, WIDTH - 185, HEIGHT - 80, true);
+            ScrollArea rightArea = new ScrollArea(165, OptionsScrollY, WIDTH - 185, OptionsScrollHeight, true);
             rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
             // ## BEGIN - END ## // TAZUO
 
@@ -4805,6 +5052,27 @@ namespace ClassicUO.Game.UI.Gumps
 
             section.AddRight(AddLabel(null, _langDust.CannonballOrPrevCoinColor, 0, 0), 2);
 
+            section.Add(
+                AddLabel(
+                    null,
+                    "Jewelry (rings, bracelets, etc.) is tiny on the paperdoll. Enable larger icons in those slots?",
+                    startX,
+                    startY
+                )
+            );
+            startY += 36;
+
+            section.Add(
+                _enlargeJewelryPaperdoll = AddCheckBox(
+                    null,
+                    "Yes — enlarge ring, bracelet, earrings, necklace and talisman on paperdoll",
+                    _currentProfile.EnlargeJewelryOnPaperdoll,
+                    startX,
+                    startY
+                )
+            );
+            startY += _enlargeJewelryPaperdoll.Height + 2;
+
             section.Add(AddLabel(null, _langDust.ChangeTreeArtTo, startX, startY));
 
             mode = _currentProfile.TreeType;
@@ -4834,7 +5102,7 @@ namespace ClassicUO.Game.UI.Gumps
             section.AddRight(AddLabel(null, _langDust.StumpOrTileColor, 0, 0), 2);
             // ## BEGIN - END ## // ART / HUE CHANGES
             // ## BEGIN - END ## // TITLE BAR
-            SettingsSection sectionTitleBar = AddSettingsSection(box, "-----TITLE BAR-----");
+            SettingsSection sectionTitleBar = AddSettingsSection(box, "Title Bar");
             sectionTitleBar.Y = section.Bounds.Bottom + 80;
             startY = section.Bounds.Bottom + 80;
 
@@ -4876,7 +5144,7 @@ namespace ClassicUO.Game.UI.Gumps
     
             // ## BEGIN - END ## // TITLE BAR
             // ## BEGIN - END ## // VISUAL HELPERS
-            SettingsSection section2 = AddSettingsSection(box, "-----VISUAL HELPERS-----");
+            SettingsSection section2 = AddSettingsSection(box, "Visual Helpers");
             section2.Y = sectionTitleBar.Bounds.Bottom + 40;
 
             startY = sectionTitleBar.Bounds.Bottom + 40;
@@ -4982,7 +5250,7 @@ namespace ClassicUO.Game.UI.Gumps
             section2.AddRight(AddLabel(null, "Custom color mortalled", 0, 0), 2);
             // ## BEGIN - END ## // VISUAL HELPERS
             // ## BEGIN - END ## // HEALTHBAR
-            SettingsSection section3 = AddSettingsSection(box, "-----HEALTHBAR-----");
+            SettingsSection section3 = AddSettingsSection(box, "Health Bar");
             section3.Y = section2.Bounds.Bottom + 40;
 
             startY = section2.Bounds.Bottom + 40;
@@ -4993,7 +5261,7 @@ namespace ClassicUO.Game.UI.Gumps
             startY += _highlightHealthBarByState.Height + 2;
             // ## BEGIN - END ## // HEALTHBAR
             // ## BEGIN - END ## // CURSOR
-            SettingsSection section4 = AddSettingsSection(box, "-----CURSOR-----");
+            SettingsSection section4 = AddSettingsSection(box, "Cursor");
             section4.Y = section3.Bounds.Bottom + 40;
 
             startY = section3.Bounds.Bottom + 40;
@@ -5048,7 +5316,7 @@ namespace ClassicUO.Game.UI.Gumps
             startY += _showTargetRangeIndicator.Height + 2;
             // ## BEGIN - END ## // CURSOR
             // ## BEGIN - END ## // OVERHEAD / UNDERCHAR
-            SettingsSection section5 = AddSettingsSection(box, "-----OVERHEAD / UNDERFEET-----");
+            SettingsSection section5 = AddSettingsSection(box, "Overhead / Underfoot");
             section5.Y = section4.Bounds.Bottom + 40;
             startY = section4.Bounds.Bottom + 40;
 
@@ -5056,7 +5324,7 @@ namespace ClassicUO.Game.UI.Gumps
             startY += _overheadRange.Height + 2;
             // ## BEGIN - END ## // OVERHEAD / UNDERCHAR
             // ## BEGIN - END ## // OLDHEALTHLINES
-            SettingsSection section6 = AddSettingsSection(box, "-----OLDHEALTHLINES-----");
+            SettingsSection section6 = AddSettingsSection(box, "Old Health Lines");
             section6.Y = section5.Bounds.Bottom + 40;
 
             startY = section5.Bounds.Bottom + 40;
@@ -5074,7 +5342,7 @@ namespace ClassicUO.Game.UI.Gumps
             startY += _multipleUnderlinesSelfPartyTransparency.Height + 2;
             // ## BEGIN - END ## // OLDHEALTHLINES
             // ## BEGIN - END ## // MISC
-            SettingsSection section7 = AddSettingsSection(box, "-----MISC-----");
+            SettingsSection section7 = AddSettingsSection(box, "Misc");
             section7.Y = section6.Bounds.Bottom + 40;
 
             startY = section6.Bounds.Bottom + 40;
@@ -5168,7 +5436,7 @@ namespace ClassicUO.Game.UI.Gumps
             startY += _blockEnergyFArtForceAoS.Height + 2;
             // ## BEGIN - END ## // MISC
             // ## BEGIN - END ## // MISC2
-            SettingsSection section8 = AddSettingsSection(box, "-----MISC2-----");
+            SettingsSection section8 = AddSettingsSection(box, "Misc2");
             section8.Y = section7.Bounds.Bottom + 40;
 
             startY = section7.Bounds.Bottom + 40;
@@ -5212,8 +5480,6 @@ namespace ClassicUO.Game.UI.Gumps
             section8.Add(_showDeathOnWorldmap = AddCheckBox(null, "Show death location on world map for 5min:", _currentProfile.ShowDeathOnWorldmap, startX, startY));
             startY += _showDeathOnWorldmap.Height + 2;
 
-            section8.Add(_showMapCloseFriend = AddCheckBox(null, "Show closed friend in World Map:", _currentProfile.ShowMapCloseFriend, startX, startY));
-            startY += _showMapCloseFriend.Height + 2;
             section8.Add(_autoAvoidMobiles = AddCheckBox(null, _langDust.AutoAvoidObstaculesAndMobiles, _currentProfile.AutoAvoidObstacules, startX, startY));
             startY += _autoAvoidMobiles.Height + 2;
             section8.Add(_scaleMonstersEnabled = AddCheckBox(null, "Scale monsters (Ctrl+Shift over monster: +/- to scale)", _currentProfile.ScaleMonstersEnabled, startX, startY));
@@ -5224,7 +5490,7 @@ namespace ClassicUO.Game.UI.Gumps
 
             // ## BEGIN - END ## // MISC2
             // ## BEGIN - END ## // STATUSGUMP
-            SettingsSection section10 = AddSettingsSection(box, "-----STATUSGUMP-----");
+            SettingsSection section10 = AddSettingsSection(box, "STATUS GUMP");
             section10.Y = section8.Bounds.Bottom + 40;
 
             startY = 0;
@@ -5233,7 +5499,7 @@ namespace ClassicUO.Game.UI.Gumps
             startY += _useRazorEnhStatusGump.Height + 2;
             // ## BEGIN - END ## // STATUSGUMP
             // ## BEGIN - END ## // MISC3 SHOWALLLAYERS
-            SettingsSection section11 = AddSettingsSection(box, "-----MISC3-----");
+            SettingsSection section11 = AddSettingsSection(box, "MISC3");
             section11.Y = section10.Bounds.Bottom + 40;
 
             startY = section10.Bounds.Bottom + 40;
@@ -5384,7 +5650,7 @@ namespace ClassicUO.Game.UI.Gumps
             // ## BEGIN - END ## // TAZUO
             //ScrollArea rightArea = new ScrollArea(190, 20, WIDTH - 210, 420, true);
             // ## BEGIN - END ## // TAZUO
-            ScrollArea rightArea = new ScrollArea(165, 20, WIDTH - 185, HEIGHT - 80, true);
+            ScrollArea rightArea = new ScrollArea(165, OptionsScrollY, WIDTH - 185, OptionsScrollHeight, true);
             rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
             // ## BEGIN - END ## // TAZUO
 
@@ -5396,7 +5662,7 @@ namespace ClassicUO.Game.UI.Gumps
             rightArea.Add(box);
 
             // ## BEGIN - END ## // VISUAL HELPERS
-            SettingsSection section = AddSettingsSection(box, "-----FEATURES MACROS-----");
+            SettingsSection section = AddSettingsSection(box, "Features Macros");
 
             section.Add(AddLabel(null, "HighlightTileAtRange (toggle HighlightTileAtRange on / off)", startX, startY));
             // ## BEGIN - END ## // VISUAL HELPERS
@@ -5419,7 +5685,7 @@ namespace ClassicUO.Game.UI.Gumps
             section.Add(AddLabel(null, "ToggleModernCooldownBar (toggle on / off modern cooldown bar)", startX, startY));
             // ## BEGIN - END ## // MODERNCOOLDOWNBAR
             // ## BEGIN - END ## // MACROS
-            SettingsSection section2 = AddSettingsSection(box, "-----SIMPLE MACROS-----");
+            SettingsSection section2 = AddSettingsSection(box, "Simple Macros");
             section2.Y = section.Bounds.Bottom + 40;
 
             section2.Add(AddLabel(null, "LastTargetRC (last target with custom range check)", startX, startY));
@@ -5439,7 +5705,7 @@ namespace ClassicUO.Game.UI.Gumps
             section2.Add(AddLabel(null, "OpenCorpses (opens 0x2006 corpses within 2 tiles)", startX, startY));
             // ## BEGIN - END ## // MACROS
             // ## BEGIN - END ## // ADVMACROS
-            SettingsSection section3 = AddSettingsSection(box, "-----ADVANCED MACROS-----");
+            SettingsSection section3 = AddSettingsSection(box, "Advanced Macros");
             section3.Y = section2.Bounds.Bottom + 40;
             startY = section2.Bounds.Bottom + 40;
             section3.Add(AddLabel(null, "use macro to run advanced scripts ONCE:", startX, startY));
@@ -5683,7 +5949,7 @@ namespace ClassicUO.Game.UI.Gumps
             startY += _pullPartyAllyBarsFinalLocationY.Height + 2;
             // ## BEGIN - END ## // ADVMACROS
             // ## BEGIN - END ## // AUTOMATIONS
-            SettingsSection section4 = AddSettingsSection(box, "-----AUTOMATIONS-----");
+            SettingsSection section4 = AddSettingsSection(box, "Automations");
             section4.Y = section3.Bounds.Bottom + 40;
             startY = section3.Bounds.Bottom + 40;
 
@@ -5693,7 +5959,7 @@ namespace ClassicUO.Game.UI.Gumps
             section4.Add(AddLabel(null, "-aibot or macro aibot (auto bot \n)", startX, startY));
             section4.Add(AddLabel(null, "-engange (auto engage and pathfind to last target)", startX, startY));
 
-            SettingsSection section5 = AddSettingsSection(box, "-----MISC-----");
+            SettingsSection section5 = AddSettingsSection(box, "Misc4");
             section5.Y = section4.Bounds.Bottom + 40;
             startY = section4.Bounds.Bottom + 40;
 
@@ -5797,7 +6063,7 @@ namespace ClassicUO.Game.UI.Gumps
             */
             // ## BEGIN - END ## // OUTLANDS
             // ## BEGIN - END ## // LOBBY
-            SettingsSection section6 = AddSettingsSection(box, "-----LOBBY-----");
+            SettingsSection section6 = AddSettingsSection(box, "Lobby");
             section6.Y = section5.Bounds.Bottom + 40;
             startY = section5.Bounds.Bottom + 40;
 
@@ -6963,6 +7229,7 @@ namespace ClassicUO.Game.UI.Gumps
             _currentProfile.GoldType = _goldType.SelectedIndex;
             _currentProfile.GoldHue = _goldColorPickerBox.Hue;
             _currentProfile.ColorGold = _colorGold.IsChecked;
+            _currentProfile.EnlargeJewelryOnPaperdoll = _enlargeJewelryPaperdoll?.IsChecked ?? false;
             _currentProfile.ColorEnergyBolt = _colorEnergyBolt.IsChecked;
             _currentProfile.EnergyBoltHue = _energyBoltColorPickerBox.Hue;
             _currentProfile.ColorTreeTile = _colorTreeTile.IsChecked;
@@ -7348,7 +7615,6 @@ namespace ClassicUO.Game.UI.Gumps
             _currentProfile.OnCastingGump = _onCastingGump.IsChecked;
             _currentProfile.OnCastingGump_hidden = _onCastingGump_hidden.IsChecked;
             _currentProfile.OnCastingUnderPlayerBar = _onCastingUnderPlayerBar.IsChecked;
-            _currentProfile.ShowMapCloseFriend = _showMapCloseFriend.IsChecked;
             _currentProfile.AutoAvoidObstacules = _autoAvoidMobiles.IsChecked;
             _currentProfile.ScaleMonstersEnabled = _scaleMonstersEnabled.IsChecked;
             // ## BEGIN - END ## // ONCASTINGGUMP
@@ -7612,9 +7878,9 @@ namespace ClassicUO.Game.UI.Gumps
                 new Rectangle
                 (
                     x + 165,
-                    y + 20,
+                    y + OptionsScrollY,
                     WIDTH - 250,
-                    400
+                    Math.Max(120, 400 - OptionsScrollY)
                 ),
                 hueVector
             );
@@ -7629,7 +7895,54 @@ namespace ClassicUO.Game.UI.Gumps
                 hueVector
             );
 
-            return base.Draw(batcher, x, y);
+            bool drawn = base.Draw(batcher, x, y);
+            if (_optionsSearchAppliedTerm.Length >= 2)
+            {
+                Texture2D white = SolidColorTextureCache.GetTexture(Color.White);
+                const int border = 2;
+                const int pad = 1;
+                foreach (Control ch in Children)
+                {
+                    if (ch is not NiceButton nb || ch.Page != 0 || !nb.IsSwitchPage || nb.IsDisposed || !nb.IsVisible)
+                    {
+                        continue;
+                    }
+
+                    if (!_optionsSearchPagesWithHits.Contains(nb.ButtonParameter))
+                    {
+                        continue;
+                    }
+
+                    GetControlPositionInOptionsGump(this, nb, out int tx, out int ty);
+                    int tw = Math.Max(4, nb.Width);
+                    int th = Math.Max(4, nb.Height);
+                    DrawOptionsSearchHighlightBorder(batcher, white, hueVector, x + tx - pad, y + ty - pad, tw + pad * 2, th + pad * 2, border);
+                }
+
+                if (ActivePage > 0)
+                {
+                    for (int i = 0; i < _optionsSearchMatches.Count; i++)
+                    {
+                        Control c = _optionsSearchMatches[i];
+                        if (c == null || c.IsDisposed || !c.IsVisible || OptionsSearchContentPage(c) != ActivePage)
+                        {
+                            continue;
+                        }
+
+                        GetControlPositionInOptionsGump(this, c, out int gx, out int gy);
+                        int w = Math.Max(4, c.Width);
+                        int h = Math.Max(4, c.Height);
+                        if (!OptionsSearchHighlightVisible(c, gx, gy, w, h))
+                        {
+                            continue;
+                        }
+
+                        DrawOptionsSearchHighlightBorder(batcher, white, hueVector, x + gx - pad, y + gy - pad, w + pad * 2, h + pad * 2, border);
+                    }
+                }
+            }
+
+            return drawn;
         }
 
         private InputField AddInputField
@@ -7859,8 +8172,8 @@ namespace ClassicUO.Game.UI.Gumps
                 AcceptMouseInput = true;
                 WantUpdateSize = true;
 
-
-                Label label = new Label(title, true, HUE_FONT, font: FONT);
+                string displayTitle = string.IsNullOrEmpty(title) ? title : title.ToUpperInvariant();
+                Label label = new Label(displayTitle, true, HUE_FONT, font: FONT);
                 label.X = 5;
                 base.Add(label);
 
