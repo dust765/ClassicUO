@@ -55,6 +55,8 @@ namespace ClassicUO.Game.UI.Gumps
             _leftMouseIsDown,
             _isLastTarget,
             _needsNameUpdate;
+        private bool _hasBarsBelow;
+        private bool _lastNamePlateHealthBar;
         private UOLabel _text;
         private Texture2D _borderColor = SolidColorTextureCache.GetTexture(Color.Black);
         private Vector2 _textDrawOffset = Vector2.Zero;
@@ -173,6 +175,7 @@ namespace ClassicUO.Game.UI.Gumps
                 _textDrawOffset.X = (Width - _text.Width - 4) >> 1;
                 _textDrawOffset.Y = hasOtherBarBelow || hasSelfBarsBelow ? 0 : (Height - _text.Height) >> 1;
                 WantUpdateSize = false;
+                _lastNamePlateHealthBar = ProfileManager.CurrentProfile.NamePlateHealthBar;
 
                 return true;
             }
@@ -511,6 +514,11 @@ namespace ClassicUO.Game.UI.Gumps
             }
             else
             {
+                if (ProfileManager.CurrentProfile != null && _background != null)
+                {
+                    _background.Alpha = ProfileManager.CurrentProfile.NamePlateOpacity / 100f;
+                }
+
                 if (entity.Serial == TargetManager.LastTargetInfo.Serial && !entity.Equals(World.Player))
                 {
                     if (!_isLastTarget) //Only set this if it was not already last target
@@ -534,6 +542,16 @@ namespace ClassicUO.Game.UI.Gumps
                 if (_needsNameUpdate)
                 {
                     SetName();
+                }
+
+                if (entity is Mobile && ProfileManager.CurrentProfile != null)
+                {
+                    bool curBar = ProfileManager.CurrentProfile.NamePlateHealthBar;
+                    if (curBar != _lastNamePlateHealthBar)
+                    {
+                        _lastNamePlateHealthBar = curBar;
+                        SetName();
+                    }
                 }
             }
         }
@@ -584,23 +602,20 @@ namespace ClassicUO.Game.UI.Gumps
                 _hpPercent = (double)m.Hits / (double)m.HitsMax;
 
                 IsVisible = true;
+
+                bool onlyWarMode = ProfileManager.CurrentProfile.NamePlateHideAtFullHealthInWarmode;
+                bool playerInWar = World.Player != null && World.Player.InWarMode;
+
+                if (onlyWarMode && !playerInWar)
+                {
+                    IsVisible = false;
+                    return false;
+                }
+
                 if (ProfileManager.CurrentProfile.NamePlateHideAtFullHealth && _hpPercent >= 1)
                 {
-                    if (ProfileManager.CurrentProfile.NamePlateHideAtFullHealthInWarmode)
-                    {
-                        if (World.Player.InWarMode)
-                        {
-                            IsVisible = false;
-                            return false;
-                        }
-
-                    }
-                    else
-                    {
-                        IsVisible = false;
-                        return false;
-                    }
-
+                    IsVisible = false;
+                    return false;
                 }
 
                 Client.Game.Animations.GetAnimationDimensions(

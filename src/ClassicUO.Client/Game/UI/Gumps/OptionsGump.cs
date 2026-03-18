@@ -245,9 +245,6 @@ namespace ClassicUO.Game.UI.Gumps
         // ## BEGIN - END ## // MACROS
         private HSliderBar _lastTargetRange;
         // ## BEGIN - END ## // MACROS
-        // ## BEGIN - END ## // NAMEOVERHEAD
-        private Checkbox _showHPLineInNOH;
-        // ## BEGIN - END ## // NAMEOVERHEAD
         // ## BEGIN - END ## // UI/GUMPS
         private Checkbox _bandageGump, _bandageUpDownToggle, _uccEnableLTBar;
         private InputField _bandageGumpOffsetX, _bandageGumpOffsetY;
@@ -5226,21 +5223,11 @@ namespace ClassicUO.Game.UI.Gumps
             startY += _forceGargoyleWalk.Height + 2;
 
             // ## BEGIN - END ## // MISC2
-            // ## BEGIN - END ## // NAMEOVERHEAD
-            SettingsSection section9 = AddSettingsSection(box, "-----NAMEOVERHEAD-----");
-            section9.Y = section8.Bounds.Bottom + 40;
-
-            startY = section8.Bounds.Bottom + 40;
-
-            section9.Add(_showHPLineInNOH = AddCheckBox(null, "Show HPLine in NameOverheadGump:", _currentProfile.ShowHPLineInNOH, startX, startY));
-            startY += _showHPLineInNOH.Height + 2;
-
-            // ## BEGIN - END ## // NAMEOVERHEAD
             // ## BEGIN - END ## // STATUSGUMP
             SettingsSection section10 = AddSettingsSection(box, "-----STATUSGUMP-----");
-            section10.Y = section9.Bounds.Bottom + 40;
+            section10.Y = section8.Bounds.Bottom + 40;
 
-            startY = section9.Bounds.Bottom + 40;
+            startY = 0;
 
             section10.Add(_useRazorEnhStatusGump = AddCheckBox(null, "Use Razor Enhanced status gump:", _currentProfile.UseRazorEnhStatusGump, startX, startY));
             startY += _useRazorEnhStatusGump.Height + 2;
@@ -7136,9 +7123,6 @@ namespace ClassicUO.Game.UI.Gumps
             // ## BEGIN - END ## // MACROS
             _currentProfile.LastTargetRange = _lastTargetRange.Value;
             // ## BEGIN - END ## // MACROS
-            // ## BEGIN - END ## // NAMEOVERHEAD
-            _currentProfile.ShowHPLineInNOH = _showHPLineInNOH.IsChecked;
-            // ## BEGIN - END ## // NAMEOVERHEAD
             // ## BEGIN - END ## // UI/GUMPS
             _currentProfile.BandageGump = _bandageGump.IsChecked;
 

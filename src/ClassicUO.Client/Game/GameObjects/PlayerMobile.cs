@@ -101,6 +101,17 @@ namespace ClassicUO.Game.GameObjects
         public override bool InWarMode { get; set; }
         public IReadOnlyDictionary<BuffIconType, BuffIcon> BuffIcons => _buffIcons;
 
+        public override void SetInWorldTile(ushort x, ushort y, sbyte z)
+        {
+            bool positionChanged = x != X || y != Y || z != Z;
+            base.SetInWorldTile(x, y, z);
+            if (positionChanged)
+            {
+                ClearSteps();
+                Walker.Reset();
+            }
+        }
+
         public ref Ability PrimaryAbility => ref Abilities[0];
         public ref Ability SecondaryAbility => ref Abilities[1];
         protected override bool IsWalking => LastStepTime > Time.Ticks - Constants.PLAYER_WALKING_DELAY;

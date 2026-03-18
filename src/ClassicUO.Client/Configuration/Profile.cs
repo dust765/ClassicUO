@@ -281,8 +281,6 @@ namespace ClassicUO.Configuration
         public bool NameOverheadToggled { get; set; } = false;
         public bool ShowTargetRangeIndicator { get; set; }
         public bool PartyInviteGump { get; set; }
-        // ## BEGIN - END ## // NAMEOVERHEAD
-        public bool ShowHPLineInNOH { get; set; } = false;
         public bool NameOverheadPinnedToggled { get; set; } = false;
         public bool NameOverheadBackgroundToggled { get; set; } = false;
         // ## BEGIN - END ## // NAMEOVERHEAD
@@ -743,6 +741,7 @@ namespace ClassicUO.Configuration
         public bool WorldMapTopMost { get; set; }
         public bool WorldMapFreeView { get; set; }
         public bool WorldMapShowParty { get; set; } = true;
+        public bool WorldMapShowGuild { get; set; }
         public int WorldMapZoomIndex { get; set; } = 4;
         public bool WorldMapShowCoordinates { get; set; } = true;
         public bool WorldMapShowMouseCoordinates { get; set; } = true;

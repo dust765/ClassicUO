@@ -171,7 +171,7 @@ namespace ClassicUO.Game.GameObjects
             UpdateTextCoordsV();
         }
 
-        public void SetInWorldTile(ushort x, ushort y, sbyte z)
+        public virtual void SetInWorldTile(ushort x, ushort y, sbyte z)
         {
             X = x;
             Y = y;
