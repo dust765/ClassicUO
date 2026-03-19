@@ -11,6 +11,7 @@ namespace ClassicUO.Game.UI.Gumps
 {
     internal class AutoLootOptions : Gump
     {
+        private const ushort _autoLootTextHue = 0x080A;
         public AutoLootOptions() : base(0, 0)
         {
             if (!AutoLootManager.Instance.IsLoaded)
@@ -34,27 +35,27 @@ namespace ClassicUO.Game.UI.Gumps
         {
             Add(new AlphaBlendControl(0.85f) { Width = Width, Height = Height });
 
-            SettingsSection topSecion = new SettingsSection("Simple Auto Loot", Width);
+            SettingsSection topSecion = new SettingsSection("Simple Auto Loot", Width, _autoLootTextHue);
 
-            topSecion.Add(new UOLabel("Enable auto loot", 1, 0, ClassicUO.Assets.TEXT_ALIGN_TYPE.TS_LEFT, 0, ClassicUO.Game.FontStyle.None));
+            topSecion.Add(new UOLabel("Enable auto loot", 1, _autoLootTextHue, ClassicUO.Assets.TEXT_ALIGN_TYPE.TS_LEFT, 0, ClassicUO.Game.FontStyle.None));
 
             Checkbox enable;
             topSecion.AddRight(enable = new Checkbox(0x00D2, 0x00D3, "", 0xff, 0xffff) { IsChecked = ProfileManager.CurrentProfile.EnableAutoLoot });
             enable.ValueChanged += (e, v) => { ProfileManager.CurrentProfile.EnableAutoLoot = enable.IsChecked; };
 
-            topSecion.Add(new UOLabel("Show progress bar while looting", 1, 0, ClassicUO.Assets.TEXT_ALIGN_TYPE.TS_LEFT, 0, ClassicUO.Game.FontStyle.None));
+            topSecion.Add(new UOLabel("Show progress bar while looting", 1, _autoLootTextHue, ClassicUO.Assets.TEXT_ALIGN_TYPE.TS_LEFT, 0, ClassicUO.Game.FontStyle.None));
 
             Checkbox enablepb;
             topSecion.AddRight(enablepb = new Checkbox(0x00D2, 0x00D3, "", 0xff, 0xffff) { IsChecked = ProfileManager.CurrentProfile.EnableAutoLootProgressBar });
             enablepb.ValueChanged += (e, v) => { ProfileManager.CurrentProfile.EnableAutoLootProgressBar = enablepb.IsChecked; };
 
-            topSecion.Add(new UOLabel("Hue corpse after processing", 1, 0, ClassicUO.Assets.TEXT_ALIGN_TYPE.TS_LEFT, 0, ClassicUO.Game.FontStyle.None));
+            topSecion.Add(new UOLabel("Hue corpse after processing", 1, _autoLootTextHue, ClassicUO.Assets.TEXT_ALIGN_TYPE.TS_LEFT, 0, ClassicUO.Game.FontStyle.None));
             Checkbox hueCorpse;
             topSecion.AddRight(hueCorpse = new Checkbox(0x00D2, 0x00D3, "", 0xff, 0xffff) { IsChecked = ProfileManager.CurrentProfile.HueCorpseAfterAutoloot });
             hueCorpse.ValueChanged += (e, v) => { ProfileManager.CurrentProfile.HueCorpseAfterAutoloot = hueCorpse.IsChecked; };
 
             NiceButton addEntry;
-            topSecion.Add(addEntry = new NiceButton(0, 0, 100, 25, ButtonAction.Activate, "Add entry") { IsSelectable = false });
+            topSecion.Add(addEntry = new NiceButton(0, 0, 100, 25, ButtonAction.Activate, "Add entry", 0, ClassicUO.Assets.TEXT_ALIGN_TYPE.TS_CENTER, _autoLootTextHue) { IsSelectable = false });
             addEntry.MouseUp += (e, v) =>
             {
                 AutoLootManager.Instance.AddLootItem();
@@ -64,7 +65,7 @@ namespace ClassicUO.Game.UI.Gumps
             Add(topSecion);
 
             ScrollArea entries = new ScrollArea(0, topSecion.Y + topSecion.Height + 25, Width - 2, Height - topSecion.Y - topSecion.Height - 25, true);
-            SettingsSection entriesSection = new SettingsSection("Loot entries", Width - 2);
+            SettingsSection entriesSection = new SettingsSection("Loot entries", Width - 2, _autoLootTextHue);
             entries.Add(entriesSection);
 
             BuildEntries(entriesSection);
@@ -88,7 +89,7 @@ namespace ClassicUO.Game.UI.Gumps
                     x += 55;
                 }
 
-                InputField graphicInput = new InputField(0x0BB8, 0xFF, 0xFFF, true, 100, 50) { X = x };
+                InputField graphicInput = new InputField(0x0BB8, 0xFF, 0xFFFF, true, 100, 50) { X = x };
                 graphicInput.SetText(autoLootItem.Graphic.ToString());
                 graphicInput.TextChanged += (s, e) =>
                 {
@@ -104,7 +105,7 @@ namespace ClassicUO.Game.UI.Gumps
                 area.Add(graphicInput);
                 x += graphicInput.Width + 5;
 
-                InputField hueInput = new InputField(0x0BB8, 0xFF, 0xFFF, true, 100, 50) { X = x };
+                InputField hueInput = new InputField(0x0BB8, 0xFF, 0xFFFF, true, 100, 50) { X = x };
                 hueInput.SetText(autoLootItem.Hue == ushort.MaxValue ? "-1" : autoLootItem.Hue.ToString());
                 hueInput.TextChanged += (s, e) =>
                 {
@@ -121,7 +122,7 @@ namespace ClassicUO.Game.UI.Gumps
                 x += hueInput.Width + 5;
 
                 NiceButton delete;
-                area.Add(delete = new NiceButton(x, 0, 90, 49, ButtonAction.Activate, "Delete") { IsSelectable = false, DisplayBorder = true });
+                area.Add(delete = new NiceButton(x, 0, 90, 49, ButtonAction.Activate, "Delete", 0, ClassicUO.Assets.TEXT_ALIGN_TYPE.TS_CENTER, _autoLootTextHue) { IsSelectable = false, DisplayBorder = true });
                 delete.MouseUp += (s, e) =>
                 {
                     if (e.Button == Input.MouseButtonType.Left)

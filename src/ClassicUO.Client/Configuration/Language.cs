@@ -685,7 +685,8 @@ namespace ClassicUO.Configuration
         public string UseLandTexturesWhereAvailable { get; set; } = "Use land textures where available(Experimental)";
         public string SOSGumpID { get; set; } = "SOS Gump ID";
         public string NearbyItemGump { get; set; } = "Enable nearby item gump";
-        public string ShowUseLootModalOnCtrl { get; set; } = "Show Use/Loot modal when pressing Ctrl (nearby items)";
+        public string ShowUseLootModalOnCtrl { get; set; } = "Show nearby Use/Loot modal (assign hotkey below)";
+        public string NearbyItemModalHotkeyHint { get; set; } = "Hotkey (mouse over world, click field, press key, OK):";
         #endregion
 
         #region Tooltips

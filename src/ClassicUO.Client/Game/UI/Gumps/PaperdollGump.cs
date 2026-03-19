@@ -853,13 +853,9 @@ namespace ClassicUO.Game.UI.Gumps
             private Control bg, border;
             private double forcedScale = 1f;
 
-            private static bool IsJewelryPaperdollLayer(Layer layer)
+            private static bool IsRingOrBraceletSlot(Layer layer)
             {
-                return layer == Layer.Ring
-                    || layer == Layer.Bracelet
-                    || layer == Layer.Earrings
-                    || layer == Layer.Necklace
-                    || layer == Layer.Talisman;
+                return layer == Layer.Ring || layer == Layer.Bracelet;
             }
 
             public EquipmentSlot(
@@ -920,12 +916,17 @@ namespace ClassicUO.Game.UI.Gumps
                 if (mobile != null)
                 {
                     Item it_at_layer = mobile.FindItemByLayer(Layer);
-                    bool jewelryLayer = IsJewelryPaperdollLayer(Layer);
+                    bool ringOrBracelet = IsRingOrBraceletSlot(Layer);
                     bool wantLargeJewelry =
-                        jewelryLayer
+                        ringOrBracelet
                         && ProfileManager.CurrentProfile?.EnlargeJewelryOnPaperdoll == true;
 
-                    if (_itemGump != null && jewelryLayer && wantLargeJewelry != _jewelrySlotBuiltLarge)
+                    bool braceletLarge =
+                        wantLargeJewelry && Layer == Layer.Bracelet;
+
+                    if (_itemGump != null
+                        && ringOrBracelet
+                        && (wantLargeJewelry != _jewelrySlotBuiltLarge || _itemGump.BraceletLarge != braceletLarge))
                     {
                         _itemGump.Dispose();
                         _itemGump = null;
@@ -949,10 +950,21 @@ namespace ClassicUO.Game.UI.Gumps
                             int fh = 18;
                             int fx = 0;
                             int fy = 0;
+                            bool enlargeDraw = false;
                             if (wantLargeJewelry)
                             {
-                                fw = fh = 36;
-                                fx = fy = -9;
+                                if (Layer == Layer.Bracelet)
+                                {
+                                    fw = fh = 20;
+                                    fx = fy = -1;
+                                }
+                                else
+                                {
+                                    fw = fh = 22;
+                                    fx = fy = -2;
+                                }
+
+                                enlargeDraw = true;
                                 _jewelrySlotBuiltLarge = true;
                             }
                             else
@@ -961,7 +973,7 @@ namespace ClassicUO.Game.UI.Gumps
                             }
 
                             Add(
-                                _itemGump = new ItemGumpFixed(item, fw, fh)
+                                _itemGump = new ItemGumpFixed(item, fw, fh, enlargeDraw, braceletLarge)
                                 {
                                     X = fx,
                                     Y = fy,
@@ -1007,10 +1019,14 @@ namespace ClassicUO.Game.UI.Gumps
                 private Point originalSize;
                 private Point point;
                 private readonly Rectangle graphicSize;
+                private readonly bool _scaleUpSmallArt;
+                public bool BraceletLarge { get; }
 
-                public ItemGumpFixed(Item item, int w, int h)
+                public ItemGumpFixed(Item item, int w, int h, bool scaleUpSmallArt = false, bool braceletLarge = false)
                     : base(item.Serial, item.DisplayedGraphic, item.Hue, item.X, item.Y)
                 {
+                    _scaleUpSmallArt = scaleUpSmallArt;
+                    BraceletLarge = braceletLarge;
                     Width = w;
                     Height = h;
                     WantUpdateSize = false;
@@ -1037,19 +1053,22 @@ namespace ClassicUO.Game.UI.Gumps
                 {
                     base.ScaleWidthAndHeight(scale);
 
-                    originalSize.X = Width;
-                    originalSize.Y = Height;
-
-                    if (graphicSize.Width < Width)
+                    if (!_scaleUpSmallArt)
                     {
-                        originalSize.X = graphicSize.Width;
-                        point.X = (Width >> 1) - (originalSize.X >> 1);
-                    }
+                        originalSize.X = Width;
+                        originalSize.Y = Height;
 
-                    if (graphicSize.Height < Height)
-                    {
-                        originalSize.Y = graphicSize.Height;
-                        point.Y = (Height >> 1) - (originalSize.Y >> 1);
+                        if (graphicSize.Width < Width)
+                        {
+                            originalSize.X = graphicSize.Width;
+                            point.X = (Width >> 1) - (originalSize.X >> 1);
+                        }
+
+                        if (graphicSize.Height < Height)
+                        {
+                            originalSize.Y = graphicSize.Height;
+                            point.Y = (Height >> 1) - (originalSize.Y >> 1);
+                        }
                     }
 
                     return this;
@@ -1077,9 +1096,40 @@ namespace ClassicUO.Game.UI.Gumps
                     );
 
                     ref readonly var artInfo = ref Client.Game.Arts.GetArt(item.DisplayedGraphic);
-                    
 
-                    if (artInfo.Texture != null)
+                    if (artInfo.Texture == null)
+                    {
+                        return false;
+                    }
+
+                    int srcW = graphicSize.Width;
+                    int srcH = graphicSize.Height;
+                    if (srcW < 1 || srcH < 1)
+                    {
+                        return false;
+                    }
+
+                    if (_scaleUpSmallArt)
+                    {
+                        float mult = BraceletLarge ? 1.55f : 1.8f;
+                        int lo = BraceletLarge ? 8 : 10;
+                        int dw = Math.Min(Width, Math.Max(lo, (int)Math.Ceiling(srcW * mult)));
+                        int dh = Math.Min(Height, Math.Max(lo, (int)Math.Ceiling(srcH * mult)));
+                        int px = x + (Width - dw) / 2;
+                        int py = y + (Height - dh) / 2;
+                        batcher.Draw(
+                            artInfo.Texture,
+                            new Rectangle(px, py, dw, dh),
+                            new Rectangle(
+                                artInfo.UV.X + graphicSize.X,
+                                artInfo.UV.Y + graphicSize.Y,
+                                srcW,
+                                srcH
+                            ),
+                            hueVector
+                        );
+                    }
+                    else
                     {
                         batcher.Draw(
                             artInfo.Texture,
@@ -1097,11 +1147,9 @@ namespace ClassicUO.Game.UI.Gumps
                             ),
                             hueVector
                         );
-
-                        return true;
                     }
 
-                    return false;
+                    return true;
                 }
 
                 public override bool Contains(int x, int y)

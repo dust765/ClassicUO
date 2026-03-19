@@ -65,6 +65,9 @@ namespace ClassicUO.Network
         public delegate void OnPacketBufferReader(ref StackDataReader p);
 
         private static uint _requestedGridLoot;
+        private static uint _lastStatusSerial;
+        private static long _lastStatusTicks;
+        private const int STATUS_REQUEST_DEBOUNCE_MS = 120;
 
         private static readonly TextFileParser _parser = new TextFileParser(
             string.Empty,
@@ -3691,9 +3694,27 @@ namespace ClassicUO.Network
             GameActions.SendCloseStatus(TargetManager.LastAttack);
             
             TargetManager.LastAttack = serial;
-    
-            GameActions.RequestMobileStatus(serial);
+
+            RequestMobileStatusDebounced(serial);
             
+        }
+
+        private static void RequestMobileStatusDebounced(uint serial)
+        {
+            if (!SerialHelper.IsValid(serial))
+            {
+                return;
+            }
+
+            long now = Time.Ticks;
+            if (_lastStatusSerial == serial && now - _lastStatusTicks < STATUS_REQUEST_DEBOUNCE_MS)
+            {
+                return;
+            }
+
+            _lastStatusSerial = serial;
+            _lastStatusTicks = now;
+            GameActions.RequestMobileStatus(serial);
         }
 
         private static void TextEntryDialog(ref StackDataReader p)
@@ -6657,7 +6678,7 @@ namespace ClassicUO.Network
                     // This is actually a way to get all Hp from all new mobiles.
                     // Real UO client does it only when LastAttack == serial.
                     // We force to close suddenly.
-                    GameActions.RequestMobileStatus(serial);
+                    RequestMobileStatusDebounced(serial);
 
                     //if (TargetManager.LastAttack != serial)
                     //{

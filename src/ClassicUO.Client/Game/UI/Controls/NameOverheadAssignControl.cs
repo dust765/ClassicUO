@@ -35,6 +35,7 @@ using System.Collections.Generic;
 using ClassicUO.Assets;
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.UI.Gumps;
+using ClassicUO.Game.UI.Gumps.Login;
 using ClassicUO.Resources;
 using SDL3;
 
@@ -58,8 +59,8 @@ namespace ClassicUO.Game.UI.Controls
 
             CanMove = true;
 
-            const int hotkeyRowY = 20;
-            AddLabel("Set hotkey:", 0, 2);
+            const int hotkeyRowY = 34;
+            AddLabel("Set hotkey:", 0, 8);
 
             _hotkeyBox = new HotkeyBox
             {
@@ -92,7 +93,13 @@ namespace ClassicUO.Game.UI.Controls
             );
 
             int scrollTop = buttonsY + 25 + 10;
-            Add(checkBoxScroll = new ScrollArea(0, scrollTop, 300, 368, true));
+            int ow = LoginLayoutHelper.OptionsWidth;
+            int oh = LoginLayoutHelper.OptionsHeight;
+            int scrollW = Math.Max(280, ow - 342);
+            int scrollH = Math.Max(200, oh - scrollTop - 58);
+            Add(checkBoxScroll = new ScrollArea(0, scrollTop, scrollW, scrollH, true));
+            checkBoxScroll.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            checkBoxScroll.UpdateScrollbarPosition();
 
             SetupOptionCheckboxes();
 

@@ -247,6 +247,11 @@ namespace ClassicUO.Game.GameObjects
                 }
             }
 
+            if (OnGround && Graphic == CombatCollection.MOONGATE_GRAPHIC)
+            {
+                hue = CombatCollection.MoongateHue(Graphic, hue);
+            }
+
             hueVec = ShaderHueTranslator.GetHueVector(hue, partial, alpha);
 
             if (!IsMulti && !IsCoin && Amount > 1 && ItemData.IsStackable)

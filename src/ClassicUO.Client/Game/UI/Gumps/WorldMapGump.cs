@@ -444,7 +444,10 @@ namespace ClassicUO.Game.UI.Gumps
                             _showGuildMembers
                                 ? "Guild tracking is ENABLED.\nThe world map will show guild members when the server sends their positions."
                                 : "Guild tracking is DISABLED.\nGuild members will no longer be updated on the world map.",
-                            null
+                            null,
+                            false,
+                            MessageButtonType.OK,
+                            1
                         )
                     );
                 },
