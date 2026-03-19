@@ -99,6 +99,8 @@ namespace ClassicUO.Game.GameObjects
             if (ProfileManager.CurrentProfile.DisplayRadius && Distance == ProfileManager.CurrentProfile.DisplayRadiusDistance && System.Math.Abs(Z - World.Player.Z) < 11)
                 hue = ProfileManager.CurrentProfile.DisplayRadiusHue;
 
+            hue = CombatCollection.MoongateHue(Graphic, hue);
+
             Vector3 hueVec = ShaderHueTranslator.GetHueVector(hue, partial, AlphaHue / 255f);
 
             // ## BEGIN - END ## // VISUAL HELPERS

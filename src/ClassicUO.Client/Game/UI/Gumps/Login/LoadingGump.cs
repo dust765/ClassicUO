@@ -108,8 +108,8 @@ namespace ClassicUO.Game.UI.Gumps.Login
             });
 
             // Logo maior
-            const int LogoMaxWidth  = 280;
-            const int LogoMaxHeight = 68;
+            const int LogoMaxWidth  = 420;
+            const int LogoMaxHeight = 108;
             string logoPath = Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Client", "logodust.png");
             _logoTexture = PNGLoader.Instance.GetImageTexture(logoPath);
             if (_logoTexture != null)
@@ -118,23 +118,22 @@ namespace ClassicUO.Game.UI.Gumps.Login
                 int logoW = (int)(_logoTexture.Width * scale);
                 int logoH = (int)(_logoTexture.Height * scale);
                 int logoX = panelX + ((ModalWidth - logoW) >> 1);
-                int logoY = panelY + 16;
+                int logoY = panelY + 12;
                 Add(new CustomGumpPic(logoX, logoY, _logoTexture, logoW, logoH, 0));
             }
 
-            // Linha de acento superior (3px, brilhante)
+            int accentY = panelY + 128;
             Add(new RoundedColorBox(ModalWidth, 3, AccentColor, 0)
             {
                 X = panelX,
-                Y = panelY + 92
+                Y = accentY
             });
 
-            // Label de status com texto branco legível
             string initialLabel = _baseLabelText + ".";
             _label = new UOLabel(initialLabel, 1, 0xFFFF, TEXT_ALIGN_TYPE.TS_CENTER, LabelMaxWidth, FontStyle.BlackBorder)
             {
                 X = panelX + ((ModalWidth - LabelMaxWidth) >> 1),
-                Y = panelY + 110
+                Y = accentY + 14
             };
             Add(_label);
             _lastDotTicks = Time.Ticks;

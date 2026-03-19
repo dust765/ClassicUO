@@ -1253,6 +1253,24 @@ namespace ClassicUO.Game.UI.Gumps
                         point.Y = (hit.Height >> 1) - (originalSize.Y >> 1);
                     }
 
+                    if (ProfileManager.CurrentProfile.EnlargeJewelryOnPaperdoll
+                        && _item != null
+                        && (_item.ItemData.Layer == (byte)Layer.Ring || _item.ItemData.Layer == (byte)Layer.Bracelet)
+                        && rect.Width > 0
+                        && rect.Height > 0)
+                    {
+                        bool isBracelet = _item.ItemData.Layer == (byte)Layer.Bracelet;
+                        float jMult = isBracelet ? 1.55f : 1.8f;
+                        int jMin = isBracelet ? 8 : 9;
+                        int pad = 2;
+                        int jw = Math.Min(hit.Width - pad, Math.Max(jMin, (int)Math.Ceiling(rect.Width * jMult)));
+                        int jh = Math.Min(hit.Height - pad, Math.Max(jMin, (int)Math.Ceiling(rect.Height * jMult)));
+                        originalSize.X = jw;
+                        originalSize.Y = jh;
+                        point.X = (hit.Width >> 1) - (jw >> 1);
+                        point.Y = (hit.Height >> 1) - (jh >> 1);
+                    }
+
                     batcher.Draw
                     (
                         texture,

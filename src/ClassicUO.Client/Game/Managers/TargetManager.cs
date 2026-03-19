@@ -161,6 +161,11 @@ namespace ClassicUO.Game.Managers
             get { return _lastAttack; }
             set
             {
+                if (_lastAttack == value)
+                {
+                    return;
+                }
+
                 _lastAttack = value;
 
                 Profile profile = ProfileManager.CurrentProfile;

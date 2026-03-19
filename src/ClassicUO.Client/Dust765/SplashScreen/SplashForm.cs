@@ -105,8 +105,8 @@ namespace ClassicUO.Dust765
             var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
 
             // ── Logo centralizado no topo ────────────────────────────────────
-            const int logoH = 90;
-            int logoY = 14;
+            const int logoH = 148;
+            int logoY = 10;
             if (_logo != null)
             {
                 double scale = Math.Min((double)(w - pad * 2) / _logo.Width, (double)logoH / _logo.Height);

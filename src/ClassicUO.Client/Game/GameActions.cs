@@ -578,6 +578,11 @@ namespace ClassicUO.Game
 
         public static void Attack(uint serial)
         {
+            if (!World.InGame || World.Player == null || World.Player.IsDestroyed)
+            {
+                return;
+            }
+
             if (ProfileManager.CurrentProfile.EnabledCriminalActionQuery)
             {
                 Mobile m = World.Mobiles.Get(serial);
