@@ -67,14 +67,17 @@ namespace ClassicUO.Dust765.UI.Gumps
             int contentY = 0;
             string[] sections =
             {
-                "/c[yellow]v3.0.7/cd",
+                "/c[yellow]v3.0.8/cd",
                 "",
                 "/c[yellow]Features/cd",
-                "- Add splash loading with loading mul files (instead of loading from uo files)",
-
+                "- Add Search in Options",
+                "",
                 "/c[yellow]Fixes/cd",
-                "- Fix BorderControl disappearing around the game window",
-                "- Fixed start from uostealth",
+                "- Fix nameplateoverheadgump",
+                "- Fix Target hue by notoriety",
+                "- Fix Show nearly item gump",
+                "- Fix OnCasting after recall",
+                "- Show Guild in Wolrd Map",
             };
 
             foreach (string line in sections)
