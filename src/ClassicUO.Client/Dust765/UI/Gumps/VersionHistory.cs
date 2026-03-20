@@ -77,7 +77,7 @@ namespace ClassicUO.Dust765.UI.Gumps
                 "- Fix Target hue by notoriety",
                 "- Fix Show nearly item gump",
                 "- Fix OnCasting after recall",
-                "- Show Guild in Wolrd Map",
+                "- Show Guild in World Map",
             };
 
             foreach (string line in sections)
