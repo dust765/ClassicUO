@@ -126,6 +126,7 @@ namespace ClassicUO.Game.UI.Gumps
         private bool _showMobiles = true;
         private bool _showMultis = true;
         private bool _showPartyMembers = true;
+        private bool _showGuildMembers;
         private bool _showPlayerBar = true;
         private bool _showPlayerName = true;
         private int _zoomIndex = 4;
@@ -235,8 +236,9 @@ namespace ClassicUO.Game.UI.Gumps
 
             _flipMap = ProfileManager.CurrentProfile.WorldMapFlipMap;
             _showPartyMembers = ProfileManager.CurrentProfile.WorldMapShowParty;
+            _showGuildMembers = ProfileManager.CurrentProfile.WorldMapShowGuild;
 
-            World.WMapManager.SetEnable(_showPartyMembers);
+            World.WMapManager.SetEnable(_showPartyMembers || _showGuildMembers);
 
             _zoomIndex = ProfileManager.CurrentProfile.WorldMapZoomIndex;
 
@@ -279,6 +281,7 @@ namespace ClassicUO.Game.UI.Gumps
             ProfileManager.CurrentProfile.WorldMapTopMost = TopMost;
             ProfileManager.CurrentProfile.WorldMapFreeView = FreeView;
             ProfileManager.CurrentProfile.WorldMapShowParty = _showPartyMembers;
+            ProfileManager.CurrentProfile.WorldMapShowGuild = _showGuildMembers;
 
             ProfileManager.CurrentProfile.WorldMapZoomIndex = _zoomIndex;
 
@@ -419,12 +422,37 @@ namespace ClassicUO.Game.UI.Gumps
                 () =>
                 {
                     _showPartyMembers = !_showPartyMembers;
-
-                    World.WMapManager.SetEnable(_showPartyMembers);
+                    World.WMapManager.SetEnable(_showPartyMembers || _showGuildMembers);
                     SaveSettings();
                 },
                 true,
                 _showPartyMembers
+            );
+            _options["show_guild_members"] = new ContextMenuItemEntry
+            (
+                "Show Guild",
+                () =>
+                {
+                    _showGuildMembers = !_showGuildMembers;
+                    GameActions.Say("[guildtracking", ProfileManager.CurrentProfile?.SpeechHue ?? 0);
+                    World.WMapManager.SetEnable(_showPartyMembers || _showGuildMembers);
+                    SaveSettings();
+                    UIManager.Add(
+                        new MessageBoxGump(
+                            380,
+                            150,
+                            _showGuildMembers
+                                ? "Guild tracking is ENABLED.\nThe world map will show guild members when the server sends their positions."
+                                : "Guild tracking is DISABLED.\nGuild members will no longer be updated on the world map.",
+                            null,
+                            false,
+                            MessageButtonType.OK,
+                            1
+                        )
+                    );
+                },
+                true,
+                _showGuildMembers
             );
             _options["show_corpse"] = new ContextMenuItemEntry("Show my Corpse", () => { _showCorpse = !_showCorpse; SaveSettings(); }, true, _showCorpse);
 
@@ -651,6 +679,7 @@ namespace ClassicUO.Game.UI.Gumps
             ContextMenu.Add(_options["free_view"]);
             ContextMenu.Add("", null);
             ContextMenu.Add(_options["show_party_members"]);
+            ContextMenu.Add(_options["show_guild_members"]);
             ContextMenu.Add(_options["show_corpse"]);
             ContextMenu.Add(_options["show_mobiles"]);
             ContextMenu.Add(_options["show_multis"]);
@@ -2526,7 +2555,7 @@ namespace ClassicUO.Game.UI.Gumps
                         {
                             WMapEntity wme = World.WMapManager.GetEntity(mob.Serial);
 
-                            if (wme != null && wme.IsGuild)
+                            if (_showGuildMembers && wme != null && wme.IsGuild)
                             {
                                 DrawWMEntity
                                 (
@@ -2544,11 +2573,13 @@ namespace ClassicUO.Game.UI.Gumps
                 }
             }
 
-            foreach (WMapEntity wme in World.WMapManager.Entities.Values)
+            if (_showGuildMembers)
             {
-                if (wme.IsGuild && !World.Party.Contains(wme.Serial))
+                foreach (WMapEntity wme in World.WMapManager.Entities.Values)
                 {
-                    DrawWMEntity
+                    if (wme.IsGuild && !World.Party.Contains(wme.Serial))
+                    {
+                        DrawWMEntity
                     (
                         batcher,
                         wme,
@@ -2558,6 +2589,7 @@ namespace ClassicUO.Game.UI.Gumps
                         halfHeight,
                         Zoom
                     );
+                    }
                 }
             }
 

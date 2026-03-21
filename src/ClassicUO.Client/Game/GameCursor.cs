@@ -217,6 +217,65 @@ namespace ClassicUO.Game
 
         public ItemHold ItemHold { get; } = new ItemHold();
 
+        private bool TryJewelryEnlargedDrag(out int dw, out int dh, out Rectangle srcUvRect)
+        {
+            dw = dh = 0;
+            srcUvRect = default;
+
+            if (!ItemHold.Enabled
+                || ItemHold.IsGumpTexture
+                || ProfileManager.CurrentProfile?.EnlargeJewelryOnPaperdoll != true)
+            {
+                return false;
+            }
+
+            byte layer = ItemHold.ItemData.Layer;
+
+            if (layer != (byte)Layer.Ring && layer != (byte)Layer.Bracelet)
+            {
+                return false;
+            }
+
+            ushort g = GetDraggingItemGraphic();
+
+            if (g == 0xFFFF)
+            {
+                return false;
+            }
+
+            Rectangle bounds = Client.Game.Arts.GetRealArtBounds(g);
+            int bw = Math.Max(1, bounds.Width);
+            int bh = Math.Max(1, bounds.Height);
+            bool isBracelet = layer == (byte)Layer.Bracelet;
+            float mult = isBracelet ? 1.55f : 1.8f;
+            int cap = isBracelet ? 20 : 22;
+            int minSz = isBracelet ? 8 : 10;
+            double logicalW = Math.Min(cap, Math.Max(minSz, bw * mult));
+            double logicalH = Math.Min(cap, Math.Max(minSz, bh * mult));
+            float scaleMul = 1f;
+            Profile p = ProfileManager.CurrentProfile;
+
+            if (p != null
+                && p.ScaleItemsInsideContainers
+                && SerialHelper.IsValid(ItemHold.Container)
+                && !SerialHelper.IsMobile(ItemHold.Container))
+            {
+                scaleMul = UIManager.ContainerScale;
+            }
+
+            dw = (int)Math.Ceiling(logicalW * scaleMul);
+            dh = (int)Math.Ceiling(logicalH * scaleMul);
+            ref readonly var artInfo = ref Client.Game.Arts.GetArt(g);
+
+            if (artInfo.Texture == null)
+            {
+                return false;
+            }
+
+            srcUvRect = new Rectangle(artInfo.UV.X + bounds.X, artInfo.UV.Y + bounds.Y, bw, bh);
+            return true;
+        }
+
         private ushort GetDraggingItemGraphic()
         {
             if (ItemHold.Enabled)
@@ -234,6 +293,11 @@ namespace ClassicUO.Game
 
         private Point GetDraggingItemOffset()
         {
+            if (TryJewelryEnlargedDrag(out int jw, out int jh, out _))
+            {
+                return new Point((jw >> 1) - ItemHold.MouseOffset.X, (jh >> 1) - ItemHold.MouseOffset.Y);
+            }
+
             ushort graphic = GetDraggingItemGraphic();
 
             if (graphic != 0xFFFF)
@@ -328,11 +392,28 @@ namespace ClassicUO.Game
                     int x = ItemHold.FixedX - offset.X;
                     int y = ItemHold.FixedY - offset.Y;
 
+                    int hitW = artInfo.UV.Width;
+                    int hitH = artInfo.UV.Height;
+
+                    if (TryJewelryEnlargedDrag(out int jw, out int jh, out _))
+                    {
+                        hitW = jw;
+                        hitH = jh;
+                    }
+                    else if (
+                        ProfileManager.CurrentProfile != null
+                        && ProfileManager.CurrentProfile.ScaleItemsInsideContainers
+                    )
+                    {
+                        hitW = (int)(hitW * UIManager.ContainerScale);
+                        hitH = (int)(hitH * UIManager.ContainerScale);
+                    }
+
                     if (
                         Mouse.Position.X >= x
-                        && Mouse.Position.X < x + artInfo.UV.Width
+                        && Mouse.Position.X < x + hitW
                         && Mouse.Position.Y >= y
-                        && Mouse.Position.Y < y + artInfo.UV.Height
+                        && Mouse.Position.Y < y + hitH
                     )
                     {
                         if (!ItemHold.IgnoreFixedPosition)
@@ -590,14 +671,24 @@ namespace ClassicUO.Game
                         ItemHold.HasAlpha ? .5f : 1f
                     );
 
-                    var rect = new Rectangle(
-                        x,
-                        y,
-                        (int)(artInfo.UV.Width * scale),
-                        (int)(artInfo.UV.Height * scale)
-                    );
+                    Rectangle rect;
 
-                    sb.Draw(artInfo.Texture, rect, artInfo.UV, hue);
+                    if (TryJewelryEnlargedDrag(out int jw, out int jh, out Rectangle srcJewel))
+                    {
+                        rect = new Rectangle(x, y, jw, jh);
+                        sb.Draw(artInfo.Texture, rect, srcJewel, hue);
+                    }
+                    else
+                    {
+                        rect = new Rectangle(
+                            x,
+                            y,
+                            (int)(artInfo.UV.Width * scale),
+                            (int)(artInfo.UV.Height * scale)
+                        );
+
+                        sb.Draw(artInfo.Texture, rect, artInfo.UV, hue);
+                    }
 
                     if (
                         ItemHold.Amount > 1
@@ -608,7 +699,14 @@ namespace ClassicUO.Game
                         rect.X += 5;
                         rect.Y += 5;
 
-                        sb.Draw(artInfo.Texture, rect, artInfo.UV, hue);
+                        if (TryJewelryEnlargedDrag(out _, out _, out Rectangle srcJ2))
+                        {
+                            sb.Draw(artInfo.Texture, rect, srcJ2, hue);
+                        }
+                        else
+                        {
+                            sb.Draw(artInfo.Texture, rect, artInfo.UV, hue);
+                        }
                     }
                 }
             }

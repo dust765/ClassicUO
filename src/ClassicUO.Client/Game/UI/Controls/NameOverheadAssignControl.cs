@@ -35,6 +35,7 @@ using System.Collections.Generic;
 using ClassicUO.Assets;
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.UI.Gumps;
+using ClassicUO.Game.UI.Gumps.Login;
 using ClassicUO.Resources;
 using SDL3;
 
@@ -58,11 +59,13 @@ namespace ClassicUO.Game.UI.Controls
 
             CanMove = true;
 
-            AddLabel("Set hotkey:", 0, 0);
+            const int hotkeyRowY = 34;
+            AddLabel("Set hotkey:", 0, 8);
 
             _hotkeyBox = new HotkeyBox
             {
-                X = 80
+                X = 80,
+                Y = hotkeyRowY
             };
 
             _hotkeyBox.HotkeyChanged += BoxOnHotkeyChanged;
@@ -70,11 +73,12 @@ namespace ClassicUO.Game.UI.Controls
 
             Add(_hotkeyBox);
 
+            int buttonsY = hotkeyRowY + _hotkeyBox.Height + 8;
             Add
             (
                 new NiceButton
                 (
-                    0, _hotkeyBox.Height + 3, 100, 25,
+                    0, buttonsY, 100, 25,
                     ButtonAction.Activate, "Uncheck all", 0, TEXT_ALIGN_TYPE.TS_LEFT
                 ) { ButtonParameter = (int)ButtonType.UncheckAll, IsSelectable = false }
             );
@@ -83,12 +87,19 @@ namespace ClassicUO.Game.UI.Controls
             (
                 new NiceButton
                 (
-                    120, _hotkeyBox.Height + 3, 100, 25,
+                    120, buttonsY, 100, 25,
                     ButtonAction.Activate, "Check all", 0, TEXT_ALIGN_TYPE.TS_LEFT
                 ) { ButtonParameter = (int)ButtonType.CheckAll, IsSelectable = false }
             );
 
-            Add(checkBoxScroll = new ScrollArea(0, 60, 300, 400, true));
+            int scrollTop = buttonsY + 25 + 10;
+            int ow = LoginLayoutHelper.OptionsWidth;
+            int oh = LoginLayoutHelper.OptionsHeight;
+            int scrollW = Math.Max(280, ow - 342);
+            int scrollH = Math.Max(200, oh - scrollTop - 58);
+            Add(checkBoxScroll = new ScrollArea(0, scrollTop, scrollW, scrollH, true));
+            checkBoxScroll.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            checkBoxScroll.UpdateScrollbarPosition();
 
             SetupOptionCheckboxes();
 

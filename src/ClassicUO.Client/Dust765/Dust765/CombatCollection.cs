@@ -58,6 +58,7 @@ namespace ClassicUO.Dust765.Dust765
         public const ushort BRIGHT_FIRE_COLOR = 0x0496;
         public const ushort BRIGHT_POISON_COLOR = 0x0A0B;
         public const ushort BRIGHT_PARALYZE_COLOR = 0x0A13;
+        public const ushort MOONGATE_GRAPHIC = 0x0F6C;
         // ## BEGIN - END ## // ART / HUE CHANGES
         // ## BEGIN - END ## // MACROS
         //USED VARS
@@ -321,6 +322,37 @@ namespace ClassicUO.Dust765.Dust765
 
             return hue;
         }
+        public static ushort MoongateHue(ushort graphic, ushort currentHue)
+        {
+            if (graphic != MOONGATE_GRAPHIC)
+            {
+                return currentHue;
+            }
+
+            Profile p = ProfileManager.CurrentProfile;
+
+            if (p == null || !p.MoongateRecolorEnabled)
+            {
+                return currentHue;
+            }
+
+            switch (p.MoongateHueStyle)
+            {
+                case 1:
+                    return BRIGHT_WHITE_COLOR;
+                case 2:
+                    return BRIGHT_PINK_COLOR;
+                case 3:
+                    return BRIGHT_ICE_COLOR;
+                case 4:
+                    return BRIGHT_FIRE_COLOR;
+                case 5:
+                    return p.MoongateCustomHue;
+                default:
+                    return currentHue;
+            }
+        }
+
         public static ushort WeaponsHue(ushort hue)
         {
             if (ProfileManager.CurrentProfile.GlowingWeaponsType == 1)

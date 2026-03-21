@@ -67,8 +67,8 @@ namespace ClassicUO.Game.UI.Gumps.Login
             // Background
             UIManager.Add(new LoginBackground());
 
-            const int LogoMaxWidth = 750;
-            const int LogoMaxHeight = 131;
+            const int LogoMaxWidth = 900;
+            const int LogoMaxHeight = 200;
             if (LogoBackgroundImg != null)
             {
                 float scale = Math.Min((float)LogoMaxWidth / LogoBackgroundImg.Width, (float)LogoMaxHeight / LogoBackgroundImg.Height);

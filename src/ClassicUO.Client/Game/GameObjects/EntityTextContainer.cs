@@ -181,7 +181,9 @@ namespace ClassicUO.Game.GameObjects
                 return;
             }
 
-            int offY = -NameOverheadGump.CurrentHeight;
+            int offY = Parent is Entity ent
+                ? -NameOverheadGump.GetFloatingTextVerticalReserve(ent.Serial)
+                : 0;
 
             Point p = new Point();
 

@@ -132,6 +132,9 @@ namespace ClassicUO.Game.Managers
             if (mobile == null)
                 return false;
 
+            if (mobile.Serial == TargetManager.LastTargetInfo.Serial)
+                return true;
+
             if (mobile.Equals(World.Player) && ActiveOverheadOptions.HasFlag(NameOverheadOptions.ExcludeSelf)
                 && !ActiveOverheadOptions.HasFlag(NameOverheadOptions.Self))
                 return false;

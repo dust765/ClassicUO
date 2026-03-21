@@ -94,6 +94,12 @@ namespace ClassicUO.Dust765.External
             GameCursor._spellTime = 0;
             // ## BEGIN - END ## // VISUAL HELPERS
         }
+
+        public override void Dispose()
+        {
+            Stop();
+            base.Dispose();
+        }
         /*
         public void OnMessage(string text, uint hue, string name, bool isunicode = true)
         {

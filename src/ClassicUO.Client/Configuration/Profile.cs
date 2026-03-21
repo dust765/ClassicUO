@@ -281,8 +281,6 @@ namespace ClassicUO.Configuration
         public bool NameOverheadToggled { get; set; } = false;
         public bool ShowTargetRangeIndicator { get; set; }
         public bool PartyInviteGump { get; set; }
-        // ## BEGIN - END ## // NAMEOVERHEAD
-        public bool ShowHPLineInNOH { get; set; } = false;
         public bool NameOverheadPinnedToggled { get; set; } = false;
         public bool NameOverheadBackgroundToggled { get; set; } = false;
         // ## BEGIN - END ## // NAMEOVERHEAD
@@ -415,6 +413,7 @@ namespace ClassicUO.Configuration
         public int TreeType { get; set; } = 0; // 0 = off, 1 = stump, 2 = tile
         public bool ColorTreeTile { get; set; }
         public ushort TreeTileHue { get; set; } = 0x0044;
+        public bool EnlargeJewelryOnPaperdoll { get; set; }
         // ## BEGIN - END ## // ART / HUE CHANGES
         // ## BEGIN - END ## // VISUAL HELPERS
         public bool HighlightTileAtRange { get; set; }
@@ -444,6 +443,9 @@ namespace ClassicUO.Configuration
         public ushort HighlightLastTargetTypeStunnedHue { get; set; } = 0x0044;
         public int HighlightLastTargetTypeMortalled { get; set; } = 0; // 0 = off, 1 = white, 2 = pink, 3 = ice, 4 = fire, 5 = special, 6 = custom
         public ushort HighlightLastTargetTypeMortalledHue { get; set; } = 0x0044;
+        public bool MoongateRecolorEnabled { get; set; }
+        public int MoongateHueStyle { get; set; } = 1;
+        public ushort MoongateCustomHue { get; set; } = 0x0044;
         // ## BEGIN - END ## // VISUAL HELPERS
         // ## BEGIN - END ## // HEALTHBAR
         public bool HighlightHealthBarByState { get; set; } //## Highlights mobiles healthbars if they're poisoned or para
@@ -527,7 +529,6 @@ namespace ClassicUO.Configuration
         public bool ShowDeathOnWorldmap { get; set; } = false;
         public bool ForceGargoyleWalk { get; set; } = true;
 
-        public bool ShowMapCloseFriend { get; set; } = true;
         public bool AutoAvoidMobiles { get; set; } = false;
         // ## BEGIN - END ## // MISC2
         // ## BEGIN - END ## // MACROS
@@ -743,6 +744,7 @@ namespace ClassicUO.Configuration
         public bool WorldMapTopMost { get; set; }
         public bool WorldMapFreeView { get; set; }
         public bool WorldMapShowParty { get; set; } = true;
+        public bool WorldMapShowGuild { get; set; } = true;
         public int WorldMapZoomIndex { get; set; } = 4;
         public bool WorldMapShowCoordinates { get; set; } = true;
         public bool WorldMapShowMouseCoordinates { get; set; } = true;
@@ -937,6 +939,12 @@ namespace ClassicUO.Configuration
         [JsonConverter(typeof(Point2Converter))]
         public Point InfoBarSize { get; set; } = new Point(400, 20);
         public bool InfoBarLocked { get; set; } = false;
+
+        [JsonConverter(typeof(Point2Converter))]
+        public Point NearbyItemsGumpSize { get; set; } = new Point(640, 440);
+
+        [JsonConverter(typeof(Point2Converter))]
+        public Point NearbyItemsGumpPosition { get; set; } = new Point(-50000, -50000);
         [JsonConverter(typeof(Json.UOFontIndexConverter))]
         public byte InfoBarFont { get; set; } = 1;
         public int InfoBarFontSize { get; set; } = 18;
@@ -1007,7 +1015,8 @@ namespace ClassicUO.Configuration
 
         public bool EnableAutoLootProgressBar { get; set; } = true;
         public bool EnableNearbyItemGump { get; set; } = false;
-
+        public int NearbyItemGumpHotkeyKey { get; set; }
+        public uint NearbyItemGumpHotkeyMod { get; set; }
 
         public void Save(string path, bool saveGumps = true)
         {

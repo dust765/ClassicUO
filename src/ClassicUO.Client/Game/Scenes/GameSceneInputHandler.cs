@@ -1324,6 +1324,88 @@ namespace ClassicUO.Game.Scenes
             return ok;
         }
 
+        private static bool NearbyItemIsModifierKeycode(int pk)
+        {
+            switch ((SDL.SDL_Keycode)pk)
+            {
+                case SDL.SDL_Keycode.SDLK_LCTRL:
+                case SDL.SDL_Keycode.SDLK_RCTRL:
+                case SDL.SDL_Keycode.SDLK_LSHIFT:
+                case SDL.SDL_Keycode.SDLK_RSHIFT:
+                case SDL.SDL_Keycode.SDLK_LALT:
+                case SDL.SDL_Keycode.SDLK_RALT:
+                case SDL.SDL_Keycode.SDLK_LGUI:
+                case SDL.SDL_Keycode.SDLK_RGUI:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private static bool NearbyItemKeyEquals(SDL.SDL_Keycode ev, int pk)
+        {
+            if ((int)ev == pk)
+            {
+                return true;
+            }
+
+            int evi = (int)ev;
+
+            if (pk == (int)SDL.SDL_Keycode.SDLK_LCTRL || pk == (int)SDL.SDL_Keycode.SDLK_RCTRL)
+            {
+                return evi == (int)SDL.SDL_Keycode.SDLK_LCTRL || evi == (int)SDL.SDL_Keycode.SDLK_RCTRL;
+            }
+
+            if (pk == (int)SDL.SDL_Keycode.SDLK_LSHIFT || pk == (int)SDL.SDL_Keycode.SDLK_RSHIFT)
+            {
+                return evi == (int)SDL.SDL_Keycode.SDLK_LSHIFT || evi == (int)SDL.SDL_Keycode.SDLK_RSHIFT;
+            }
+
+            if (pk == (int)SDL.SDL_Keycode.SDLK_LALT || pk == (int)SDL.SDL_Keycode.SDLK_RALT)
+            {
+                return evi == (int)SDL.SDL_Keycode.SDLK_LALT || evi == (int)SDL.SDL_Keycode.SDLK_RALT;
+            }
+
+            if (pk == (int)SDL.SDL_Keycode.SDLK_LGUI || pk == (int)SDL.SDL_Keycode.SDLK_RGUI)
+            {
+                return evi == (int)SDL.SDL_Keycode.SDLK_LGUI || evi == (int)SDL.SDL_Keycode.SDLK_RGUI;
+            }
+
+            return false;
+        }
+
+        private static bool NearbyItemHotkeyMatches(SDL.SDL_KeyboardEvent e, int storedKey, uint storedMod)
+        {
+            int pk = storedKey == 0 ? (int)SDL.SDL_Keycode.SDLK_LCTRL : storedKey;
+            var evKey = (SDL.SDL_Keycode)e.key;
+
+            if (!NearbyItemKeyEquals(evKey, pk))
+            {
+                return false;
+            }
+
+            if (NearbyItemIsModifierKeycode(pk))
+            {
+                return true;
+            }
+
+            uint em = (uint)e.mod & ~(uint)Keyboard.IgnoreKeyMod;
+            uint sm = storedMod & ~(uint)Keyboard.IgnoreKeyMod;
+            uint guiMask = (uint)SDL.SDL_Keymod.SDL_KMOD_LGUI | (uint)SDL.SDL_Keymod.SDL_KMOD_RGUI;
+
+            bool eshift = (em & (uint)SDL.SDL_Keymod.SDL_KMOD_SHIFT) != 0;
+            bool ectrl = (em & (uint)SDL.SDL_Keymod.SDL_KMOD_CTRL) != 0;
+            bool ealt = (em & (uint)SDL.SDL_Keymod.SDL_KMOD_ALT) != 0;
+            bool egui = (em & guiMask) != 0;
+
+            bool sshift = (sm & (uint)SDL.SDL_Keymod.SDL_KMOD_SHIFT) != 0;
+            bool sctrl = (sm & (uint)SDL.SDL_Keymod.SDL_KMOD_CTRL) != 0;
+            bool salt = (sm & (uint)SDL.SDL_Keymod.SDL_KMOD_ALT) != 0;
+            bool sgui = (sm & guiMask) != 0;
+
+            return eshift == sshift && ectrl == sctrl && ealt == salt && egui == sgui;
+        }
+
         internal override void OnKeyDown(SDL.SDL_KeyboardEvent e)
         {
             if ((SDL.SDL_Keycode)e.key == SDL.SDL_Keycode.SDLK_TAB && (bool)e.repeat)
@@ -1336,9 +1418,16 @@ namespace ClassicUO.Game.Scenes
                 TargetManager.CancelTarget();
             }
 
-            if((SDL.SDL_Keycode)e.key == SDL.SDL_Keycode.SDLK_LCTRL && UIManager.IsMouseOverWorld && !Client.Game.GameCursor.ItemHold.Enabled && ProfileManager.CurrentProfile.EnableNearbyItemGump && NearbyItems.NearbyItemGump == null )
+            if (ProfileManager.CurrentProfile.EnableNearbyItemGump
+                && NearbyItems.NearbyItemGump == null
+                && UIManager.IsMouseOverWorld
+                && !Client.Game.GameCursor.ItemHold.Enabled
+                && NearbyItemHotkeyMatches(
+                    e,
+                    ProfileManager.CurrentProfile.NearbyItemGumpHotkeyKey,
+                    ProfileManager.CurrentProfile.NearbyItemGumpHotkeyMod))
             {
-                UIManager.Add(new NearbyItems());
+                NearbyItems.TryOpen();
             }
 
             if ((SDL.SDL_Keycode)e.key == SDL.SDL_Keycode.SDLK_F9 && ProfileManager.CurrentProfile?.PvP_QuickTargetEnemyList == true)

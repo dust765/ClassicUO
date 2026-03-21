@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -685,7 +685,8 @@ namespace ClassicUO.Configuration
         public string UseLandTexturesWhereAvailable { get; set; } = "Use land textures where available(Experimental)";
         public string SOSGumpID { get; set; } = "SOS Gump ID";
         public string NearbyItemGump { get; set; } = "Enable nearby item gump";
-        public string ShowUseLootModalOnCtrl { get; set; } = "Show Use/Loot modal when pressing Ctrl (nearby items)";
+        public string ShowUseLootModalOnCtrl { get; set; } = "Show nearby Use/Loot modal (assign hotkey below)";
+        public string NearbyItemModalHotkeyHint { get; set; } = "Hotkey (mouse over world, click field, press key, OK):";
         #endregion
 
         #region Tooltips
@@ -809,7 +810,6 @@ namespace ClassicUO.Configuration
         public string OffscreenTargeting { get; set; } = "Offscreen targeting (always on)";
         public string SetTargetOutRange { get; set; } = "Set target with is out range";
         public string OverrideContainerOpenRange { get; set; } = "Override container open range";
-        public string ShowCloseFriendInWordMapGump { get; set; } = "Show Close Friend in WordMapGump";
         public string AutoAvoidObstaculesAndMobiles { get; set; } = "Auto avoid obstacules and mobiles";
         public string RazorTargetToLasttargetString { get; set; } = "Razor * Target * to lasttarget string";
         public string TextForTargetMsgHead { get; set; } = "Text for Target Msg Head: ";

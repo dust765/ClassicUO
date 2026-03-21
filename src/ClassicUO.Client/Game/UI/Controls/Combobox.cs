@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -122,6 +122,23 @@ namespace ClassicUO.Game.UI.Controls
 
         public event EventHandler<int> OnOptionSelected;
 
+        internal bool MatchesSearch(string term)
+        {
+            if (string.IsNullOrEmpty(term) || _items == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < _items.Length; i++)
+            {
+                if (_items[i] != null && _items[i].IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return _label?.Text != null && _label.Text.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
 
         public override bool Draw(UltimaBatcher2D batcher, int x, int y)
         {
