@@ -636,8 +636,9 @@ namespace ClassicUO.Game
 
             if (scanType == ScanTypeObject.Objects)
             {
-                foreach (Item item in Items.Values)
+                foreach (KeyValuePair<uint, Item> ikv in Items)
                 {
+                    Item item = ikv.Value;
                     if (item.IsMulti || item.IsDestroyed || !item.OnGround)
                     {
                         continue;
@@ -652,8 +653,9 @@ namespace ClassicUO.Game
             }
             else
             {
-                foreach (Mobile mobile in Mobiles.Values)
+                foreach (KeyValuePair<uint, Mobile> mkv in Mobiles)
                 {
+                    Mobile mobile = mkv.Value;
                     if (mobile.IsDestroyed || mobile == Player)
                     {
                         continue;
@@ -786,14 +788,14 @@ namespace ClassicUO.Game
 
         public static void Clear()
         {
-            foreach (Mobile mobile in Mobiles.Values)
+            foreach (KeyValuePair<uint, Mobile> mkv in Mobiles)
             {
-                RemoveMobile(mobile);
+                RemoveMobile(mkv.Value);
             }
 
-            foreach (Item item in Items.Values)
+            foreach (KeyValuePair<uint, Item> ikv in Items)
             {
-                RemoveItem(item);
+                RemoveItem(ikv.Value);
             }
 
             UIManager.GetGump<BaseHealthBarGump>(Player.Serial)?.Dispose();
@@ -842,8 +844,9 @@ namespace ClassicUO.Game
                 Player = null;
             }
 
-            foreach (Item item in Items.Values)
+            foreach (KeyValuePair<uint, Item> ikv in Items)
             {
+                Item item = ikv.Value;
                 if (noplayer && Player != null && !Player.IsDestroyed)
                 {
                     if (item.RootContainer == Player)
@@ -867,8 +870,9 @@ namespace ClassicUO.Game
 
             _toRemove.Clear();
 
-            foreach (Mobile mob in Mobiles.Values)
+            foreach (KeyValuePair<uint, Mobile> mkv in Mobiles)
             {
+                Mobile mob = mkv.Value;
                 if (noplayer && Player != null && !Player.IsDestroyed)
                 {
                     if (mob == Player)

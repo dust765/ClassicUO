@@ -43,7 +43,10 @@ namespace ClassicUO.Dust765.Dust765
         private static float _averageFPS = 0;
         private static int _totalObjects = 0;
         private static int _renderedObjectsCount = 0;
-        
+
+        private static readonly RenderedText[] _cachedStatsText = new RenderedText[4];
+        private static readonly string[] _cachedStatsStrings = new string[4];
+
         public static bool IsEnabled => ProfileManager.CurrentProfile?.PerformanceOptimizations ?? true;
         public static bool ShowStats => ProfileManager.CurrentProfile?.PerformanceShowStats ?? false;
 
@@ -87,19 +90,25 @@ namespace ClassicUO.Dust765.Dust765
                 return;
 
             // Draw performance stats in top-left corner
-            var stats = new List<string>
-            {
-                $"FPS: {_averageFPS:F1}",
-                $"Objects: {_renderedObjectsCount}/{_totalObjects}",
-                $"Optimization: {GetOptimizationStatus()}",
-                $"Quality: {GetQualityLevelName()}"
-            };
+            string s0 = $"FPS: {_averageFPS:F1}";
+            string s1 = $"Objects: {_renderedObjectsCount}/{_totalObjects}";
+            string s2 = $"Optimization: {GetOptimizationStatus()}";
+            string s3 = $"Quality: {GetQualityLevelName()}";
+
+            if (_cachedStatsStrings[0] != s0) { _cachedStatsText[0]?.Destroy(); _cachedStatsText[0] = RenderedText.Create(s0, 0x0481, style: FontStyle.BlackBorder); _cachedStatsStrings[0] = s0; }
+            if (_cachedStatsStrings[1] != s1) { _cachedStatsText[1]?.Destroy(); _cachedStatsText[1] = RenderedText.Create(s1, 0x0481, style: FontStyle.BlackBorder); _cachedStatsStrings[1] = s1; }
+            if (_cachedStatsStrings[2] != s2) { _cachedStatsText[2]?.Destroy(); _cachedStatsText[2] = RenderedText.Create(s2, 0x0481, style: FontStyle.BlackBorder); _cachedStatsStrings[2] = s2; }
+            if (_cachedStatsStrings[3] != s3) { _cachedStatsText[3]?.Destroy(); _cachedStatsText[3] = RenderedText.Create(s3, 0x0481, style: FontStyle.BlackBorder); _cachedStatsStrings[3] = s3; }
 
             int y = 10;
-            foreach (var stat in stats)
+
+            for (int i = 0; i < 4; i++)
             {
-                var text = RenderedText.Create(stat, 0x0481, style: FontStyle.BlackBorder);
-                text.Draw(batcher, 10, y);
+                if (_cachedStatsText[i] != null)
+                {
+                    _cachedStatsText[i].Draw(batcher, 10, y);
+                }
+
                 y += 20;
             }
         }

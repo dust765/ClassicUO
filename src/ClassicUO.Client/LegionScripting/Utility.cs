@@ -31,8 +31,9 @@ namespace ClassicUO.LegionScripting
         {
             List<Item> list = new List<Item>();
 
-            foreach (Item item in World.Items.Values)
+            foreach (KeyValuePair<uint, Item> kv in World.Items)
             {
+                Item item = kv.Value;
                 if (gfx != uint.MaxValue && item.Graphic != gfx)
                     continue;
 

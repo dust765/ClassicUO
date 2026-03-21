@@ -666,9 +666,12 @@ namespace ClassicUO.Game.UI.Gumps
 
         public static void UpdateAllGridContainers()
         {
-            foreach (GridContainer _ in UIManager.Gumps.OfType<GridContainer>())
+            for (LinkedListNode<Gump> node = UIManager.Gumps.First; node != null; node = node.Next)
             {
-                _.OptionsUpdated();
+                if (node.Value is GridContainer gc && !gc.IsDisposed)
+                {
+                    gc.OptionsUpdated();
+                }
             }
         }
 
@@ -1338,9 +1341,18 @@ namespace ClassicUO.Game.UI.Gumps
 
             public void AddLockedItemSlot(uint serial, int specificSlot)
             {
-                if (ItemPositions.Values.Contains(serial)) //Is this item already locked? Lets remove it from lock status for now
+                int removeSlot = -1;
+                foreach (KeyValuePair<int, uint> kv in ItemPositions)
                 {
-                    int removeSlot = ItemPositions.First((x) => x.Value == serial).Key;
+                    if (kv.Value == serial)
+                    {
+                        removeSlot = kv.Key;
+                        break;
+                    }
+                }
+
+                if (removeSlot >= 0)
+                {
                     ItemPositions.Remove(removeSlot);
                 }
 
@@ -1517,7 +1529,15 @@ namespace ClassicUO.Game.UI.Gumps
 
                     contents.Add(item);
                 }
-                return contents.OrderBy((x) => x.Graphic).ThenBy((x) => x.Hue).ToList();
+
+                contents.Sort(
+                    static (a, b) =>
+                    {
+                        int g = a.Graphic.CompareTo(b.Graphic);
+                        return g != 0 ? g : a.Hue.CompareTo(b.Hue);
+                    }
+                );
+                return contents;
             }
 
             public int hcount = 0;

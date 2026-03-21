@@ -163,6 +163,11 @@ namespace ClassicUO.Game.UI.Controls
             HasFakeItem = value;
         }
 
+        public void RequestRefresh()
+        {
+            _updateUI = true;
+        }
+
         private void UpdateUI()
         {
             if (IsDisposed)
@@ -304,7 +309,10 @@ namespace ClassicUO.Game.UI.Controls
 
                 if (equipItem != null)
                 {
-                    if (Mobile.IsCovered(mobile, layer))
+                    bool isOwnPaperdoll = World.Player != null && LocalSerial == World.Player.Serial;
+                    bool showAllLayersPaperdoll = isOwnPaperdoll && (ProfileManager.CurrentProfile?.ShowAllLayersPaperdoll ?? false);
+
+                    if (!showAllLayersPaperdoll && Mobile.IsCovered(mobile, layer))
                     {
                         continue;
                     }

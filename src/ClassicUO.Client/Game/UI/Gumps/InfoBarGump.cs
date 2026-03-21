@@ -31,7 +31,6 @@
 #endregion
 
 using System.Collections.Generic;
-using System.Linq;
 using System.Xml;
 using ClassicUO.Assets;
 using ClassicUO.Configuration;
@@ -101,9 +100,12 @@ namespace ClassicUO.Game.UI.Gumps
 
         public static void UpdateAllOptions()
         {
-            foreach(InfoBarGump g in UIManager.Gumps.OfType<InfoBarGump>())
+            for (LinkedListNode<Gump> node = UIManager.Gumps.First; node != null; node = node.Next)
             {
-                g.UpdateOptions();
+                if (node.Value is InfoBarGump g && !g.IsDisposed)
+                {
+                    g.UpdateOptions();
+                }
             }
         }
 

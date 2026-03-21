@@ -563,7 +563,7 @@ namespace ClassicUO
                         break;
 
                     case "packetlog":
-
+#if DEBUG
                         PacketLogger.Default.Enabled = true;
                         PacketLogger.Default.CreateFile();
 
@@ -581,7 +581,7 @@ namespace ClassicUO
                                     PacketLogger.Default.LogPacketID.Add(res2);
                             }
                         }
-
+#endif
                         break;
 
                     case "language":

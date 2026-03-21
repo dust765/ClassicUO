@@ -31,6 +31,7 @@
 #endregion
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -596,27 +597,66 @@ namespace ClassicUO.Network
             {
                 if (plugin._onRecv_new != null)
                 {
-                    byte[] tmp = new byte[length];
-                    Array.Copy(data, tmp, length);
-
-                    if (!plugin._onRecv_new(tmp, ref length))
+                    byte[] rented = ArrayPool<byte>.Shared.Rent(length);
+                    try
                     {
-                        result = false;
-                    }
+                        Array.Copy(data, 0, rented, 0, length);
 
-                    Array.Copy(tmp, data, length);
+                        if (!plugin._onRecv_new(rented, ref length))
+                        {
+                            result = false;
+                        }
+
+                        if (length < 0)
+                        {
+                            length = 0;
+                        }
+
+                        int copyLen = Math.Min(Math.Min(length, rented.Length), data.Length);
+                        Array.Copy(rented, 0, data, 0, copyLen);
+                        length = copyLen;
+                    }
+                    finally
+                    {
+                        ArrayPool<byte>.Shared.Return(rented);
+                    }
                 }
                 else if (plugin._onRecv != null)
                 {
-                    byte[] tmp = new byte[length];
-                    Array.Copy(data, tmp, length);
-
-                    if (!plugin._onRecv(ref tmp, ref length))
+                    byte[] rented = ArrayPool<byte>.Shared.Rent(length);
+                    byte[] tmp = rented;
+                    try
                     {
-                        result = false;
-                    }
+                        Array.Copy(data, 0, rented, 0, length);
 
-                    Array.Copy(tmp, data, length);
+                        if (!plugin._onRecv(ref tmp, ref length))
+                        {
+                            result = false;
+                        }
+
+                        if (length < 0)
+                        {
+                            length = 0;
+                        }
+
+                        if (tmp == null)
+                        {
+                            length = 0;
+                        }
+                        else
+                        {
+                            int copyLen = Math.Min(Math.Min(length, tmp.Length), data.Length);
+                            Array.Copy(tmp, 0, data, 0, copyLen);
+                            length = copyLen;
+                        }
+                    }
+                    finally
+                    {
+                        if (ReferenceEquals(tmp, rented))
+                        {
+                            ArrayPool<byte>.Shared.Return(rented);
+                        }
+                    }
                 }
             }
 
@@ -631,29 +671,80 @@ namespace ClassicUO.Network
             {
                 if (plugin._onSend_new != null)
                 {
-                    var tmp = message.ToArray();
-                    var length = tmp.Length;
-
-                    if (!plugin._onSend_new(tmp, ref length))
+                    int workingLen = message.Length;
+                    if (workingLen == 0)
                     {
-                        result = false;
+                        continue;
                     }
 
-                    message = message.Slice(0, length);
-                    tmp.AsSpan(0, length).CopyTo(message);
+                    byte[] rented = ArrayPool<byte>.Shared.Rent(workingLen);
+                    try
+                    {
+                        message.CopyTo(rented.AsSpan(0, workingLen));
+                        int length = workingLen;
+
+                        if (!plugin._onSend_new(rented, ref length))
+                        {
+                            result = false;
+                        }
+
+                        if (length < 0)
+                        {
+                            length = 0;
+                        }
+
+                        int outLen = Math.Min(Math.Min(length, rented.Length), message.Length);
+                        message = message.Slice(0, outLen);
+                        rented.AsSpan(0, outLen).CopyTo(message);
+                    }
+                    finally
+                    {
+                        ArrayPool<byte>.Shared.Return(rented);
+                    }
                 }
                 else if (plugin._onSend != null)
                 {
-                    var tmp = message.ToArray();
-                    var length = tmp.Length;
-
-                    if (!plugin._onSend(ref tmp, ref length))
+                    int workingLen = message.Length;
+                    if (workingLen == 0)
                     {
-                        result = false;
+                        continue;
                     }
 
-                    message = message.Slice(0, length);
-                    tmp.AsSpan(0, length).CopyTo(message);
+                    byte[] rented = ArrayPool<byte>.Shared.Rent(workingLen);
+                    byte[] tmp = rented;
+                    try
+                    {
+                        message.CopyTo(rented.AsSpan(0, workingLen));
+                        int length = workingLen;
+
+                        if (!plugin._onSend(ref tmp, ref length))
+                        {
+                            result = false;
+                        }
+
+                        if (length < 0)
+                        {
+                            length = 0;
+                        }
+
+                        if (tmp == null)
+                        {
+                            message = message.Slice(0, 0);
+                        }
+                        else
+                        {
+                            int outLen = Math.Min(Math.Min(length, tmp.Length), message.Length);
+                            message = message.Slice(0, outLen);
+                            tmp.AsSpan(0, outLen).CopyTo(message);
+                        }
+                    }
+                    finally
+                    {
+                        if (ReferenceEquals(tmp, rented))
+                        {
+                            ArrayPool<byte>.Shared.Return(rented);
+                        }
+                    }
                 }
             }
 

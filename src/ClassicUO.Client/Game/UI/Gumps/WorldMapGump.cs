@@ -48,7 +48,6 @@ using SDL3;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Xml;
@@ -257,8 +256,10 @@ namespace ClassicUO.Game.UI.Gumps
             _showMarkerNames = ProfileManager.CurrentProfile.WorldMapShowMarkersNames;
 
 
-            _hiddenMarkerFiles = string.IsNullOrEmpty(ProfileManager.CurrentProfile.WorldMapHiddenMarkerFiles) ? new List<string>() : ProfileManager.CurrentProfile.WorldMapHiddenMarkerFiles.Split(',').ToList();
-            _hiddenZoneFiles = string.IsNullOrEmpty(ProfileManager.CurrentProfile.WorldMapHiddenZoneFiles) ? new List<string>() : ProfileManager.CurrentProfile.WorldMapHiddenZoneFiles.Split(',').ToList();
+            string hiddenMarkers = ProfileManager.CurrentProfile.WorldMapHiddenMarkerFiles;
+            _hiddenMarkerFiles = string.IsNullOrEmpty(hiddenMarkers) ? new List<string>() : new List<string>(hiddenMarkers.Split(','));
+            string hiddenZones = ProfileManager.CurrentProfile.WorldMapHiddenZoneFiles;
+            _hiddenZoneFiles = string.IsNullOrEmpty(hiddenZones) ? new List<string>() : new List<string>(hiddenZones.Split(','));
 
             _showGridIfZoomed = ProfileManager.CurrentProfile.WorldMapShowGridIfZoomed;
             _allowPositionalTarget = ProfileManager.CurrentProfile.WorldMapAllowPositionalTarget;
@@ -540,7 +541,16 @@ namespace ClassicUO.Game.UI.Gumps
 
                                 if (!zoneSet.Hidden)
                                 {
-                                    string hiddenFile = _hiddenZoneFiles.FirstOrDefault(x => x.Equals(filename));
+                                    string hiddenFile = null;
+
+                                    for (int h = 0; h < _hiddenZoneFiles.Count; h++)
+                                    {
+                                        if (_hiddenZoneFiles[h].Equals(filename))
+                                        {
+                                            hiddenFile = _hiddenZoneFiles[h];
+                                            break;
+                                        }
+                                    }
 
                                     if (!string.IsNullOrEmpty(hiddenFile))
                                     {
@@ -634,7 +644,16 @@ namespace ClassicUO.Game.UI.Gumps
 
                             if (!markerFile.Hidden)
                             {
-                                string hiddenFile = _hiddenMarkerFiles.SingleOrDefault(x => x.Equals(markerFile.Name));
+                                string hiddenFile = null;
+
+                                for (int h = 0; h < _hiddenMarkerFiles.Count; h++)
+                                {
+                                    if (_hiddenMarkerFiles[h].Equals(markerFile.Name))
+                                    {
+                                        hiddenFile = _hiddenMarkerFiles[h];
+                                        break;
+                                    }
+                                }
 
                                 if (!string.IsNullOrEmpty(hiddenFile))
                                 {
@@ -701,6 +720,11 @@ namespace ClassicUO.Game.UI.Gumps
             base.Update();
 
             if (IsDisposed)
+            {
+                return;
+            }
+
+            if (!IsVisible)
             {
                 return;
             }
@@ -1843,10 +1867,18 @@ namespace ClassicUO.Game.UI.Gumps
 
             foreach (string filename in zonefiles)
             {
-                bool shouldHide = !string.IsNullOrEmpty
-                (
-                    _hiddenZoneFiles.FirstOrDefault(x => x.Contains(filename))
-                );
+                string foundZone = null;
+
+                for (int hz = 0; hz < _hiddenZoneFiles.Count; hz++)
+                {
+                    if (_hiddenZoneFiles[hz].Contains(filename))
+                    {
+                        foundZone = _hiddenZoneFiles[hz];
+                        break;
+                    }
+                }
+
+                bool shouldHide = !string.IsNullOrEmpty(foundZone);
 
                 _zoneSets.AddZoneSetByFileName(filename, shouldHide);
             }
@@ -1867,8 +1899,9 @@ namespace ClassicUO.Game.UI.Gumps
 
                     GameActions.Print(ResGumps.LoadingWorldMapMarkers, 0x2A);
 
-                    foreach (Texture2D t in _markerIcons.Values)
+                    foreach (KeyValuePair<string, Texture2D> mkv in _markerIcons)
                     {
+                        Texture2D t = mkv.Value;
                         if (t != null && !t.IsDisposed)
                         {
                             t.Dispose();
@@ -1887,59 +1920,50 @@ namespace ClassicUO.Game.UI.Gumps
                         Directory.CreateDirectory(_mapIconsPath);
                     }
 
-                    foreach (string icon in Directory.GetFiles(_mapIconsPath, "*.cur").Union(Directory.GetFiles(_mapIconsPath, "*.ico")))
+                    foreach (string pattern in new[] { "*.cur", "*.ico" })
                     {
-                        FileStream fs = new FileStream(icon, FileMode.Open, FileAccess.Read);
-                        MemoryStream ms = new MemoryStream();
-                        fs.CopyTo(ms);
-                        ms.Seek(0, SeekOrigin.Begin);
+                        foreach (string icon in Directory.GetFiles(_mapIconsPath, pattern))
+                        {
+                            using (FileStream fs = new FileStream(icon, FileMode.Open, FileAccess.Read, FileShare.Read))
+                            {
+                                try
+                                {
+                                    Texture2D texture = CurLoader.CreateTextureFromICO_Cur(fs);
 
-                        try
-                        {
-                            Texture2D texture = CurLoader.CreateTextureFromICO_Cur(ms);
-
-                            _markerIcons.Add(Path.GetFileNameWithoutExtension(icon).ToLower(), texture);
-                        }
-                        catch (Exception ee)
-                        {
-                            Log.Error($"{ee}");
-                        }
-                        finally
-                        {
-                            ms.Dispose();
-                            fs.Dispose();
+                                    _markerIcons.Add(Path.GetFileNameWithoutExtension(icon).ToLower(), texture);
+                                }
+                                catch (Exception ee)
+                                {
+                                    Log.Error($"{ee}");
+                                }
+                            }
                         }
                     }
 
-                    foreach (string icon in Directory.GetFiles(_mapIconsPath, "*.png").Union(Directory.GetFiles(_mapIconsPath, "*.jpg")))
+                    foreach (string pattern in new[] { "*.png", "*.jpg" })
                     {
-
-                        FileStream fs = new FileStream(icon, FileMode.Open, FileAccess.Read);
-                        MemoryStream ms = new MemoryStream();
-                        fs.CopyTo(ms);
-                        ms.Seek(0, SeekOrigin.Begin);
-
-                        try
+                        foreach (string icon in Directory.GetFiles(_mapIconsPath, pattern))
                         {
-                            Texture2D texture = Texture2D.FromStream(Client.Game.GraphicsDevice, ms);
+                            using (FileStream fs = new FileStream(icon, FileMode.Open, FileAccess.Read, FileShare.Read))
+                            {
+                                try
+                                {
+                                    Texture2D texture = Texture2D.FromStream(Client.Game.GraphicsDevice, fs);
 
-                            _markerIcons.Add(Path.GetFileNameWithoutExtension(icon).ToLower(), texture);
-                        }
-                        catch (Exception ee)
-                        {
-                            Log.Error($"{ee}");
-                        }
-                        finally
-                        {
-                            ms.Dispose();
-                            fs.Dispose();
+                                    _markerIcons.Add(Path.GetFileNameWithoutExtension(icon).ToLower(), texture);
+                                }
+                                catch (Exception ee)
+                                {
+                                    Log.Error($"{ee}");
+                                }
+                            }
                         }
                     }
 
                     List<string> mapFiles = new List<string> { UserMarkersFilePath };
-                    mapFiles.AddRange(Directory.GetFiles(_mapFilesPath, "*.map")
-                                        .Union(Directory.GetFiles(_mapFilesPath, "*.csv"))
-                                        .Union(Directory.GetFiles(_mapFilesPath, "*.xml")));
+                    mapFiles.AddRange(Directory.GetFiles(_mapFilesPath, "*.map"));
+                    mapFiles.AddRange(Directory.GetFiles(_mapFilesPath, "*.csv"));
+                    mapFiles.AddRange(Directory.GetFiles(_mapFilesPath, "*.xml"));
 
                     _markerFiles.Clear();
 
@@ -1956,7 +1980,16 @@ namespace ClassicUO.Game.UI.Gumps
                                 IsEditable = false,
                             };
 
-                            string hiddenFile = _hiddenMarkerFiles.FirstOrDefault(x => x.Contains(markerFile.Name));
+                            string hiddenFile = null;
+
+                            for (int hm = 0; hm < _hiddenMarkerFiles.Count; hm++)
+                            {
+                                if (_hiddenMarkerFiles[hm].Contains(markerFile.Name))
+                                {
+                                    hiddenFile = _hiddenMarkerFiles[hm];
+                                    break;
+                                }
+                            }
 
                             if (!string.IsNullOrEmpty(hiddenFile))
                             {
@@ -2176,7 +2209,16 @@ namespace ClassicUO.Game.UI.Gumps
                 mapMarker.MarkerIcon = markerIconTexture;
             }
 
-            var mapMarkerFile = _markerFiles.FirstOrDefault(x => x.FullPath == UserMarkersFilePath);
+            WMapMarkerFile mapMarkerFile = null;
+
+            for (int mf = 0; mf < _markerFiles.Count; mf++)
+            {
+                if (_markerFiles[mf].FullPath == UserMarkersFilePath)
+                {
+                    mapMarkerFile = _markerFiles[mf];
+                    break;
+                }
+            }
 
             mapMarkerFile?.Markers.Add(mapMarker);
         }
@@ -2219,7 +2261,16 @@ namespace ClassicUO.Game.UI.Gumps
                 mapMarker.MarkerIcon = markerIconTexture;
             }
 
-            var mapMarkerFile = _markerFiles.FirstOrDefault(x => x.FullPath == UserMarkersFilePath);
+            WMapMarkerFile mapMarkerFile = null;
+
+            for (int mf = 0; mf < _markerFiles.Count; mf++)
+            {
+                if (_markerFiles[mf].FullPath == UserMarkersFilePath)
+                {
+                    mapMarkerFile = _markerFiles[mf];
+                    break;
+                }
+            }
 
             mapMarkerFile?.Markers.Add(mapMarker);
         }
@@ -2229,7 +2280,16 @@ namespace ClassicUO.Game.UI.Gumps
         /// </summary>
         internal static void ReloadUserMarkers()
         {
-            var userFile = _markerFiles.FirstOrDefault(f => f.Name == USER_MARKERS_FILE);
+            WMapMarkerFile userFile = null;
+
+            for (int uf = 0; uf < _markerFiles.Count; uf++)
+            {
+                if (_markerFiles[uf].Name == USER_MARKERS_FILE)
+                {
+                    userFile = _markerFiles[uf];
+                    break;
+                }
+            }
 
             if (userFile == null)
             {
@@ -2278,6 +2338,11 @@ namespace ClassicUO.Game.UI.Gumps
         public override bool Draw(UltimaBatcher2D batcher, int x, int y)
         {
             if (IsDisposed || !World.InGame)
+            {
+                return false;
+            }
+
+            if (!IsVisible)
             {
                 return false;
             }
@@ -2499,8 +2564,9 @@ namespace ClassicUO.Game.UI.Gumps
 
             if (_showMobiles)
             {
-                foreach (Mobile mob in World.Mobiles.Values)
+                foreach (KeyValuePair<uint, Mobile> kv in World.Mobiles)
                 {
+                    Mobile mob = kv.Value;
                     if (mob == World.Player)
                     {
                         continue;
@@ -2575,8 +2641,9 @@ namespace ClassicUO.Game.UI.Gumps
 
             if (_showGuildMembers)
             {
-                foreach (WMapEntity wme in World.WMapManager.Entities.Values)
+                foreach (KeyValuePair<uint, WMapEntity> wmeKv in World.WMapManager.Entities)
                 {
+                    WMapEntity wme = wmeKv.Value;
                     if (wme.IsGuild && !World.Party.Contains(wme.Serial))
                     {
                         DrawWMEntity
@@ -3616,7 +3683,16 @@ namespace ClassicUO.Game.UI.Gumps
                     CanvasToWorld(x, y, out _mouseCenter.X, out _mouseCenter.Y);
 
                     // Check if file is loaded and contain markers
-                    var userFile = _markerFiles.Where(f => f.Name == USER_MARKERS_FILE).FirstOrDefault();
+                    WMapMarkerFile userFile = null;
+
+                    for (int uf = 0; uf < _markerFiles.Count; uf++)
+                    {
+                        if (_markerFiles[uf].Name == USER_MARKERS_FILE)
+                        {
+                            userFile = _markerFiles[uf];
+                            break;
+                        }
+                    }
 
                     if (userFile == null)
                     {

@@ -30,7 +30,6 @@
 
 #endregion
 
-using System.Linq;
 using ClassicUO.Configuration;
 // ## BEGIN - END ## // AUTOLOOT
 using ClassicUO.Dust765.Dust765;
@@ -272,9 +271,12 @@ namespace ClassicUO.Game.UI.Gumps
             int x = 20;
             int y = 20;
 
-            foreach (GridLootItem gridLootItem in Children.OfType<GridLootItem>())
+            foreach (Control c in Children)
             {
-                gridLootItem.Dispose();
+                if (c is GridLootItem gridLootItem && !gridLootItem.IsDisposed)
+                {
+                    gridLootItem.Dispose();
+                }
             }
 
             int count = 0;

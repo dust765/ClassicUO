@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -30,7 +30,6 @@
 
 #endregion
 
-using System.Linq;
 using ClassicUO.Game.UI.Controls;
 using ClassicUO.Assets;
 using ClassicUO.Network;
@@ -271,7 +270,13 @@ namespace ClassicUO.Game.UI.Gumps
 
             public void CalculateWidth()
             {
-                MaxValue = Children.Sum(s => s.Width) - Width;
+                int sumWidth = 0;
+                foreach (Control s in Children)
+                {
+                    sumWidth += s.Width;
+                }
+
+                MaxValue = sumWidth - Width;
 
                 if (MaxValue < 0)
                 {
@@ -337,8 +342,13 @@ namespace ClassicUO.Game.UI.Gumps
 
                     ushort index = 1;
 
-                    foreach (RadioButton radioButton in Children.OfType<RadioButton>())
+                    foreach (Control c in Children)
                     {
+                        if (!(c is RadioButton radioButton) || radioButton.IsDisposed)
+                        {
+                            continue;
+                        }
+
                         if (radioButton.IsChecked)
                         {
                             NetClient.Socket.Send_GrayMenuResponse(

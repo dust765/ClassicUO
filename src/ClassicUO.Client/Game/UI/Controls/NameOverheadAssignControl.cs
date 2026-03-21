@@ -59,12 +59,12 @@ namespace ClassicUO.Game.UI.Controls
 
             CanMove = true;
 
-            const int hotkeyRowY = 34;
-            AddLabel("Set hotkey:", 0, 8);
-
+            const int hotkeyRowY = 8;
+            Label hotkeyLabel = new Label("Set hotkey:", true, 0xFFFF) { X = 0, Y = hotkeyRowY };
+            Add(hotkeyLabel);
             _hotkeyBox = new HotkeyBox
             {
-                X = 80,
+                X = hotkeyLabel.Width + 6,
                 Y = hotkeyRowY
             };
 
@@ -96,7 +96,7 @@ namespace ClassicUO.Game.UI.Controls
             int ow = LoginLayoutHelper.OptionsWidth;
             int oh = LoginLayoutHelper.OptionsHeight;
             int scrollW = Math.Max(280, ow - 342);
-            int scrollH = Math.Max(200, oh - scrollTop - 58);
+            int scrollH = Math.Max(200, oh - scrollTop - 110);
             Add(checkBoxScroll = new ScrollArea(0, scrollTop, scrollW, scrollH, true));
             checkBoxScroll.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
             checkBoxScroll.UpdateScrollbarPosition();

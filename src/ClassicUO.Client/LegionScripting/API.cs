@@ -187,7 +187,16 @@ namespace ClassicUO.LegionScripting
         public Buff[] ActiveBuffs() => MainThreadQueue.InvokeOnMainThread(() =>
         {
             if (World.Player?.BuffIcons == null) return new Buff[0];
-            return World.Player.BuffIcons.Values.Select(b => new Buff(b)).ToArray();
+            int n = World.Player.BuffIcons.Count;
+            if (n == 0) return new Buff[0];
+            var arr = new Buff[n];
+            int i = 0;
+            foreach (BuffIcon b in World.Player.BuffIcons.Values)
+            {
+                arr[i++] = new Buff(b);
+            }
+
+            return arr;
         });
 
         public void SysMsg(string message, ushort hue = 946) => MainThreadQueue.EnqueueAction(() => GameActions.Print(message, hue));
@@ -250,10 +259,19 @@ namespace ClassicUO.LegionScripting
 
         public PyItem[] FindTypeAll(uint graphic, uint container = uint.MaxValue, ushort range = ushort.MaxValue, ushort hue = ushort.MaxValue, ushort minamount = 0) =>
             MainThreadQueue.InvokeOnMainThread(() =>
-                Utility.FindItems(graphic, uint.MaxValue, uint.MaxValue, container, hue, range, true)
-                    .Where(i => !_ignoreList.Contains(i.Serial) && i.Amount >= minamount)
-                    .Select(i => new PyItem(i))
-                    .ToArray());
+            {
+                List<Item> found = Utility.FindItems(graphic, uint.MaxValue, uint.MaxValue, container, hue, range, true);
+                var tmp = new List<PyItem>(found.Count);
+                foreach (Item i in found)
+                {
+                    if (!_ignoreList.Contains(i.Serial) && i.Amount >= minamount)
+                    {
+                        tmp.Add(new PyItem(i));
+                    }
+                }
+
+                return tmp.ToArray();
+            });
 
         public PyItem FindLayer(string layer, uint serial = uint.MaxValue) => MainThreadQueue.InvokeOnMainThread(() =>
         {
@@ -269,8 +287,9 @@ namespace ClassicUO.LegionScripting
         public PyItem[] GetItemsOnGround(int distance = int.MaxValue, uint graphic = uint.MaxValue) => MainThreadQueue.InvokeOnMainThread(() =>
         {
             var list = new List<PyItem>();
-            foreach (Item item in World.Items.Values)
+            foreach (KeyValuePair<uint, Item> kv in World.Items)
             {
+                Item item = kv.Value;
                 if (item == null || item.IsDestroyed || !item.OnGround || OnIgnoreList(item)) continue;
                 if (distance != int.MaxValue && item.Distance > distance) continue;
                 if (graphic != uint.MaxValue && item.Graphic != graphic) continue;
@@ -282,8 +301,16 @@ namespace ClassicUO.LegionScripting
         public PyItem[] ItemsInContainer(uint container, bool recursive = false) => MainThreadQueue.InvokeOnMainThread(() =>
         {
             if (!recursive)
-                return Utility.FindItems(uint.MaxValue, uint.MaxValue, uint.MaxValue, container, ushort.MaxValue, int.MaxValue, true)
-                    .Select(i => new PyItem(i)).ToArray();
+            {
+                List<Item> items = Utility.FindItems(uint.MaxValue, uint.MaxValue, uint.MaxValue, container, ushort.MaxValue, int.MaxValue, true);
+                var arr = new PyItem[items.Count];
+                for (int i = 0; i < items.Count; i++)
+                {
+                    arr[i] = new PyItem(items[i]);
+                }
+
+                return arr;
+            }
             var results = new List<PyItem>();
             var stack = new Stack<uint>();
             stack.Push(container);
@@ -381,8 +408,9 @@ namespace ClassicUO.LegionScripting
         {
             Item nearest = null;
             int bestDist = int.MaxValue;
-            foreach (Item item in World.Items.Values)
+            foreach (KeyValuePair<uint, Item> kv in World.Items)
             {
+                Item item = kv.Value;
                 if (item == null || item.IsDestroyed || !item.IsCorpse || item.Distance > range) continue;
                 if (_ignoreList.Contains(item.Serial)) continue;
                 if (item.Distance < bestDist) { bestDist = item.Distance; nearest = item; }
@@ -474,8 +502,9 @@ namespace ClassicUO.LegionScripting
                 if (World.Mobiles == null) return null;
                 Mobile nearest = null;
                 int bestDist = int.MaxValue;
-                foreach (Mobile m in World.Mobiles.Values)
+                foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
                 {
+                    Mobile m = mkv.Value;
                     if (m == null || m.IsDestroyed || m.Distance > range) continue;
                     if (notorieties != null && notorieties.Length > 0 && !notorieties.Contains((Notoriety)(byte)m.NotorietyFlag)) continue;
                     if (m.Distance < bestDist) { bestDist = m.Distance; nearest = m; }

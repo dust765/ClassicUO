@@ -487,12 +487,14 @@ namespace ClassicUO.Game.GameObjects
 
                     if (isHuman)
                     {
-                        if (ProfileManager.CurrentProfile.HiddenLayers.Contains((int)layer) && ((ProfileManager.CurrentProfile.HideLayersForSelf && Serial == World.Player.Serial) || !ProfileManager.CurrentProfile.HideLayersForSelf))
+                        bool showAllLayers = ProfileManager.CurrentProfile?.ShowAllLayers ?? false;
+
+                        if (!showAllLayers && ProfileManager.CurrentProfile.HiddenLayers.Contains((int)layer) && ((ProfileManager.CurrentProfile.HideLayersForSelf && Serial == World.Player.Serial) || !ProfileManager.CurrentProfile.HideLayersForSelf))
                         {
                             continue;
                         }
 
-                        if (IsCovered(this, layer))
+                        if (!showAllLayers && IsCovered(this, layer))
                         {
                             continue;
                         }

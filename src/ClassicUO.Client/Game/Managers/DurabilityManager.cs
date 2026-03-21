@@ -34,7 +34,6 @@ using System.Collections.Concurrent;
 using ClassicUO.Game.Data;
 using ClassicUO.Game.UI.Gumps;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System;
@@ -52,7 +51,7 @@ namespace ClassicUO.Game.Managers
             Layer.Beard, Layer.Earrings, Layer.Helmet, Layer.OneHanded, Layer.TwoHanded, Layer.Talisman
         };
 
-        public List<DurabiltyProp> Durabilities => _itemLayerSlots.Values.ToList();
+        public List<DurabiltyProp> Durabilities => new List<DurabiltyProp>(_itemLayerSlots.Values);
 
         public DurabilityManager()
         {
@@ -75,7 +74,7 @@ namespace ClassicUO.Game.Managers
                     {
                         if (!item.IsDestroyed)
                         {
-                            if (item.Container == World.Player.Serial && _equipLayers.Contains(item.Layer))
+                            if (item.Container == World.Player.Serial && Array.IndexOf(_equipLayers, item.Layer) >= 0)
                             {
                                 var durability = ParseDurability((int)item.Serial, e.Data);
                                 _itemLayerSlots.AddOrUpdate(item.Serial, durability, (_, _) => durability);

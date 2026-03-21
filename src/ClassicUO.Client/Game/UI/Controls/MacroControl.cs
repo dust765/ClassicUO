@@ -31,7 +31,6 @@
 #endregion
 
 using System;
-using System.Linq;
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.Scenes;
 using ClassicUO.Game.UI.Gumps;
@@ -411,18 +410,18 @@ namespace ClassicUO.Game.UI.Controls
                     RemoveLastCommand();
                     break;
                 case (int)buttonsOption.CreateNewMacro:
-                    UIManager.Gumps.OfType<MacroButtonGump>().FirstOrDefault(s => s.TheMacro == Macro)?.Dispose();
+                    UIManager.DisposeMacroButtonGumpForMacro(Macro);
 
                     MacroButtonGump macroButtonGump = new MacroButtonGump(Macro, Mouse.Position.X, Mouse.Position.Y);
                     UIManager.Add(macroButtonGump);
                     break;
                 case (int)buttonsOption.OpenMacroOptions:
-                    UIManager.Gumps.OfType<MacroGump>().FirstOrDefault()?.Dispose();
+                    UIManager.DisposeFirstOfType<MacroGump>();
 
                     GameActions.OpenSettings(4);
                     break;
                 case (int)buttonsOption.OpenButtonEditor:
-                    UIManager.Gumps.OfType<MacroButtonEditorGump>().FirstOrDefault()?.Dispose();
+                    UIManager.DisposeFirstOfType<MacroButtonEditorGump>();
                     OpenMacroButtonEditor(Macro, null);
                     break;
             }

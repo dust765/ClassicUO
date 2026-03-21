@@ -686,9 +686,12 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
                 Remove(_facialLabel);
             }
 
-            foreach (CustomColorPicker customPicker in Children.OfType<CustomColorPicker>().ToList())
+            for (int ci = Children.Count - 1; ci >= 0; ci--)
             {
-                Remove(customPicker);
+                if (Children[ci] is CustomColorPicker customPicker)
+                {
+                    Remove(customPicker);
+                }
             }
 
             // Hair

@@ -506,7 +506,9 @@ namespace ClassicUO.Network
 
             if (message.IsEmpty) return;
 
+#if DEBUG
             PacketLogger.Default?.Log(message, true);
+#endif
 
             if (!skipEncryption)
             {

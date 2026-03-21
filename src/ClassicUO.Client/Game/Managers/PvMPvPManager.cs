@@ -78,8 +78,9 @@ namespace ClassicUO.Game.Managers
             if (profile?.PvP_CriminalAttackableAlert == true)
             {
                 CriminalOrAttackableNearby = false;
-                foreach (Mobile m in World.Mobiles.Values)
+                foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
                 {
+                    Mobile m = mkv.Value;
                     if (m == World.Player || m.IsDestroyed) continue;
                     if (m.Distance > 12) continue;
                     if (m.NotorietyFlag == NotorietyFlag.Criminal || m.NotorietyFlag == NotorietyFlag.Gray || m.NotorietyFlag == NotorietyFlag.Enemy || m.NotorietyFlag == NotorietyFlag.Murderer)

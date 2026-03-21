@@ -33,7 +33,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using ClassicUO.Configuration;
 // ## BEGIN - END ## // UI/GUMPS
 using ClassicUO.Dust765.Dust765;
@@ -68,11 +67,14 @@ namespace ClassicUO.Game.UI.Gumps
         private static int HEIGHT => LoginLayoutHelper.OptionsHeight;
         private const int TEXTBOX_HEIGHT = 25;
         private const int OptionsTabStartY = 10;
+        private readonly List<HealthBarGump> _optionsHealthBarMigrateScratch = new List<HealthBarGump>(32);
+        private readonly List<HealthBarGumpCustom> _optionsHealthBarCustomMigrateScratch = new List<HealthBarGumpCustom>(32);
+        private readonly List<PaperDollGump> _optionsPaperdollRefreshScratch = new List<PaperDollGump>(8);
         private const int OptionsSearchRowHeight = 26;
         private const int OptionsSearchToContentGap = 12;
         private static int OptionsScrollY =>
             OptionsTabStartY + OptionsSearchRowHeight + OptionsSearchToContentGap;
-        private static int OptionsScrollHeight => HEIGHT - 60 - OptionsScrollY;
+        private static int OptionsScrollHeight => HEIGHT - 85 - OptionsScrollY;
         private static readonly string[] WINDOW_TITLE_STYLE_LABELS =
         {
             "Like CUO (native)",
@@ -2536,7 +2538,7 @@ namespace ClassicUO.Game.UI.Gumps
                                 return;
                             }
 
-                            UIManager.Gumps.OfType<MacroButtonGump>().FirstOrDefault(s => s.TheMacro == _macroControl.Macro)?.Dispose();
+                            UIManager.DisposeMacroButtonGumpForMacro(_macroControl.Macro);
 
                             MacroButtonGump macroButtonGump = new MacroButtonGump(_macroControl.Macro, Mouse.Position.X, Mouse.Position.Y);
 
@@ -2571,7 +2573,16 @@ namespace ClassicUO.Game.UI.Gumps
 
             delButton.MouseUp += (ss, ee) =>
             {
-                NiceButton nb = databox.FindControls<NiceButton>().SingleOrDefault(a => a.IsSelected);
+                NiceButton nb = null;
+
+                foreach (NiceButton b in databox.FindControls<NiceButton>())
+                {
+                    if (b.IsSelected)
+                    {
+                        nb = b;
+                        break;
+                    }
+                }
 
                 if (nb != null)
                 {
@@ -2587,7 +2598,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                             if (_macroControl != null)
                             {
-                                UIManager.Gumps.OfType<MacroButtonGump>().FirstOrDefault(s => s.TheMacro == _macroControl.Macro)?.Dispose();
+                                UIManager.DisposeMacroButtonGumpForMacro(_macroControl.Macro);
 
                                 Client.Game.GetScene<GameScene>().Macros.Remove(_macroControl.Macro);
 
@@ -2646,7 +2657,7 @@ namespace ClassicUO.Game.UI.Gumps
                         return;
                     }
 
-                    UIManager.Gumps.OfType<MacroButtonGump>().FirstOrDefault(s => s.TheMacro == m)?.Dispose();
+                    UIManager.DisposeMacroButtonGumpForMacro(m);
 
                     MacroButtonGump macroButtonGump = new MacroButtonGump(m, Mouse.Position.X, Mouse.Position.Y);
 
@@ -3914,7 +3925,7 @@ namespace ClassicUO.Game.UI.Gumps
             const int PAGE = 13;
             int top = OptionsScrollY;
             int nameListTop = top + 54;
-            int bottomSeparatorY = HEIGHT - 51;
+            int bottomSeparatorY = HEIGHT - 90;
             const int nameOverheadDividerX = 322;
             int nameListW = nameOverheadDividerX - 165;
 
@@ -4054,7 +4065,17 @@ namespace ClassicUO.Game.UI.Gumps
 
             delButton.MouseUp += (ss, ee) =>
             {
-                NiceButton nb = databox.FindControls<NiceButton>().SingleOrDefault(a => a.IsSelected);
+                NiceButton nb = null;
+
+                foreach (NiceButton b in databox.FindControls<NiceButton>())
+                {
+                    if (b.IsSelected)
+                    {
+                        nb = b;
+                        break;
+                    }
+                }
+
                 if (nb != null)
                 {
                     QuestionGump dialog = new QuestionGump
@@ -4821,7 +4842,13 @@ namespace ClassicUO.Game.UI.Gumps
 
         public Combobox GenerateFontSelector(byte selectedFont)
         {
-            var fontLabels = Enumerable.Range(0, 20).Select(i => $"Font {i}").ToArray();
+            string[] fontLabels = new string[20];
+
+            for (int fi = 0; fi < 20; fi++)
+            {
+                fontLabels[fi] = $"Font {fi}";
+            }
+
             int idx = Math.Max(0, Math.Min(19, (int)selectedFont));
             return AddCombobox(null, fontLabels, idx, 0, 0, 200);
         }
@@ -5682,7 +5709,7 @@ namespace ClassicUO.Game.UI.Gumps
             }
 
             _nearbyItemGumpHotkeyBox.SetKey((SDL.SDL_Keycode)nk, (SDL.SDL_Keymod)nm);
-            sectionMiscTaz.Add(_nearbyItemGumpHotkeyBox);
+            sectionMiscTaz.AddRight(_nearbyItemGumpHotkeyBox);
 
             Add(rightArea, PAGE);
         }
@@ -6576,9 +6603,12 @@ namespace ClassicUO.Game.UI.Gumps
             if (_currentProfile.EnableGridContainerAnchor != _gridContainerAnchorable.IsChecked)
             {
                 _currentProfile.EnableGridContainerAnchor = _gridContainerAnchorable.IsChecked;
-                foreach (GridContainer _ in UIManager.Gumps.OfType<GridContainer>())
+                for (LinkedListNode<Gump> node = UIManager.Gumps.First; node != null; node = node.Next)
                 {
-                    _.AnchorType = _currentProfile.EnableGridContainerAnchor ? ANCHOR_TYPE.NONE : ANCHOR_TYPE.DISABLED;
+                    if (node.Value is GridContainer gc && !gc.IsDisposed)
+                    {
+                        gc.AnchorType = _currentProfile.EnableGridContainerAnchor ? ANCHOR_TYPE.NONE : ANCHOR_TYPE.DISABLED;
+                    }
                 }
             }
             if (_currentProfile.UseImprovedBuffBar != _enableImprovedBuffGump.IsChecked)
@@ -6586,14 +6616,26 @@ namespace ClassicUO.Game.UI.Gumps
                 _currentProfile.UseImprovedBuffBar = _enableImprovedBuffGump.IsChecked;
                 if (_currentProfile.UseImprovedBuffBar)
                 {
-                    foreach (Gump g in UIManager.Gumps.OfType<BuffGump>())
-                        g.Dispose();
+                    for (LinkedListNode<Gump> node = UIManager.Gumps.Last; node != null; node = node.Previous)
+                    {
+                        if (node.Value is BuffGump bg && !bg.IsDisposed)
+                        {
+                            bg.Dispose();
+                        }
+                    }
+
                     UIManager.Add(new ImprovedBuffGump());
                 }
                 else
                 {
-                    foreach (Gump g in UIManager.Gumps.OfType<ImprovedBuffGump>())
-                        g.Dispose();
+                    for (LinkedListNode<Gump> node = UIManager.Gumps.Last; node != null; node = node.Previous)
+                    {
+                        if (node.Value is ImprovedBuffGump ibg && !ibg.IsDisposed)
+                        {
+                            ibg.Dispose();
+                        }
+                    }
+
                     UIManager.Add(new BuffGump(100, 100));
                 }
             }
@@ -6602,9 +6644,12 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 _currentProfile.Grid_BorderStyle = _gridBorderStyle.SelectedIndex;
                 _currentProfile.Grid_HideBorder = _gridHideBorder.IsChecked;
-                foreach (GridContainer gridContainer in UIManager.Gumps.OfType<GridContainer>())
+                for (LinkedListNode<Gump> node = UIManager.Gumps.First; node != null; node = node.Next)
                 {
-                    gridContainer.BuildBorder();
+                    if (node.Value is GridContainer gridContainer && !gridContainer.IsDisposed)
+                    {
+                        gridContainer.BuildBorder();
+                    }
                 }
             }
 
@@ -6720,18 +6765,24 @@ namespace ClassicUO.Game.UI.Gumps
             if (_currentProfile.AltGridContainerBackgroundHue != _altGridContainerBackgroundHue.Hue)
             {
                 _currentProfile.AltGridContainerBackgroundHue = _altGridContainerBackgroundHue.Hue;
-                foreach (GridContainer _ in UIManager.Gumps.OfType<GridContainer>())
+                for (LinkedListNode<Gump> node = UIManager.Gumps.First; node != null; node = node.Next)
                 {
-                    _.OptionsUpdated();
+                    if (node.Value is GridContainer gc && !gc.IsDisposed)
+                    {
+                        gc.OptionsUpdated();
+                    }
                 }
             }
 
             if (_currentProfile.ContainerOpacity != (byte)_containerOpacity.Value)
             {
                 _currentProfile.ContainerOpacity = (byte)_containerOpacity.Value;
-                foreach (GridContainer _ in UIManager.Gumps.OfType<GridContainer>())
+                for (LinkedListNode<Gump> node = UIManager.Gumps.First; node != null; node = node.Next)
                 {
-                    _.OptionsUpdated();
+                    if (node.Value is GridContainer gc && !gc.IsDisposed)
+                    {
+                        gc.OptionsUpdated();
+                    }
                 }
             }
 
@@ -7128,9 +7179,9 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 if (_currentProfile.CustomBarsToggled)
                 {
-                    List<HealthBarGump> hbgstandard = UIManager.Gumps.OfType<HealthBarGump>().ToList();
+                    UIManager.CollectGumps(_optionsHealthBarMigrateScratch);
 
-                    foreach (HealthBarGump healthbar in hbgstandard)
+                    foreach (HealthBarGump healthbar in _optionsHealthBarMigrateScratch)
                     {
                         UIManager.Add(new HealthBarGumpCustom(healthbar.LocalSerial) { X = healthbar.X, Y = healthbar.Y });
 
@@ -7139,9 +7190,9 @@ namespace ClassicUO.Game.UI.Gumps
                 }
                 else
                 {
-                    List<HealthBarGumpCustom> hbgcustom = UIManager.Gumps.OfType<HealthBarGumpCustom>().ToList();
+                    UIManager.CollectGumps(_optionsHealthBarCustomMigrateScratch);
 
-                    foreach (HealthBarGumpCustom customhealthbar in hbgcustom)
+                    foreach (HealthBarGumpCustom customhealthbar in _optionsHealthBarCustomMigrateScratch)
                     {
                         UIManager.Add(new HealthBarGump(customhealthbar.LocalSerial) { X = customhealthbar.X, Y = customhealthbar.Y });
 
@@ -7226,9 +7277,12 @@ namespace ClassicUO.Game.UI.Gumps
                 UIManager.ContainerScale = containerScale / 100f;
                 _currentProfile.ScaleItemsInsideContainers = _containerScaleItems.IsChecked;
 
-                foreach (ContainerGump resizableGump in UIManager.Gumps.OfType<ContainerGump>())
+                for (LinkedListNode<Gump> node = UIManager.Gumps.First; node != null; node = node.Next)
                 {
-                    resizableGump.RequestUpdateContents();
+                    if (node.Value is ContainerGump resizableGump && !resizableGump.IsDisposed)
+                    {
+                        resizableGump.RequestUpdateContents();
+                    }
                 }
             }
 
@@ -7469,7 +7523,7 @@ namespace ClassicUO.Game.UI.Gumps
             if (_currentProfile.UOClassicCombatLTBar != _uccEnableLTBar.IsChecked)
             {
                 UOClassicCombatLTBar UOClassicCombatLTBar = UIManager.GetGump<UOClassicCombatLTBar>();
-                UIManager.Gumps.OfType<UOClassicCombatLTBar>().ToList().ForEach(g => g.Dispose());
+                UIManager.DisposeAllUOClassicCombatLTBars();
 
                 if (_uccEnableLTBar.IsChecked)
                 {
@@ -7692,6 +7746,11 @@ namespace ClassicUO.Game.UI.Gumps
             _currentProfile.ShowAllLayers = _showAllLayers.IsChecked;
             _currentProfile.ShowAllLayersPaperdoll = _showAllLayersPaperdoll.IsChecked;
             _currentProfile.ShowAllLayersPaperdoll_X = int.Parse(_showAllLayersPaperdoll_X.Text);
+            UIManager.CollectGumps(_optionsPaperdollRefreshScratch);
+            foreach (PaperDollGump gump in _optionsPaperdollRefreshScratch)
+            {
+                gump.RequestPaperdollRefresh();
+            }
             _currentProfile.ColorPaperdollByDurability = _colorPaperdollByDurability.IsChecked;
             // ## BEGIN - END ## // MISC3 SHOWALLLAYERS
             // ## BEGIN - END ## // MISC3 THIEFSUPREME
@@ -7832,21 +7891,9 @@ namespace ClassicUO.Game.UI.Gumps
 
         private void UpdateTitleBarStatsControlsAvailability()
         {
-            if (_windowTitleStyle == null)
-            {
-                return;
-            }
-
-            bool enableStatsToggle = GetWindowTitleStyleFromIndex(_windowTitleStyle.SelectedIndex) != WindowTitleBarStyle.CUO;
-
             if (_enableTitleBarStats != null)
             {
-                _enableTitleBarStats.IsEnabled = enableStatsToggle;
-
-                if (!enableStatsToggle)
-                {
-                    _enableTitleBarStats.IsChecked = true;
-                }
+                _enableTitleBarStats.IsEnabled = true;
             }
 
             if (_titleBarStatsModeText != null)

@@ -69,6 +69,8 @@ namespace ClassicUO.Game
 
         private static int _startPointZ, _endPointZ;
 
+        private static readonly List<PathObject> _pathObjectWork = new List<PathObject>(128);
+
         public static Point StartPoint => _startPoint;
         public static Point EndPoint => _endPoint;
         public static int PathSize => _pathSize;
@@ -340,7 +342,8 @@ namespace ClassicUO.Game
             int direction = newDirection ^ 4;
             newX += _offsetX[direction];
             newY += _offsetY[direction];
-            List<PathObject> list = new List<PathObject>();
+            List<PathObject> list = _pathObjectWork;
+            list.Clear();
 
             if (!CreateItemList(list, newX, newY, stepState) || list.Count == 0)
             {
@@ -437,7 +440,8 @@ namespace ClassicUO.Game
                 stepState
             );
 
-            List<PathObject> list = new List<PathObject>();
+            List<PathObject> list = _pathObjectWork;
+            list.Clear();
 
             if (World.CustomHouseManager != null)
             {
