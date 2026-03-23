@@ -10,9 +10,9 @@ namespace ClassicUO.Game.Managers
         private static readonly Dictionary<string, CachedTexture> _textureCache = new Dictionary<string, CachedTexture>();
         private static readonly List<KeyValuePair<string, CachedTexture>> _cleanupScratch = new List<KeyValuePair<string, CachedTexture>>(1024);
         private static readonly object _cacheLock = new object();
-        private static int _maxCacheSize = 1000;
+        private static int _maxCacheSize = 512;
         private static long _lastCleanupTime = 0;
-        private static readonly long _cleanupInterval = 30000; // 30 seconds
+        private static readonly long _cleanupInterval = 12000;
         
         private class CachedTexture
         {

@@ -1131,7 +1131,8 @@ namespace ClassicUO.Network
 
             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
             if (
-                ProfileManager.CurrentProfile.VisualResponseManager
+                ProfileManager.CurrentProfile != null
+                && ProfileManager.CurrentProfile.VisualResponseManager
                 && (type == MessageType.System || serial == 0xFFFF_FFFF || serial == 0 || name.ToLower() == "system" && entity == null)
             )
             {
@@ -3918,7 +3919,8 @@ namespace ClassicUO.Network
 
             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
             if (
-                ProfileManager.CurrentProfile.VisualResponseManager
+                ProfileManager.CurrentProfile != null
+                && ProfileManager.CurrentProfile.VisualResponseManager
                 && (type == MessageType.System || serial == 0xFFFF_FFFF || serial == 0 || name.ToLower() == "system" && entity == null)
             )
             {
@@ -4994,7 +4996,10 @@ namespace ClassicUO.Network
             }
 
             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
-            if (ProfileManager.CurrentProfile.VisualResponseManager)
+            if (
+                ProfileManager.CurrentProfile != null
+                && ProfileManager.CurrentProfile.VisualResponseManager
+            )
             {
                 World.VisualResponseManager.OnCliloc(cliloc);
             }

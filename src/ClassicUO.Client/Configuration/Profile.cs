@@ -720,7 +720,7 @@ namespace ClassicUO.Configuration
         public bool PerformanceBatchOptimization { get; set; } = true;
         public bool PerformanceLODSystem { get; set; } = true;
         public bool PerformanceTextureStreaming { get; set; } = true;
-        public bool PerformanceOcclusionCulling { get; set; } = false;
+        public bool PerformanceOcclusionCulling { get; set; } = true;
         public int PerformanceQualityLevel { get; set; } = 2; // 0=Low, 1=Medium, 2=High, 3=Ultra
         public bool PerformanceShowStats { get; set; } = false;
         // ## BEGIN - END ## // VISUALRESPONSEMANAGER
@@ -1017,6 +1017,21 @@ namespace ClassicUO.Configuration
         public bool EnableNearbyItemGump { get; set; } = false;
         public int NearbyItemGumpHotkeyKey { get; set; }
         public uint NearbyItemGumpHotkeyMod { get; set; }
+
+        public void EnsurePerformanceFeaturesEnabled()
+        {
+            PerformanceOptimizations = true;
+            PerformanceFrustumCulling = true;
+            PerformanceBatchOptimization = true;
+            PerformanceLODSystem = true;
+            PerformanceTextureStreaming = true;
+            PerformanceOcclusionCulling = true;
+            EnableFrustumCulling = true;
+            EnableLOD = true;
+            OptimizeBackgroundRendering = true;
+            EnableTextureCaching = true;
+            EnableChunkPreload = true;
+        }
 
         public void Save(string path, bool saveGumps = true)
         {

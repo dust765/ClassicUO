@@ -152,7 +152,7 @@ namespace ClassicUO.Game.UI.Gumps
                          _chatAdditionalButtonsCheckbox,
                          _chatShiftEnterCheckbox,
                          _enableCaveBorder;
-        private Checkbox _holdShiftForContext, _holdShiftToSplitStack, _reduceFPSWhenInactive, _sallosEasyGrab, _partyInviteGump, _objectsFading, _textFading, _holdAltToMoveGumps;
+        private Checkbox _holdShiftForContext, _holdShiftToSplitStack, _reduceFPSWhenInactive, _enableVSync, _sallosEasyGrab, _partyInviteGump, _objectsFading, _textFading, _holdAltToMoveGumps;
         private Combobox _hpComboBox, _healtbarType, _fieldsType, _hpComboBoxShowWhen;
 
         // infobar
@@ -334,7 +334,7 @@ namespace ClassicUO.Game.UI.Gumps
         #endregion
 
 
-        private Profile _currentProfile = ProfileManager.CurrentProfile;
+        private Profile _currentProfile;
         private OptionsGumpLanguage _lang = Language.Instance.GetOptionsGumpLanguage;
         private Dust765Language _langDust = Language.Instance.GetDust765;
         private InputField _optionsSearchField;
@@ -347,6 +347,8 @@ namespace ClassicUO.Game.UI.Gumps
 
         public OptionsGump() : base(0, 0)
         {
+            _currentProfile = ProfileManager.CurrentProfile;
+
             Add
             (
                 new AlphaBlendControl(0.95f)
@@ -2084,6 +2086,17 @@ namespace ClassicUO.Game.UI.Gumps
             );
 
             startY += _reduceFPSWhenInactive.Height + 2;
+
+            _enableVSync = AddCheckBox
+            (
+                rightArea,
+                Language.Instance?.GetOptionsGumpLanguage?.GetVideo?.EnableVSync ?? "Enable VSync (limits FPS to monitor refresh)",
+                _currentProfile.EnableVSync,
+                startX,
+                startY
+            );
+
+            startY += _enableVSync.Height + 2;
 
             startX = 5;
             startY += 20;
@@ -6362,6 +6375,7 @@ namespace ClassicUO.Game.UI.Gumps
                     break;
 
                 case 3: // video
+                    _enableVSync.IsChecked = false;
                     _windowBorderless.IsChecked = false;
                     if (_windowTitleStyle != null)
                     {
@@ -6680,6 +6694,12 @@ namespace ClassicUO.Game.UI.Gumps
 
             _currentProfile.HighlightGameObjects = _highlightObjects.IsChecked;
             _currentProfile.ReduceFPSWhenInactive = _reduceFPSWhenInactive.IsChecked;
+            bool enableVSync = _enableVSync.IsChecked;
+            if (_currentProfile.EnableVSync != enableVSync)
+            {
+                Client.Game.SetVSync(enableVSync);
+            }
+            _currentProfile.EnableVSync = enableVSync;
             _currentProfile.EnablePathfind = _enablePathfind.IsChecked;
             _currentProfile.UseShiftToPathfind = _useShiftPathfind.IsChecked;
             _currentProfile.AlwaysRun = _alwaysRun.IsChecked;

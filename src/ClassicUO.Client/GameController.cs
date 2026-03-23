@@ -564,6 +564,34 @@ namespace ClassicUO
             Time.Ticks = (uint)gameTime.TotalGameTime.TotalMilliseconds;
             Time.Delta = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
+            bool disableFrameLimiting = ProfileManager.CurrentProfile?.DisableFrameLimiting ?? false;
+            bool fullGameTick = true;
+            double frameMs = _intervalFixedUpdate[0];
+            if (!disableFrameLimiting)
+            {
+                frameMs = _intervalFixedUpdate[
+                    !IsActive
+                    && ProfileManager.CurrentProfile != null
+                    && ProfileManager.CurrentProfile.ReduceFPSWhenInactive
+                        ? 1
+                        : 0
+                ];
+                _totalElapsed += gameTime.ElapsedGameTime.TotalMilliseconds;
+                if (_totalElapsed > frameMs)
+                {
+                    _totalElapsed %= frameMs;
+                    fullGameTick = true;
+                }
+                else
+                {
+                    fullGameTick = false;
+                }
+            }
+            else
+            {
+                _totalElapsed = 0;
+            }
+
             Mouse.Update();
 
             long queuedBytes = NetClient.Socket.QueuedReceiveBytes;
@@ -604,7 +632,7 @@ namespace ClassicUO
 
             Plugin.Tick();
 
-            if (Scene != null && Scene.IsLoaded && !Scene.IsDestroyed)
+            if (fullGameTick && Scene != null && Scene.IsLoaded && !Scene.IsDestroyed)
             {
                 if (EventSink.GameUpdate != null)
                 {
@@ -616,13 +644,13 @@ namespace ClassicUO
             }
 
             UIManager.Update();
-            if (Time.Ticks - _lastLegionScriptingUpdate >= 50)
+            if (fullGameTick && Time.Ticks - _lastLegionScriptingUpdate >= 50)
             {
                 _lastLegionScriptingUpdate = Time.Ticks;
                 LegionScripting.LegionScripting.OnUpdate();
             }
 
-            if (World.InGame)
+            if (fullGameTick && World.InGame)
                 PerformanceOptimizer.UpdatePvPMode();
 
             if (Time.Ticks >= _nextSlowUpdate)
@@ -631,7 +659,6 @@ namespace ClassicUO
                 UIManager.SlowUpdate();
             }
 
-            _totalElapsed += gameTime.ElapsedGameTime.TotalMilliseconds;
             _currentFpsTime += gameTime.ElapsedGameTime.TotalMilliseconds;
 
             if (_currentFpsTime >= 1000)
@@ -646,35 +673,31 @@ namespace ClassicUO
                 _currentFpsTime = 0;
             }
 
-            // Verificar se o frame limiting deve ser desabilitado
-            bool disableFrameLimiting = ProfileManager.CurrentProfile?.DisableFrameLimiting ?? false;
-            
             if (!disableFrameLimiting)
             {
-                double x = _intervalFixedUpdate[
-                    !IsActive
-                    && ProfileManager.CurrentProfile != null
-                    && ProfileManager.CurrentProfile.ReduceFPSWhenInactive
-                        ? 1
-                        : 0
-                ];
-                _suppressedDraw = false;
-
-                if (_totalElapsed > x)
-                {
-                    _totalElapsed %= x;
-                }
-                else
+                if (!fullGameTick)
                 {
                     _suppressedDraw = true;
                     SuppressDraw();
+                    double remaining = frameMs - _totalElapsed;
+                    int sleepCap = (int)Math.Min(96, Math.Max(frameMs, 8));
+                    if (remaining >= 2.0)
+                    {
+                        Thread.Sleep((int)Math.Min(remaining, sleepCap));
+                    }
+                    else if (remaining >= 0.25)
+                    {
+                        Thread.Sleep(1);
+                    }
+                }
+                else
+                {
+                    _suppressedDraw = false;
                 }
             }
             else
             {
-                // Frame limiting completamente desabilitado - renderizar sempre
                 _suppressedDraw = false;
-                _totalElapsed = 0; // Reset para evitar acúmulo
             }
 
             GameCursor?.Update();

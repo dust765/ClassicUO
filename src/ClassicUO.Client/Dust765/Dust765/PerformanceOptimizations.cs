@@ -52,7 +52,7 @@ namespace ClassicUO.Dust765.Dust765
         public static bool IsBatchOptimizationEnabled => ProfileManager.CurrentProfile?.PerformanceBatchOptimization ?? true;
         public static bool IsLODSystemEnabled => ProfileManager.CurrentProfile?.PerformanceLODSystem ?? true;
         public static bool IsTextureStreamingEnabled => ProfileManager.CurrentProfile?.PerformanceTextureStreaming ?? true;
-        public static bool IsOcclusionCullingEnabled => ProfileManager.CurrentProfile?.PerformanceOcclusionCulling ?? false;
+        public static bool IsOcclusionCullingEnabled => ProfileManager.CurrentProfile?.PerformanceOcclusionCulling ?? true;
         public static int QualityLevel => ProfileManager.CurrentProfile?.PerformanceQualityLevel ?? 2;
 
         // FRUSTUM CULLING
