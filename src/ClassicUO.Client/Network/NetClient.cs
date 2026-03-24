@@ -171,7 +171,7 @@ namespace ClassicUO.Network
         private readonly SocketWrapper _socket;
         private uint? _localIP;
         private readonly CircularBuffer _sendStream;
-        private readonly ConcurrentQueue<byte[]> _receiveQueue = new ConcurrentQueue<byte[]>();
+        private readonly ConcurrentQueue<(byte[] data, int length)> _receiveQueue = new ConcurrentQueue<(byte[] data, int length)>();
         private long _queuedReceiveBytes;
         private int _queuedReceiveMessages;
         private volatile bool _receiveBackpressure;
@@ -222,7 +222,7 @@ namespace ClassicUO.Network
                         else
                         {
                             ProcessSendFromQueue();
-                            Thread.Sleep(1);
+                            Thread.Sleep(0); // cede time slice; watermark faz o throttle real
                             continue;
                         }
                     }
@@ -230,7 +230,7 @@ namespace ClassicUO.Network
                     {
                         _receiveBackpressure = true;
                         ProcessSendFromQueue();
-                        Thread.Sleep(1);
+                        Thread.Sleep(0); // cede time slice; watermark faz o throttle real
                         continue;
                     }
 
@@ -249,10 +249,11 @@ namespace ClassicUO.Network
 
                         if (!decompressed.IsEmpty)
                         {
-                            byte[] message = new byte[decompressed.Length];
-                            decompressed.CopyTo(message.AsSpan());
-                            _receiveQueue.Enqueue(message);
-                            Interlocked.Add(ref _queuedReceiveBytes, message.Length);
+                            int msgLen = decompressed.Length;
+                            byte[] pooled = ArrayPool<byte>.Shared.Rent(msgLen);
+                            decompressed.CopyTo(pooled.AsSpan());
+                            _receiveQueue.Enqueue((pooled, msgLen));
+                            Interlocked.Add(ref _queuedReceiveBytes, msgLen);
                             Interlocked.Increment(ref _queuedReceiveMessages);
                         }
                     }
@@ -262,7 +263,7 @@ namespace ClassicUO.Network
                     }
                     else
                     {
-                        Thread.SpinWait(100);
+                        Thread.Sleep(1); // socket idle — cede o core em vez de busy-wait
                     }
                 }
                 catch (SocketException ex)
@@ -288,7 +289,7 @@ namespace ClassicUO.Network
 
                 ProcessSendFromQueue();
                 if (_receiveQueue.IsEmpty && _sendStream.Length == 0)
-                    Thread.SpinWait(50);
+                    Thread.Sleep(1); // nada a fazer — cede o core
             }
             _networkRunning = false;
         }
@@ -400,7 +401,8 @@ namespace ClassicUO.Network
 
         private void ClearReceiveQueue()
         {
-            while (_receiveQueue.TryDequeue(out _)) { }
+            while (_receiveQueue.TryDequeue(out var item))
+                ArrayPool<byte>.Shared.Return(item.data);
             Interlocked.Exchange(ref _queuedReceiveBytes, 0);
             Interlocked.Exchange(ref _queuedReceiveMessages, 0);
         }
@@ -423,21 +425,24 @@ namespace ClassicUO.Network
             }
 
             int totalLen = 0;
-            var overflow = default(System.Collections.Generic.List<byte[]>);
+            var overflow = default(System.Collections.Generic.List<(byte[], int)>);
 
-            while (_receiveQueue.TryDequeue(out byte[] chunk))
+            while (_receiveQueue.TryDequeue(out var item))
             {
-                Interlocked.Add(ref _queuedReceiveBytes, -chunk.Length);
+                byte[] chunk = item.data;
+                int chunkLen = item.length;
+                Interlocked.Add(ref _queuedReceiveBytes, -chunkLen);
                 Interlocked.Decrement(ref _queuedReceiveMessages);
 
-                if (totalLen + chunk.Length <= _receiveDrainBuffer.Length)
+                if (totalLen + chunkLen <= _receiveDrainBuffer.Length)
                 {
-                    Array.Copy(chunk, 0, _receiveDrainBuffer, totalLen, chunk.Length);
-                    totalLen += chunk.Length;
+                    Array.Copy(chunk, 0, _receiveDrainBuffer, totalLen, chunkLen);
+                    totalLen += chunkLen;
+                    ArrayPool<byte>.Shared.Return(chunk);
                 }
                 else
                 {
-                    (overflow ??= new System.Collections.Generic.List<byte[]>()).Add(chunk);
+                    (overflow ??= new System.Collections.Generic.List<(byte[], int)>()).Add((chunk, chunkLen));
                 }
             }
 
@@ -446,7 +451,7 @@ namespace ClassicUO.Network
                 foreach (var c in overflow)
                 {
                     _receiveQueue.Enqueue(c);
-                    Interlocked.Add(ref _queuedReceiveBytes, c.Length);
+                    Interlocked.Add(ref _queuedReceiveBytes, c.Item2);
                     Interlocked.Increment(ref _queuedReceiveMessages);
                 }
             }
@@ -457,9 +462,10 @@ namespace ClassicUO.Network
             return _receiveDrainBuffer.AsSpan(0, totalLen);
         }
 
-        public bool TryDequeuePacket(out byte[] packet)
+        public bool TryDequeuePacket(out byte[] data, out int length)
         {
-            packet = null;
+            data = null;
+            length = 0;
 
             if (_pendingDisconnect)
             {
@@ -469,15 +475,19 @@ namespace ClassicUO.Network
                 return false;
             }
 
-            if (!_receiveQueue.TryDequeue(out packet))
-            {
+            if (!_receiveQueue.TryDequeue(out var item))
                 return false;
-            }
 
-            Interlocked.Add(ref _queuedReceiveBytes, -packet.Length);
+            data = item.data;
+            length = item.length;
+            Interlocked.Add(ref _queuedReceiveBytes, -length);
             Interlocked.Decrement(ref _queuedReceiveMessages);
-
             return true;
+        }
+
+        public void ReturnPacketBuffer(byte[] buffer)
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
         }
 
         public void Flush()

@@ -74,6 +74,8 @@ namespace ClassicUO
 
         private static Vector3 bgHueShader = new Vector3(0, 0, 0.3f);
 
+        public static bool FullGameTick { get; private set; }
+
         public GameController()
         {
             GraphicManager = new GraphicsDeviceManager(this);
@@ -592,6 +594,8 @@ namespace ClassicUO
                 _totalElapsed = 0;
             }
 
+            FullGameTick = fullGameTick;
+
             Mouse.Update();
 
             long queuedBytes = NetClient.Socket.QueuedReceiveBytes;
@@ -606,14 +610,21 @@ namespace ClassicUO
                 packetBudget = MAX_PACKETS_PER_FRAME * 2;
             }
 
-            while (packetBudget > 0 && NetClient.Socket.TryDequeuePacket(out byte[] message))
+            while (packetBudget > 0 && NetClient.Socket.TryDequeuePacket(out byte[] message, out int messageLength))
             {
-                int parsed = PacketHandlers.Handler.ParsePackets(message, packetBudget);
-                NetClient.Socket.Statistics.TotalPacketsReceived += (uint)parsed;
-
-                if (parsed > 0)
+                try
                 {
-                    packetBudget -= parsed;
+                    int parsed = PacketHandlers.Handler.ParsePackets(message.AsSpan(0, messageLength), packetBudget);
+                    NetClient.Socket.Statistics.TotalPacketsReceived += (uint)parsed;
+
+                    if (parsed > 0)
+                    {
+                        packetBudget -= parsed;
+                    }
+                }
+                finally
+                {
+                    NetClient.Socket.ReturnPacketBuffer(message);
                 }
             }
 
