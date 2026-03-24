@@ -647,7 +647,9 @@ namespace ClassicUO.Game.Scenes
             {
                 for (int x = -1; x <= 2; ++x)
                 {
-                    GameObject tile = World.Map.GetTile(obj.X + x, obj.Y + y);
+                    GameObject headTile = World.Map.GetTile(obj.X + x, obj.Y + y);
+                    int groundZ = headTile?.Z ?? 0;
+                    GameObject tile = headTile;
 
                     found = false;
 
@@ -661,6 +663,17 @@ namespace ClassicUO.Game.Scenes
 
                             if (itemData.IsNoShoot || itemData.IsWindow)
                             {
+                                // ## BEGIN - END ## // MISC2
+                                // If invisible houses mode would hide this tile, don't count it as overhead
+                                if (ProfileManager.CurrentProfile?.InvisibleHousesEnabled == true &&
+                                    (tile.Z - World.Player.Z) > ProfileManager.CurrentProfile.InvisibleHousesZ &&
+                                    (tile.Z - groundZ) > ProfileManager.CurrentProfile.DontRemoveHouseBelowZ)
+                                {
+                                    tile = next;
+                                    continue;
+                                }
+                                // ## BEGIN - END ## // MISC2
+
                                 if (_maxZ - tile.Z + 5 >= tile.Z - obj.Z)
                                 {
                                     found = true;
