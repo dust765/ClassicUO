@@ -83,6 +83,8 @@ namespace ClassicUO.Game.Scenes
 
         private uint _time_cleanup = Time.Ticks + 5000;
         private uint _timeToUpdateNativeTitleStats;
+        private uint _timeTextServerEntities;
+        private ushort _lastPreloadX, _lastPreloadY;
         private static XBREffect _xbr;
         private bool _alphaChanged;
         private long _alphaTimer;
@@ -848,24 +850,25 @@ namespace ClassicUO.Game.Scenes
                     if (chunk == null || chunk.IsDestroyed)
                         continue;
 
-                    for (int x = 0; x < 8; x++)
+                    int chunkBaseX = chunkX << 3;
+                    int chunkBaseY = chunkY << 3;
+                    int tileStartX = Math.Max(0, minX - chunkBaseX);
+                    int tileEndX   = Math.Min(7, maxX - chunkBaseX);
+                    int tileStartY = Math.Max(0, minY - chunkBaseY);
+                    int tileEndY   = Math.Min(7, maxY - chunkBaseY);
+
+                    for (int x = tileStartX; x <= tileEndX; x++)
                     {
-                        for (int y = 0; y < 8; y++)
+                        for (int y = tileStartY; y <= tileEndY; y++)
                         {
-                            int worldX = (chunkX << 3) + x;
-                            int worldY = (chunkY << 3) + y;
-
-                            if (worldX < minX || worldX > maxX || worldY < minY || worldY > maxY)
-                                continue;
-
                             GameObject firstObj = chunk.GetHeadObject(x, y);
                             if (firstObj == null || firstObj.IsDestroyed)
                                 continue;
 
                             AddTileToRenderList(
                                 firstObj,
-                                worldX,
-                                worldY,
+                                chunkBaseX + x,
+                                chunkBaseY + y,
                                 use_handles,
                                 150,
                                 maxCotZ,
@@ -893,8 +896,12 @@ namespace ClassicUO.Game.Scenes
                 }
             }
 
-            UpdateTextServerEntities(World.Mobiles, true);
-            UpdateTextServerEntities(World.Items, false);
+            if (UpdateDrawPosition || Time.Ticks >= _timeTextServerEntities)
+            {
+                _timeTextServerEntities = Time.Ticks + 100;
+                UpdateTextServerEntities(World.Mobiles, true);
+                UpdateTextServerEntities(World.Items, false);
+            }
 
             UpdateDrawPosition = false;
         }
@@ -933,10 +940,16 @@ namespace ClassicUO.Game.Scenes
             // Preload chunks around the player for smoother rendering after teleport
             if (World.InGame && World.Map != null && World.Player != null)
             {
-                World.Map.PreloadChunksAround(World.Player.X, World.Player.Y, 3, 8);
+                if (World.Player.X != _lastPreloadX || World.Player.Y != _lastPreloadY)
+                {
+                    _lastPreloadX = World.Player.X;
+                    _lastPreloadY = World.Player.Y;
+                    World.Map.PreloadChunksAround(World.Player.X, World.Player.Y, 3, 8);
+                }
             }
 
-            PacketHandlers.SendMegaClilocRequests();
+            if (GameController.FullGameTick)
+                PacketHandlers.SendMegaClilocRequests();
 
             if (_forceStopScene)
             {
@@ -967,8 +980,11 @@ namespace ClassicUO.Game.Scenes
             }
 
             World.Update();
-            _animatedStaticsManager.Process();
-            BoatMovingManager.Update();
+            if (GameController.FullGameTick)
+            {
+                _animatedStaticsManager.Process();
+                BoatMovingManager.Update();
+            }
             Pathfinder.ProcessAutoWalk();
             DelayedObjectClickManager.Update();
 
