@@ -105,7 +105,24 @@ namespace ClassicUO.Game.Managers
         }
 
         public static bool IsTemporarilyShowing { get; private set; }
-        public static bool IsShowing => IsPermaToggled || IsTemporarilyShowing || Keyboard.Ctrl && Keyboard.Shift;
+
+        private static bool _cachedIsShowing;
+        private static uint _isShowingCacheTime;
+
+        public static bool IsShowing
+        {
+            get
+            {
+                if (Time.Ticks - _isShowingCacheTime > 16)
+                {
+                    _cachedIsShowing = IsPermaToggled || IsTemporarilyShowing || Keyboard.Ctrl && Keyboard.Shift;
+                    _isShowingCacheTime = Time.Ticks;
+                }
+                return _cachedIsShowing;
+            }
+        }
+
+        public static void InvalidateShowingCache() => _isShowingCacheTime = 0;
 
         private static List<NameOverheadOption> Options { get; set; } = new List<NameOverheadOption>();
 
@@ -253,6 +270,7 @@ namespace ClassicUO.Game.Managers
                 return;
 
             IsPermaToggled = toggled;
+            InvalidateShowingCache();
             _gump?.UpdateCheckboxes();
         }
 
@@ -382,6 +400,7 @@ namespace ClassicUO.Game.Managers
             SetActiveOption(option);
 
             IsTemporarilyShowing = true;
+            InvalidateShowingCache();
         }
 
         public static void RegisterKeyUp(SDL.SDL_Keycode keySym)
@@ -392,6 +411,7 @@ namespace ClassicUO.Game.Managers
             _lastKeySym = SDL.SDL_Keycode.SDLK_UNKNOWN;
 
             IsTemporarilyShowing = false;
+            InvalidateShowingCache();
         }
 
         public static void SetActiveOption(NameOverheadOption option)
