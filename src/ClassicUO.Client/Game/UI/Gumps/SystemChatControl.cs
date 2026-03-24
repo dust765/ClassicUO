@@ -237,9 +237,10 @@ namespace ClassicUO.Game.UI.Gumps
 
         public void SetFocus()
         {
+            bool wasEditable = TextBoxControl.IsEditable;
             TextBoxControl.IsEditable = true;
             TextBoxControl.SetKeyboardFocus();
-            TextBoxControl.IsEditable = _isActive;
+            TextBoxControl.IsEditable = wasEditable;
             _trans.IsVisible = _isActive;
         }
 
