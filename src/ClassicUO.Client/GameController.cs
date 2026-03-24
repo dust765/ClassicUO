@@ -632,7 +632,7 @@ namespace ClassicUO
 
             Plugin.Tick();
 
-            if (fullGameTick && Scene != null && Scene.IsLoaded && !Scene.IsDestroyed)
+            if (Scene != null && Scene.IsLoaded && !Scene.IsDestroyed)
             {
                 if (EventSink.GameUpdate != null)
                 {
@@ -680,12 +680,15 @@ namespace ClassicUO
                     _suppressedDraw = true;
                     SuppressDraw();
                     double remaining = frameMs - _totalElapsed;
-                    int sleepCap = (int)Math.Min(96, Math.Max(frameMs, 8));
-                    if (remaining >= 2.0)
+                    if (remaining >= 4.0)
                     {
-                        Thread.Sleep((int)Math.Min(remaining, sleepCap));
+                        int sleepMs = (int)Math.Floor(Math.Min(remaining - 1.5, 4.0));
+                        if (sleepMs > 0)
+                        {
+                            Thread.Sleep(sleepMs);
+                        }
                     }
-                    else if (remaining >= 0.25)
+                    else if (remaining >= 1.25)
                     {
                         Thread.Sleep(1);
                     }

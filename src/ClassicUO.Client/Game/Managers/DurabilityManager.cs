@@ -35,7 +35,6 @@ using ClassicUO.Game.Data;
 using ClassicUO.Game.UI.Gumps;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System;
 
 namespace ClassicUO.Game.Managers
@@ -43,6 +42,7 @@ namespace ClassicUO.Game.Managers
     public class DurabilityManager : IDisposable
     {
         private readonly ConcurrentDictionary<uint, DurabiltyProp> _itemLayerSlots = new ConcurrentDictionary<uint, DurabiltyProp>();
+        private uint _nextUiRefreshTick;
         
         private static readonly Layer[] _equipLayers =
         {
@@ -65,31 +65,33 @@ namespace ClassicUO.Game.Managers
 
         private void OnOPLReceive(object s, OPLEventArgs e)
         {
-            Task.Factory.StartNew(() =>
+            var isItem = SerialHelper.IsValid(e.Serial) && SerialHelper.IsItem(e.Serial);
+            if (isItem)
             {
-                var isItem = SerialHelper.IsValid(e.Serial) && SerialHelper.IsItem(e.Serial);
-                if (isItem)
+                if (World.Items.TryGetValue(e.Serial, out var item))
                 {
-                    if (World.Items.TryGetValue(e.Serial, out var item))
+                    if (!item.IsDestroyed)
                     {
-                        if (!item.IsDestroyed)
+                        if (item.Container == World.Player.Serial && Array.IndexOf(_equipLayers, item.Layer) >= 0)
                         {
-                            if (item.Container == World.Player.Serial && Array.IndexOf(_equipLayers, item.Layer) >= 0)
-                            {
-                                var durability = ParseDurability((int)item.Serial, e.Data);
-                                _itemLayerSlots.AddOrUpdate(item.Serial, durability, (_, _) => durability);
-                            }
-                            else
-                            {
-                                _itemLayerSlots.TryRemove(item.Serial, out DurabiltyProp _);
-                            }
+                            var durability = ParseDurability((int)item.Serial, e.Data);
+                            _itemLayerSlots.AddOrUpdate(item.Serial, durability, (_, _) => durability);
+                        }
+                        else
+                        {
+                            _itemLayerSlots.TryRemove(item.Serial, out DurabiltyProp _);
+                        }
 
+                        uint now = Time.Ticks;
+                        if (now >= _nextUiRefreshTick)
+                        {
+                            _nextUiRefreshTick = now + 100;
                             UIManager.GetGump<DurabilitysGump>()?.RequestUpdateContents();
                             UIManager.GetGump<DurabilitysGumpOld>()?.RequestUpdateContents();
                         }
                     }
                 }
-            });
+            }
         }
 
         private static DurabiltyProp ParseDurability(int serial, string data)

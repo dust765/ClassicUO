@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ClassicUO.Dust765.UI.Gumps
@@ -24,6 +25,24 @@ namespace ClassicUO.Dust765.UI.Gumps
         private AlphaBlendControl background;
         private OptionsGump.SettingsSection highlightSection;
         private ScrollArea highlightSectionScroll;
+
+        private sealed class DebounceState
+        {
+            public int Revision;
+        }
+
+        private static void Debounce(DebounceState state, int delayMs, Action action)
+        {
+            int current = Interlocked.Increment(ref state.Revision);
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(delayMs).ConfigureAwait(false);
+                if (current == Volatile.Read(ref state.Revision))
+                {
+                    action();
+                }
+            });
+        }
 
         public GridHightlightMenu(int x = 100, int y = 100) : base(0, 0)
         {
@@ -119,13 +138,13 @@ namespace ClassicUO.Dust765.UI.Gumps
             OptionsGump.InputField _name;
             area.Add(_name = new OptionsGump.InputField(0x0BB8, 0xFF, 0xFFFF, true, 120, 20) { X = 25, Y = y, AcceptKeyboardInput = true });
             _name.SetText(data.Name);
+            DebounceState nameRevision = new DebounceState();
 
             _name.TextChanged += (s, e) =>
             {
-                Task.Factory.StartNew(() =>
+                Debounce(nameRevision, 2500, () =>
                 {
                     var tVal = _name.Text;
-                    System.Threading.Thread.Sleep(2500);
                     if (_name.Text == tVal)
                     {
                         data.Name = _name.Text;
@@ -372,12 +391,12 @@ namespace ClassicUO.Dust765.UI.Gumps
                 OptionsGump.InputField propInput, valInput;
                 scrollArea.Add(propInput = new OptionsGump.InputField(0x0BB8, 0xFF, 0xFFFF, true, 150, 20) { Y = lastYitem });
                 propInput.SetText(data.Properties[subKeyLoc]);
+                DebounceState propRevision = new DebounceState();
                 propInput.TextChanged += (s, e) =>
                 {
-                    Task.Factory.StartNew(() =>
+                    Debounce(propRevision, 2500, () =>
                     {
                         var tVal = propInput.Text;
-                        System.Threading.Thread.Sleep(2500);
                         if (propInput.Text == tVal)
                         {
                             data.Properties[subKeyLoc] = propInput.Text;
@@ -389,12 +408,12 @@ namespace ClassicUO.Dust765.UI.Gumps
 
                 scrollArea.Add(valInput = new OptionsGump.InputField(0x0BB8, 0xFF, 0xFFFF, true, 100, 20) { X = 180, Y = lastYitem, NumbersOnly = true });
                 valInput.SetText(data.PropMinVal[subKeyLoc].ToString());
+                DebounceState valRevision = new DebounceState();
                 valInput.TextChanged += (s, e) =>
                 {
-                    Task.Factory.StartNew(() =>
+                    Debounce(valRevision, 2500, () =>
                     {
                         var tVal = valInput.Text;
-                        System.Threading.Thread.Sleep(2500);
                         if (valInput.Text == tVal)
                         {
                             if (int.TryParse(valInput.Text, out int val))

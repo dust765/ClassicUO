@@ -1,17 +1,17 @@
 using System;
-using System.Threading;
 using ClassicUO.Dust765.Shared;
 using ClassicUO.Dust765.Lobby.Networking;
 using ClassicUO.Game;
 using ClassicUO.Game.Data;
 using ClassicUO.Game.Managers;
+using ClassicUO.Utility;
 
 namespace ClassicUO.Dust765.Autos
 {
     internal class AutoLobbyStealthPosition
     {
         public static bool IsEnabled { get; set; }
-        public static Thread a_AutoLobbyStealthPositionThread;
+        private static uint _nextCheckTick;
 
         //##AutoLobbyStealthPosition Toggle##//
         public static void Toggle()
@@ -23,11 +23,6 @@ namespace ClassicUO.Dust765.Autos
         public static void Initialize()
         {
             CommandManager.Register("autohid", args => Toggle());
-
-            a_AutoLobbyStealthPositionThread = new Thread(new ThreadStart(DoAutoLobbyStealthPosition))
-            {
-                IsBackground = true
-            };
         }
 
         //##Default AutoLobbyStealthPosition Status on GameLoad##//
@@ -39,61 +34,26 @@ namespace ClassicUO.Dust765.Autos
         //##Perform AutoLobbyStealthPosition Update on Toggle/Player Death##//
         public static void Update()
         {
-            if (!IsEnabled || World.Player.IsDead)
-                DisableAutoLobbyStealthPosition();
-
-            if (IsEnabled)
-                EnableAutoLobbyStealthPosition();
-        }
-
-        //##Enable AutoLobbyStealthPosition##//
-        private static void EnableAutoLobbyStealthPosition()
-        {
-            if (!a_AutoLobbyStealthPositionThread.IsAlive)
+            if (!IsEnabled || World.Player == null || World.Player.IsDead)
             {
-                a_AutoLobbyStealthPositionThread = new Thread(new ThreadStart(DoAutoLobbyStealthPosition))
-                {
-                    IsBackground = true
-                };
-                a_AutoLobbyStealthPositionThread.Start();
+                return;
             }
-        }
 
-        //##Disable AutoLobbyStealthPosition##//
-        private static void DisableAutoLobbyStealthPosition()
-        {
-            if (a_AutoLobbyStealthPositionThread.IsAlive)
+            uint now = Time.Ticks;
+            if (now < _nextCheckTick)
             {
-                a_AutoLobbyStealthPositionThread.Abort();
+                return;
             }
-        }
+            _nextCheckTick = now + 2500;
 
-        //##Perform AutoLobbyStealthPosition Checks##//
-        private static void DoAutoLobbyStealthPosition()
-        {
-            DateTime dateTime = DateTime.Now;
-            while (true)
+            if (Lobby.Lobby._netState == null || !Lobby.Lobby._netState.IsOpen)
             {
+                return;
+            }
 
-                if (World.Player == null || World.Player.IsDead)
-                    DisableAutoLobbyStealthPosition();
-
-                if (!World.Player.IsDead && World.Player != null && ((DateTime.Now - dateTime) > TimeSpan.FromSeconds(2.5)))
-                {
-                    
-                    if (Lobby.Lobby._netState == null || !Lobby.Lobby._netState.IsOpen)
-                    {
-
-                    }
-                    else if (World.Player.IsHidden)
-                    {
-                        SendPacketToLobby();
-                    }
-
-                    dateTime = DateTime.Now;
-                    Thread.Sleep(250);
-                }
-                Thread.Sleep(250);
+            if (World.Player.IsHidden)
+            {
+                SendPacketToLobby();
             }
         }
 

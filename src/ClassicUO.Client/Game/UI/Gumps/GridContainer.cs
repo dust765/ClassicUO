@@ -1541,18 +1541,18 @@ namespace ClassicUO.Game.UI.Gumps
             }
 
             public int hcount = 0;
+            private int _highlightRevision;
 
             public void ApplyHighlightProperties()
             {
                 if (ProfileManager.CurrentProfile.GridHighlight_CorpseOnly && !container.IsCorpse)
                     return;
                 hcount++;
-                Task.Factory.StartNew(() =>
+                int revision = System.Threading.Interlocked.Increment(ref _highlightRevision);
+                _ = Task.Run(async () =>
                 {
-                    var tcount = hcount;
-                    System.Threading.Thread.Sleep(1000);
-
-                    if (tcount != hcount) { return; } //Another call has already been made
+                    await Task.Delay(350).ConfigureAwait(false);
+                    if (revision != System.Threading.Volatile.Read(ref _highlightRevision)) { return; }
                     List<GridHighlightData> highlightConfigs = new List<GridHighlightData>();
                     for (int propIndex = 0; propIndex < ProfileManager.CurrentProfile.GridHighlight_PropNames.Count; propIndex++)
                     {
