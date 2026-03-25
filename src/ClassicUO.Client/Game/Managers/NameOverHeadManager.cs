@@ -126,6 +126,20 @@ namespace ClassicUO.Game.Managers
 
         private static List<NameOverheadOption> Options { get; set; } = new List<NameOverheadOption>();
 
+        // O(1) hotkey lookup — rebuilt when options are added/removed
+        private static Dictionary<(SDL.SDL_Keycode key, bool alt, bool ctrl, bool shift), NameOverheadOption>
+            _hotkeyIndex = new();
+
+        private static void RebuildHotkeyIndex()
+        {
+            _hotkeyIndex.Clear();
+            foreach (var opt in Options)
+            {
+                if (opt.Key != SDL.SDL_Keycode.SDLK_UNKNOWN)
+                    _hotkeyIndex[(opt.Key, opt.Alt, opt.Ctrl, opt.Shift)] = opt;
+            }
+        }
+
         public static string Search { get; set; } = string.Empty;
 
         public static bool IsAllowed(Entity serial)
@@ -284,6 +298,7 @@ namespace ClassicUO.Game.Managers
 
                 Options.Clear();
                 CreateDefaultEntries();
+                RebuildHotkeyIndex();
                 Save();
 
                 return;
@@ -315,6 +330,8 @@ namespace ClassicUO.Game.Managers
                     Options.Add(option);
                 }
             }
+
+            RebuildHotkeyIndex();
         }
 
         public static void Save()
@@ -364,18 +381,21 @@ namespace ClassicUO.Game.Managers
         public static void AddOption(NameOverheadOption option)
         {
             Options.Add(option);
+            RebuildHotkeyIndex();
             _gump?.RedrawOverheadOptions();
         }
 
         public static void RemoveOption(NameOverheadOption option)
         {
             Options.Remove(option);
+            RebuildHotkeyIndex();
             _gump?.RedrawOverheadOptions();
         }
 
         public static NameOverheadOption FindOptionByHotkey(SDL.SDL_Keycode key, bool alt, bool ctrl, bool shift)
         {
-            return Options.FirstOrDefault(o => o.Key == key && o.Alt == alt && o.Ctrl == ctrl && o.Shift == shift);
+            _hotkeyIndex.TryGetValue((key, alt, ctrl, shift), out var result);
+            return result;
         }
 
         public static List<NameOverheadOption> GetAllOptions() => Options;

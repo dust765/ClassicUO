@@ -45,6 +45,7 @@ namespace ClassicUO.Network
     sealed class SocketWrapper : IDisposable
     {
         private TcpClient _socket;
+        private System.Net.Sockets.NetworkStream _cachedStream;
 
         public bool IsConnected => _socket?.Client?.Connected ?? false;
 
@@ -63,6 +64,8 @@ namespace ClassicUO.Network
 
             _socket = new TcpClient();
             _socket.NoDelay = true;
+            _socket.ReceiveBufferSize = 262144; // 256 KB — fewer syscalls, more stable latency
+            _socket.SendBufferSize = 65536;     // 64 KB send buffer
 
             try
             {
@@ -83,6 +86,7 @@ namespace ClassicUO.Network
                     return;
                 }
 
+                _cachedStream = _socket.GetStream(); // cache stream once — avoids per-packet overhead
                 OnConnected?.Invoke(this, EventArgs.Empty);
             }
             catch (SocketException socketEx)
@@ -99,7 +103,8 @@ namespace ClassicUO.Network
 
         public void Send(byte[] buffer, int offset, int count)
         {
-            var stream = _socket.GetStream();
+            var stream = _cachedStream;
+            if (stream == null) return;
             stream.Write(buffer, offset, count);
             stream.Flush();
         }
@@ -114,7 +119,7 @@ namespace ClassicUO.Network
 
             available = Math.Min(buffer.Length, available);
             var done = 0;
-            var stream = _socket.GetStream();
+            var stream = _cachedStream;
 
             while (done < available)
             {
@@ -138,6 +143,7 @@ namespace ClassicUO.Network
         {
             var s = _socket;
             _socket = null;
+            _cachedStream = null;
             if (s == null) return;
             try
             {
