@@ -999,11 +999,8 @@ namespace ClassicUO.Game.Scenes
             }
 
             World.Update();
-            if (GameController.FullGameTick)
-            {
-                _animatedStaticsManager.Process();
-                BoatMovingManager.Update();
-            }
+            _animatedStaticsManager.Process();
+            BoatMovingManager.Update();
             Pathfinder.ProcessAutoWalk();
             DelayedObjectClickManager.Update();
 

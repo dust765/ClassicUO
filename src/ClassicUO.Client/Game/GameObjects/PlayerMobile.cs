@@ -1726,7 +1726,7 @@ namespace ClassicUO.Game.GameObjects
             else
             {
 
-                if (Walker.WalkingFailed || Walker.LastStepRequestTime > Time.Ticks || Walker.StepsCount >= Constants.MAX_STEP_COUNT || Client.Version >= ClientVersion.CV_60142 && IsParalyzed)
+                if (Walker.WalkingFailed || Walker.LastStepRequestTime > Time.Ticks || Walker.StepsCount >= Constants.MAX_STEP_COUNT || Walker.TeleportFreezeUntil > Time.Ticks || Client.Version >= ClientVersion.CV_60142 && IsParalyzed)
                 {
                     return false;
                 }
@@ -1958,7 +1958,7 @@ namespace ClassicUO.Game.GameObjects
 
         public bool WalkNotAvoid(Direction direction, bool run, bool swing = false)
         {
-            if (Walker.WalkingFailed || Walker.LastStepRequestTime > Time.Ticks || Walker.StepsCount >= Constants.MAX_STEP_COUNT || Client.Version >= ClientVersion.CV_60142 && IsParalyzed)
+            if (Walker.WalkingFailed || Walker.LastStepRequestTime > Time.Ticks || Walker.StepsCount >= Constants.MAX_STEP_COUNT || Walker.TeleportFreezeUntil > Time.Ticks || Client.Version >= ClientVersion.CV_60142 && IsParalyzed)
             {
                 return false;
             }

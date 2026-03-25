@@ -6808,7 +6808,13 @@ namespace ClassicUO.Network
 
                 World.Player.Walker.ResendPacketResync = false;
                 World.Player.CloseRangedGumps();
+                bool teleported = World.Player.X != x || World.Player.Y != y;
                 World.Player.SetInWorldTile(x, y, z);
+                if (teleported && World.Map != null)
+                {
+                    World.Player.Walker.TeleportFreezeUntil = Time.Ticks + 250;
+                    World.Map.PreloadChunksAround(x, y, 4, int.MaxValue);
+                }
                 World.Player.UpdateAbilities();
                 // ## BEGIN - END ## // ONCASTINGGUMP
                 if (ProfileManager.CurrentProfile.OnCastingGump) {

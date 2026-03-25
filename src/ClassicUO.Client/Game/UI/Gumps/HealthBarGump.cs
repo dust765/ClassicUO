@@ -1510,7 +1510,7 @@ namespace ClassicUO.Game.UI.Gumps
                     }
 
                     Height = HPB_HEIGHT_SINGLELINE;
-                    if ((ProfileManager.CurrentProfile?.PvM_DamageCounterOnLastTarget == true || ProfileManager.CurrentProfile?.PvM_AggroIndicatorOnHealthBar == true) && (IsLastTarget || IsLastAttackBar))
+                    if ((ProfileManager.CurrentProfile?.PvM_DamageCounterOnLastTarget == true) && (IsLastTarget || IsLastAttackBar))
                         Height += 14;
                     Width = HPB_WIDTH;
 
@@ -1632,7 +1632,7 @@ namespace ClassicUO.Game.UI.Gumps
                             CanMove = true
                         }
                     );
-                    if ((ProfileManager.CurrentProfile?.PvM_DamageCounterOnLastTarget == true || ProfileManager.CurrentProfile?.PvM_AggroIndicatorOnHealthBar == true) && (IsLastTarget || IsLastAttackBar))
+                    if ((ProfileManager.CurrentProfile?.PvM_DamageCounterOnLastTarget == true) && (IsLastTarget || IsLastAttackBar))
                         Add(_damageCounterLabel = new Label(string.Empty, true, 1, HPB_WIDTH, 1, FontStyle.Cropped, TEXT_ALIGN_TYPE.TS_CENTER) { X = 0, Y = 16, CanMove = true });
                     else
                         _damageCounterLabel = null;
@@ -2072,7 +2072,7 @@ namespace ClassicUO.Game.UI.Gumps
                             CanMove = true
                         }
                     );
-                    if ((ProfileManager.CurrentProfile?.PvM_DamageCounterOnLastTarget == true || ProfileManager.CurrentProfile?.PvM_AggroIndicatorOnHealthBar == true) && (IsLastTarget || IsLastAttackBar))
+                    if ((ProfileManager.CurrentProfile?.PvM_DamageCounterOnLastTarget == true) && (IsLastTarget || IsLastAttackBar))
                     {
                         Height += 14;
                         Add(_damageCounterLabel = new Label(string.Empty, true, 1, 120, 1, FontStyle.Fixed, TEXT_ALIGN_TYPE.TS_CENTER) { X = 16, Y = 30, CanMove = true });

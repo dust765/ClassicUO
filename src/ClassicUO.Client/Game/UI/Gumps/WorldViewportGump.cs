@@ -51,8 +51,6 @@ namespace ClassicUO.Game.UI.Gumps
     internal class WorldViewportGump : Gump
     {
         public const int BORDER_WIDTH = 5;
-        private static readonly RenderedText _warModeText = RenderedText.Create("WAR", 0x0021, 1, true, FontStyle.BlackBorder, TEXT_ALIGN_TYPE.TS_LEFT);
-        private static readonly RenderedText _criminalAlertText = RenderedText.Create("!", 0x0026, 3, true, FontStyle.BlackBorder, TEXT_ALIGN_TYPE.TS_RIGHT);
         private readonly RenderedText _greyTimerText = RenderedText.Create("0:00", 0x0021, 1, true, FontStyle.BlackBorder, TEXT_ALIGN_TYPE.TS_RIGHT);
         private readonly BorderControl _borderControl;
         private readonly Button _button;
@@ -366,14 +364,6 @@ namespace ClassicUO.Game.UI.Gumps
                         DamageWindowOutlineHue
                         );
                 }
-            }
-
-            if (World.InGame && ProfileManager.CurrentProfile?.PvP_WarModeIndicator == true && World.Player != null && World.Player.InWarMode)
-                _warModeText.Draw(batcher, x + BORDER_WIDTH + 4, y + BORDER_WIDTH + 4);
-
-            if (World.InGame && ProfileManager.CurrentProfile?.PvP_CriminalAttackableAlert == true && PvMPvPManager.Instance.CriminalOrAttackableNearby)
-            {
-                _criminalAlertText.Draw(batcher, x + Width - BORDER_WIDTH - _criminalAlertText.Width - 4, y + BORDER_WIDTH + 4);
             }
 
             if (World.InGame && ProfileManager.CurrentProfile?.PvP_GreyCriminalTimer == true && PvMPvPManager.Instance.GreyCriminalSecondsRemaining > 0)

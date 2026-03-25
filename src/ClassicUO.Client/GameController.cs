@@ -51,7 +51,6 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using static SDL3.SDL;
 
 namespace ClassicUO
@@ -69,7 +68,6 @@ namespace ClassicUO
         private uint _totalFrames;
         private uint _lastLegionScriptingUpdate;
         private UltimaBatcher2D _uoSpriteBatch;
-        private bool _suppressedDraw;
         private Texture2D _background;
 
         private static Vector3 bgHueShader = new Vector3(0, 0, 0.3f);
@@ -655,13 +653,13 @@ namespace ClassicUO
             }
 
             UIManager.Update();
-            if (fullGameTick && Time.Ticks - _lastLegionScriptingUpdate >= 50)
+            if (Time.Ticks - _lastLegionScriptingUpdate >= 50)
             {
                 _lastLegionScriptingUpdate = Time.Ticks;
                 LegionScripting.LegionScripting.OnUpdate();
             }
 
-            if (fullGameTick && World.InGame)
+            if (World.InGame)
                 PerformanceOptimizer.UpdatePvPMode();
 
             if (Time.Ticks >= _nextSlowUpdate)
@@ -682,36 +680,6 @@ namespace ClassicUO
 
                 _totalFrames = 0;
                 _currentFpsTime = 0;
-            }
-
-            if (!disableFrameLimiting)
-            {
-                if (!fullGameTick)
-                {
-                    _suppressedDraw = true;
-                    SuppressDraw();
-                    double remaining = frameMs - _totalElapsed;
-                    if (remaining >= 4.0)
-                    {
-                        int sleepMs = (int)Math.Floor(Math.Min(remaining - 1.5, 4.0));
-                        if (sleepMs > 0)
-                        {
-                            Thread.Sleep(sleepMs);
-                        }
-                    }
-                    else if (remaining >= 1.25)
-                    {
-                        Thread.Sleep(1);
-                    }
-                }
-                else
-                {
-                    _suppressedDraw = false;
-                }
-            }
-            else
-            {
-                _suppressedDraw = false;
             }
 
             GameCursor?.Update();
@@ -785,7 +753,7 @@ namespace ClassicUO
 
         protected override bool BeginDraw()
         {
-            return !_suppressedDraw && base.BeginDraw();
+            return base.BeginDraw();
         }
 
         private void WindowOnClientSizeChanged(object sender, EventArgs e)

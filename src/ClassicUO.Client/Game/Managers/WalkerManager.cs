@@ -170,6 +170,7 @@ namespace ClassicUO.Game.Managers
         public bool WalkingFailed;
         public byte WalkSequence;
         public bool WantChangeCoordinates;
+        public long TeleportFreezeUntil;
 
         public void DenyWalk(byte sequence, int x, int y, sbyte z)
         {
@@ -265,6 +266,7 @@ namespace ClassicUO.Game.Managers
             WalkingFailed = false;
             ResendPacketResync = false;
             LastStepRequestTime = 0;
+            TeleportFreezeUntil = 0;
         }
     }
 }

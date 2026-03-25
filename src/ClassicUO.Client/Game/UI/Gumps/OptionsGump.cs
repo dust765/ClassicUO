@@ -44,6 +44,7 @@ using ClassicUO.Game.Managers;
 using ClassicUO.Game.Scenes;
 using ClassicUO.Game.UI.Gumps.Login;
 using ClassicUO.Dust765.Options;
+using ClassicUO.Dust765.UI.Gumps;
 using ClassicUO.Game.UI.Controls;
 using ClassicUO.Input;
 using ClassicUO.Assets;
@@ -5723,6 +5724,21 @@ namespace ClassicUO.Game.UI.Gumps
 
             _nearbyItemGumpHotkeyBox.SetKey((SDL.SDL_Keycode)nk, (SDL.SDL_Keymod)nm);
             sectionMiscTaz.AddRight(_nearbyItemGumpHotkeyBox);
+
+            SettingsSection sectionPv = AddSettingsSection(box, _langDust.CombatTrackingSectionTitle);
+            sectionPv.Y = sectionMiscTaz.Bounds.Bottom + 40;
+            NiceButton openCombatTracking = new NiceButton(startX, startY, Math.Min(380, rightArea.Width - 40), 28, ButtonAction.Activate, _langDust.CombatTrackingOpenButton) { IsSelectable = false, DisplayBorder = true };
+            openCombatTracking.MouseUp += (s, e) =>
+            {
+                if (e.Button == MouseButtonType.Left)
+                {
+                    UIManager.GetGump<CombatTrackingModalGump>()?.Dispose();
+                    UIManager.Add(new CombatTrackingModalGump());
+                }
+            };
+            sectionPv.Add(openCombatTracking);
+            Label combatHint = new Label(_langDust.CombatTrackingSectionHint, true, HUE_FONT, rightArea.Width - 50, FONT, FontStyle.None);
+            sectionPv.Add(combatHint);
 
             Add(rightArea, PAGE);
         }

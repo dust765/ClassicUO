@@ -26,11 +26,10 @@ namespace ClassicUO.Game.Managers
         private uint _lowHpAlertSerial;
         private const int LOW_HP_PERCENT = 20;
 
+        public uint DamageCounterStamp { get; private set; }
+
         private ulong _greyCriminalStartTicks;
         private const int GREY_CRIMINAL_DURATION_SEC = 120;
-        private uint _criminalAlertCooldownTicks;
-        private const int CRIMINAL_ALERT_COOLDOWN_MS = 10000;
-        public bool CriminalOrAttackableNearby { get; private set; }
         public int GreyCriminalSecondsRemaining { get; private set; }
 
         private struct DamageEntry
@@ -51,6 +50,10 @@ namespace ClassicUO.Game.Managers
             _subscribed = true;
             _sessionKillCount = 0;
             _damageBySerial.Clear();
+            unchecked
+            {
+                DamageCounterStamp++;
+            }
             _greyCriminalStartTicks = 0;
         }
 
@@ -75,28 +78,6 @@ namespace ClassicUO.Game.Managers
             if (!World.InGame || World.Player == null)
                 return;
             var profile = ProfileManager.CurrentProfile;
-            if (profile?.PvP_CriminalAttackableAlert == true)
-            {
-                CriminalOrAttackableNearby = false;
-                foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
-                {
-                    Mobile m = mkv.Value;
-                    if (m == World.Player || m.IsDestroyed) continue;
-                    if (m.Distance > 12) continue;
-                    if (m.NotorietyFlag == NotorietyFlag.Criminal || m.NotorietyFlag == NotorietyFlag.Gray || m.NotorietyFlag == NotorietyFlag.Enemy || m.NotorietyFlag == NotorietyFlag.Murderer)
-                    {
-                        CriminalOrAttackableNearby = true;
-                        if (Time.Ticks - _criminalAlertCooldownTicks > CRIMINAL_ALERT_COOLDOWN_MS)
-                        {
-                            _criminalAlertCooldownTicks = Time.Ticks;
-                            GameActions.Print("Criminal / attackable nearby!", 0x0026);
-                            if (profile.PvX_ConfigurableSoundsPerEvent && profile.PvX_SoundCriminalAlert != 0)
-                                Client.Game.Audio.PlaySound(profile.PvX_SoundCriminalAlert);
-                        }
-                        break;
-                    }
-                }
-            }
             if (profile?.PvX_NameOverheadProfilesByContext == true && World.Player != null)
             {
                 var flags = World.Player.InWarMode ? profile.PvP_NameOverheadProfileFlags : profile.PvM_NameOverheadProfileFlags;
@@ -121,6 +102,10 @@ namespace ClassicUO.Game.Managers
         {
             _damageBySerial.Clear();
             _sessionKillCount = 0;
+            unchecked
+            {
+                DamageCounterStamp++;
+            }
         }
 
         private void OnEntityDamage(object sender, int damage)
@@ -135,12 +120,22 @@ namespace ClassicUO.Game.Managers
             }
             entry.TotalDamage += damage;
             _damageBySerial[serial] = entry;
+            unchecked
+            {
+                DamageCounterStamp++;
+            }
         }
 
         public void NotifyMobileDeath(uint serial)
         {
             if (serial == TargetManager.LastAttack || serial == TargetManager.LastTargetInfo.Serial)
+            {
                 _sessionKillCount++;
+                unchecked
+                {
+                    DamageCounterStamp++;
+                }
+            }
         }
 
         public void CheckLowHpAlert(uint serial, int hits, int hitsMax)
@@ -178,27 +173,27 @@ namespace ClassicUO.Game.Managers
 
         public void ResetDamageFor(uint serial)
         {
-            _damageBySerial.Remove(serial);
+            if (_damageBySerial.Remove(serial))
+            {
+                unchecked
+                {
+                    DamageCounterStamp++;
+                }
+            }
         }
 
         public string GetDamageCounterText(uint serial)
         {
             var profile = ProfileManager.CurrentProfile;
-            if (profile?.PvM_DamageCounterOnLastTarget != true && profile?.PvM_AggroIndicatorOnHealthBar != true)
-                return string.Empty;
-            string aggro = profile.PvM_AggroIndicatorOnHealthBar && serial == TargetManager.LastAttack && serial != 0 ? "Aggro" : string.Empty;
             if (profile?.PvM_DamageCounterOnLastTarget != true)
-                return aggro;
+                return string.Empty;
             int total = GetTotalDamage(serial);
             double dps = GetDPS(serial);
             string dmg = total > 0 ? $"{total} | {dps:F1} DPS" : string.Empty;
             string kills = profile.PvM_KillCountMarkerPerSession && SessionKillCount > 0
                 ? (string.IsNullOrEmpty(dmg) ? $"Kills: {SessionKillCount}" : $" | Kills: {SessionKillCount}")
                 : string.Empty;
-            string line = dmg + kills;
-            if (!string.IsNullOrEmpty(aggro))
-                line = string.IsNullOrEmpty(line) ? aggro : aggro + " | " + line;
-            return line;
+            return dmg + kills;
         }
 
         public string GetDamageCounterTextForOverhead(uint serial)
@@ -206,17 +201,13 @@ namespace ClassicUO.Game.Managers
             var profile = ProfileManager.CurrentProfile;
             if (profile?.PvM_DamageCounterAsOverhead != true || serial == 0 || serial != TargetManager.LastAttack)
                 return string.Empty;
-            string aggro = profile.PvM_AggroIndicatorOnHealthBar ? "Aggro" : string.Empty;
             int total = GetTotalDamage(serial);
             double dps = GetDPS(serial);
             string dmg = total > 0 ? $"{total} | {dps:F1} DPS" : "0 | 0 DPS";
             string kills = profile.PvM_KillCountMarkerPerSession && SessionKillCount > 0
                 ? $" | Kills: {SessionKillCount}"
                 : string.Empty;
-            string line = dmg + kills;
-            if (!string.IsNullOrEmpty(aggro))
-                line = aggro + " | " + line;
-            return line;
+            return dmg + kills;
         }
     }
 }

@@ -40,6 +40,21 @@ namespace ClassicUO.Game.UI.Gumps
         {
             AnchorType = ANCHOR_TYPE.DISABLED;
             var profile = ProfileManager.CurrentProfile;
+            if (profile == null || !profile.ActionBarEnabled)
+            {
+                Dispose();
+                return;
+            }
+
+            if (profile.ActionBarSlots == null)
+                profile.ActionBarSlots = new List<ActionBarSlotData>();
+
+            if (profile.ActionBarSlots.Count == 0)
+            {
+                for (int i = 0; i < ActionBarManager.SLOT_COUNT; i++)
+                    profile.ActionBarSlots.Add(new ActionBarSlotData());
+            }
+
             X = profile.ActionBarPosition.X;
             Y = profile.ActionBarPosition.Y;
             int slotCount = Math.Max(1, Math.Min(profile?.ActionBarSlots?.Count ?? ActionBarManager.SLOT_COUNT, ActionBarManager.MAX_SLOT_COUNT));
