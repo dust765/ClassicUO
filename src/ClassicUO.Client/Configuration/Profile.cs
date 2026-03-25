@@ -296,7 +296,7 @@ namespace ClassicUO.Configuration
         public bool CBBlackBGToggled { get; set; }
 
         public bool ShowInfoBar { get; set; }
-        public bool ShowHPInTitleBar { get; set; } = true;
+        public bool ShowHPInTitleBar { get; set; } = false;
         public bool EnableTitleBarStats { get; set; }
         public TitleBarStatsMode TitleBarStatsMode { get; set; } = TitleBarStatsMode.Text;
         public int InfoBarHighlightType { get; set; } // 0 = text colour changes, 1 = underline

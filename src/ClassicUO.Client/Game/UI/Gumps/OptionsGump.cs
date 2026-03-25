@@ -7230,7 +7230,7 @@ namespace ClassicUO.Game.UI.Gumps
             _currentProfile.ShowHPInTitleBar = _showHPInTitleBar?.IsChecked ?? _currentProfile.ShowHPInTitleBar;
             _currentProfile.InfoBarHighlightType = _infoBarHighlightType.SelectedIndex;
             if (World.InGame && World.Player != null)
-                Client.Game.SetWindowTitle(World.Player.Name);
+                Client.Game.SetWindowTitle(World.Player.Name, skipStats: true);
 
             if (_actionBarEnabled != null)
                 _currentProfile.ActionBarEnabled = _actionBarEnabled.IsChecked;

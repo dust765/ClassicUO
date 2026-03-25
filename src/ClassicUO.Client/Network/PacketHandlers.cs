@@ -630,7 +630,7 @@ namespace ClassicUO.Network
                     {
                         if (
                             !string.IsNullOrEmpty(World.Player.Name)
-                            && (oldName != World.Player.Name || ProfileManager.CurrentProfile?.ShowHPInTitleBar == true)
+                            && (oldName != World.Player.Name || ProfileManager.CurrentProfile?.ShowHPInTitleBar == true || ProfileManager.CurrentProfile?.EnableTitleBarStats == true)
                         )
                         {
                             Client.Game.SetWindowTitle(World.Player.Name);
@@ -1994,7 +1994,7 @@ namespace ClassicUO.Network
                     UoAssist.SignalHits();
                     UoAssist.SignalStamina();
                     UoAssist.SignalMana();
-                    if (ProfileManager.CurrentProfile?.ShowHPInTitleBar == true)
+                    if (ProfileManager.CurrentProfile?.ShowHPInTitleBar == true || ProfileManager.CurrentProfile?.EnableTitleBarStats == true)
                         Client.Game.SetWindowTitle(World.Player.Name);
                 }
             }
@@ -3636,7 +3636,7 @@ namespace ClassicUO.Network
             if (entity == World.Player)
             {
                 UoAssist.SignalHits();
-                if (ProfileManager.CurrentProfile?.ShowHPInTitleBar == true)
+                if (ProfileManager.CurrentProfile?.ShowHPInTitleBar == true || ProfileManager.CurrentProfile?.EnableTitleBarStats == true)
                     Client.Game.SetWindowTitle(World.Player.Name);
             }
         }
