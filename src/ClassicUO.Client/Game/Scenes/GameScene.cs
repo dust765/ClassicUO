@@ -771,6 +771,25 @@ namespace ClassicUO.Game.Scenes
 
         private void FillGameObjectList()
         {
+            // Pre-grow arrays to last frame's high-water-mark — avoids mid-frame Array.Resize + GC
+            if (_renderListStaticsArray.Length <= _hwmStatics)
+                Array.Resize(ref _renderListStaticsArray, _hwmStatics + 256);
+            if (_renderListTransparentArray.Length <= _hwmTransparent)
+                Array.Resize(ref _renderListTransparentArray, _hwmTransparent + 256);
+            if (_renderListAnimationsArray.Length <= _hwmAnimations)
+                Array.Resize(ref _renderListAnimationsArray, _hwmAnimations + 256);
+            if (_renderListEffectsArray.Length <= _hwmEffects)
+                Array.Resize(ref _renderListEffectsArray, _hwmEffects + 128);
+            if (_foliages.Length <= _hwmFoliages)
+                Array.Resize(ref _foliages, _hwmFoliages + 64);
+
+            // Update high-water-marks from last frame
+            _hwmStatics = Math.Max(_hwmStatics, _renderListStaticsCount);
+            _hwmTransparent = Math.Max(_hwmTransparent, _renderListTransparentObjectsCount);
+            _hwmAnimations = Math.Max(_hwmAnimations, _renderListAnimationCount);
+            _hwmEffects = Math.Max(_hwmEffects, _renderListEffectCount);
+            _hwmFoliages = Math.Max(_hwmFoliages, _foliageCount);
+
             _renderListStaticsCount = 0;
             _renderListTransparentObjectsCount = 0;
             _renderListAnimationCount = 0;
