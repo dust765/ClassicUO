@@ -1,124 +1,74 @@
-# RAM Reduction — Design Spec
+# RAM Reduction — Design Spec (Final)
 
 **Date:** 2026-03-26
-**Approach:** B — Chunk Unloading + World Objects Periodic Cleanup
-**Expected gain:** 100–300 MB
-**Risk level:** Medium
+**Change:** Single component — Orphan Item Cleaner in `World.cs`
+**Expected gain:** 20–100 MB (depends on session length and server activity)
+**Risk level:** Low
 
 ---
 
-## Overview
+## Context
 
-Two independent components reduce RAM usage at runtime without removing assets or degrading gameplay:
+The existing engine already handles most cleanup correctly:
+- `Map.ClearUnusedBlocks()` — removes idle chunks every 500ms
+- `World.Update()` removes out-of-range mobiles and their linked-list items via `RemoveMobile()` → `RemoveItem()` → deferred `Items.Remove()` via `_toRemove`
 
-1. **Chunk Unloader** — auto-recycles map chunks beyond render distance using existing pool infrastructure
-2. **World Object Cleaner** — periodically removes `World.Items` and `World.Mobiles` entries outside view range
-
-Both are orchestrated by a new `MemoryManager` static class called from `GameScene.Update()`.
-
----
-
-## Architecture
-
-```
-GameScene.Update()
-    └── MemoryManager.Update()
-            ├── CleanChunks()    [every 5s]
-            └── CleanWorldObjects()  [every 30s]
-```
+**The identified gap:** Items added to `World.Items` with `item.Container` pointing to a serial that was never in any mobile's `LinkedObject.Items` linked list (protocol edge cases, out-of-order packets). These items are invisible to `RemoveMobile()` and accumulate indefinitely.
 
 ---
 
-## Component A — Chunk Unloader
+## Solution — Orphan Item Cleaner
+
+A periodic sweep inside `World.Update()` that finds items whose parent container no longer exists in the world.
 
 ### Trigger
-Every 5 seconds (`Time.Ticks` based timer).
 
-### Logic
-1. Get player tile position → convert to chunk coordinates (divide by 8)
-2. Iterate `Map.Chunks` (existing 2D array, skip nulls)
-3. For each chunk, compute distance from player in chunk-space
-4. **Unload condition:** `distance > (MaxRenderDistance / 8) + 2` AND `Time.Ticks - chunk.LastAccessTime > 10_000`
-5. Call `chunk.Destroy()` → returns `Land`/`Static` objects to their pools
-6. Set `Map.Chunks[cx, cy] = null`
+Every 60 seconds via a new `static uint _orphanSweepTime` field in `World.cs`.
+**Must be placed inside the existing `if (Player != null)` guard block.**
 
-### Safety
-- `LastAccessTime` is updated every time a chunk is accessed during rendering — active chunks are never removed
-- Only chunks with no recently-accessed flag are eligible
-- Player teleport (recall/gate): destination chunks have fresh `LastAccessTime` from the new render cycle
+### Algorithm
 
----
+After the existing `_toRemove` flush for items has completed (after line ~389), collect orphans into a **separate** `List<uint> _orphanRemove` (local or reused static — not `_toRemove`, which is already cleared by then):
 
-## Component B — World Object Cleaner
+```
+for each kvp in Items:
+    item = kvp.Value
+    skip if item.IsDestroyed
+    skip if item.Container == 0xFFFF_FFFF              (on ground)
+    skip if !SerialHelper.IsValid(item.Container)       (zero or garbage)
+    skip if item.Container == Player.Serial             (player backpack root)
+    skip if Items.Contains(item.Container)              (parent item exists)
+    skip if Mobiles.Contains(item.Container)            (parent mobile exists)
+    skip if UIManager.GetGump<ContainerGump>(item.Container) != null
+    skip if UIManager.GetGump<GridContainer>(item.Container) != null
+    skip if UIManager.GetGump<PaperDollGump>(item.Container) != null
+    skip if UIManager.GetGump<GridLootGump>(item.Container) != null
+    skip if ItemHold.Enabled && ItemHold.Serial == item.Serial
+    skip if CorpseManager.Exists(item.Container, 0)     (two-arg form, corpse slot only)
+    → orphan: add item.Serial to _orphanRemove (stop collecting at 100)
 
-### Trigger
-Every 30 seconds (`Time.Ticks` based timer).
+for each serial in _orphanRemove:
+    RemoveItem(serial, true)
 
-### Logic
+_orphanRemove.Clear()
+```
 
-**Items cleanup:**
-1. Compute safe distance = current view range + 4 tile buffer
-2. Iterate `World.Items`
-3. Build removal list for items where ALL are true:
-   - Distance from player > safe distance
-   - `item.Container == 0xFFFF_FFFF` (on ground, not inside a container)
-   - No `ContainerGump` open for this item's serial
-   - Parent container (if any) is not in exclusion list
-4. Call `item.Destroy()` and remove from `World.Items`
-
-**Mobiles cleanup:**
-1. Same distance threshold
-2. Exclude: `World.Player`, any mobile that is `World.Player.LastAttack`, any mobile attacking player
-3. Call `mob.Destroy()` and remove from `World.Mobiles`
-
-### Exclusion rules (items)
-| Condition | Reason |
-|---|---|
-| `item.Serial == World.Player.Serial` | Never remove player |
-| `item.Container == World.Player.Serial` | Equipped items |
-| `UIManager.GetGump<ContainerGump>(item.Serial) != null` | Open container |
-| Item inside an open container | Preserves container contents |
-
-### Re-spawn behavior
-If a removed mobile/item reappears in range, the server re-sends the spawn packet. This is identical to existing behavior on large maps and poses no gameplay risk.
-
----
-
-## MemoryManager — Timer Implementation
+### State fields added to World.cs
 
 ```csharp
-public static class MemoryManager
-{
-    private static uint _nextChunkClean = 0;
-    private static uint _nextWorldClean = 0;
-
-    public static void Update()
-    {
-        if (World.Player == null) return;
-
-        if (Time.Ticks >= _nextChunkClean)
-        {
-            CleanChunks();
-            _nextChunkClean = Time.Ticks + 5_000;
-        }
-
-        if (Time.Ticks >= _nextWorldClean)
-        {
-            CleanWorldObjects();
-            _nextWorldClean = Time.Ticks + 30_000;
-        }
-    }
-}
+private static uint _orphanSweepTime = 0;
+private static readonly List<uint> _orphanRemove = new List<uint>();
 ```
 
 ---
 
-## What We Do NOT Touch
+## Files to Modify
 
-- `ArtLoader`, `GumpsLoader`, `AnimationsLoader` — asset caches (read-only indexes; removal has no practical benefit)
-- `TextureCacheManager` — already has a configurable max size
-- Object pool sizes — we return objects to pools, not shrink pools
-- Chunks with any recently-accessed timestamp < 10s
+| File | Change |
+|---|---|
+| `src/ClassicUO.Client/Game/World.cs` | Add two fields + orphan sweep block in `Update()` |
+
+No new files. No changes to `RemoveMobile`, `RemoveItem`, or any other method.
 
 ---
 
@@ -126,28 +76,26 @@ public static class MemoryManager
 
 | Scenario | Handled by |
 |---|---|
-| Player teleports | `LastAccessTime` freshness on destination chunks |
-| Open container out of range | `ContainerGump` check + parent chain exclusion |
-| NPC in combat with player | `LastAttack` / attacker check on mobiles |
-| Item on ground being looted | 4-tile buffer + `LastAccessTime` |
-| World.Player is null | Guard at top of `MemoryManager.Update()` |
-| Scene unload / disconnect | `GameScene.Unload()` handles full cleanup independently |
-
----
-
-## Files to Create / Modify
-
-| File | Action |
-|---|---|
-| `src/ClassicUO.Client/Game/Scenes/MemoryManager.cs` | **Create** — new static class |
-| `src/ClassicUO.Client/Game/Scenes/GameScene.cs` | **Modify** — call `MemoryManager.Update()` in `Update()` |
-| `src/ClassicUO.Client/Game/Map.cs` | **Read-only reference** — access `Chunks` array and chunk methods |
+| Item on ground | `Container == 0xFFFF_FFFF` skip |
+| Invalid/zero Container | `!SerialHelper.IsValid()` skip |
+| Player backpack chain | `Container == Player.Serial` skip (deeper items have valid parent in `Items`) |
+| Parent container still in world | `Items.Contains` skip |
+| Parent mobile still in world | `Mobiles.Contains` skip |
+| ContainerGump open | `GetGump<ContainerGump>` skip |
+| GridContainer open | `GetGump<GridContainer>` skip |
+| PaperDoll open | `GetGump<PaperDollGump>` skip |
+| GridLootGump open (looting corpse) | `GetGump<GridLootGump>` skip |
+| Item being dragged | `ItemHold.Serial == item.Serial` skip |
+| Corpse contents | `CorpseManager.Exists(item.Container, 0)` skip |
+| Already-destroyed items | `item.IsDestroyed` skip |
+| Dictionary mutation during loop | Collect first, remove after loop using `_orphanRemove` |
+| Player is null | Sweep inside `if (Player != null)` guard |
 
 ---
 
 ## Success Criteria
 
-- RAM usage decreases by 100–300 MB during extended play sessions
-- No visible pop-in or missing objects within view range
-- No crashes or null reference exceptions from removed objects
-- Containers remain fully functional when open
+- `World.Items.Count` grows slower during long sessions with many NPCs
+- No exceptions from orphan removal
+- Open containers remain functional
+- No items removed that are visible or interactable
