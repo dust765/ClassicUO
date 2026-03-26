@@ -551,13 +551,13 @@ namespace ClassicUO.Configuration
         public bool UOClassicCombatLines_ToggleHMBlue { get; set; } = false;
         
         // ## BEGIN - END ## // PERFORMANCE SETTINGS
-        public int GraphicsQuality { get; set; } = 2; // 0 = Low, 1 = Medium, 2 = High
+        public int GraphicsQuality { get; set; } = 0; // 0 = Low, 1 = Medium, 2 = High
         public bool EnableFrustumCulling { get; set; } = true;
-        public bool EnableTextureCaching { get; set; } = true;
-        public bool EnableChunkPreload { get; set; } = true;
-        public int MaxRenderDistance { get; set; } = 24; // Max view range
+        public bool EnableTextureCaching { get; set; } = false;
+        public bool EnableChunkPreload { get; set; } = false;
+        public int MaxRenderDistance { get; set; } = 18; // Max view range
         public bool UseRenderTarget { get; set; } = true;
-        public float RenderTargetScale { get; set; } = 1f;
+        public float RenderTargetScale { get; set; } = 0.85f;
         public bool EnableLOD { get; set; } = true;
         public int LODDistanceTiles { get; set; } = 24;
         public int ImageRenderingMode { get; set; } = 0;
@@ -1021,8 +1021,6 @@ namespace ClassicUO.Configuration
             EnableFrustumCulling = true;
             EnableLOD = true;
             OptimizeBackgroundRendering = true;
-            EnableTextureCaching = true;
-            EnableChunkPreload = true;
         }
 
         public void Save(string path, bool saveGumps = true)

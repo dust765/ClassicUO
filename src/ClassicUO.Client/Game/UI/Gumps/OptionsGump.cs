@@ -2470,7 +2470,7 @@ namespace ClassicUO.Game.UI.Gumps
             const int PAGE = 4;
 
             ScrollArea rightArea = new ScrollArea(165, OptionsScrollY, WIDTH - 185, OptionsScrollHeight, true);
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
 
             int startX = 5;
             int startY = 5;
@@ -2535,10 +2535,10 @@ namespace ClassicUO.Game.UI.Gumps
 
                         _macroControl?.Dispose();
 
-                        _macroControl = new MacroControl(name)
+                        _macroControl = new MacroControl(name, availableHeight: HEIGHT - 85 - (OptionsScrollY + 15))
                         {
                             X = 350,
-                            Y = 20
+                            Y = OptionsScrollY + 15
                         };
 
                         manager.PushToBack(_macroControl.Macro);
@@ -2571,7 +2571,7 @@ namespace ClassicUO.Game.UI.Gumps
                             _macroControl = new MacroControl(name)
                             {
                                 X = 350,
-                                Y = 20
+                                Y = OptionsScrollY
                             };
 
                             Add(_macroControl, PAGE);
@@ -2696,10 +2696,10 @@ namespace ClassicUO.Game.UI.Gumps
 
                     _macroControl?.Dispose();
 
-                    _macroControl = new MacroControl(m.Name)
+                    _macroControl = new MacroControl(m.Name, availableHeight: HEIGHT - 85 - (OptionsScrollY + 15))
                     {
                         X = 350,
-                        Y = 20
+                        Y = OptionsScrollY + 15
                     };
 
                     Add(_macroControl, PAGE);

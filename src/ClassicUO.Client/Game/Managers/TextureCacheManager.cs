@@ -24,7 +24,14 @@ namespace ClassicUO.Game.Managers
         
         public static void SetMaxCacheSize(int size)
         {
-            _maxCacheSize = size;
+            if (size < 1)
+                size = 1;
+
+            lock (_cacheLock)
+            {
+                _maxCacheSize = size;
+                TrimExcessLocked();
+            }
         }
         
         public static Texture2D GetOrCreateTexture(string key, Func<Texture2D> textureFactory)
@@ -116,6 +123,11 @@ namespace ClassicUO.Game.Managers
                 
             _lastCleanupTime = now;
             
+            TrimExcessLocked();
+        }
+
+        private static void TrimExcessLocked()
+        {
             if (_textureCache.Count <= _maxCacheSize)
                 return;
 

@@ -59,7 +59,7 @@ namespace ClassicUO.Game.UI.Controls
             OpenButtonEditor
         }
 
-        public MacroControl(string name, bool isFastAssign = false)
+        public MacroControl(string name, bool isFastAssign = false, int availableHeight = 0)
         {
             CanMove = true;
             Label _keyBinding;
@@ -155,7 +155,7 @@ namespace ClassicUO.Game.UI.Controls
                 );
             }
 
-            var scrollAreaH = isFastAssign ? 80 : 280;
+            int scrollAreaH = isFastAssign ? 80 : (availableHeight > 0 ? Math.Max(80, availableHeight - (_hotkeyBox.Bounds.Bottom + 70)) : 280);
             var scrollAreaW = 280;
 
             ScrollArea area = new ScrollArea
