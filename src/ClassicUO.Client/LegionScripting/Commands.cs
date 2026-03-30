@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using ClassicUO.Configuration;
 using ClassicUO.Game;
 using ClassicUO.Game.Data;
@@ -331,8 +332,9 @@ namespace ClassicUO.LegionScripting
             ushort hue = args.Length >= 5 ? args[4].AsUShort() : ushort.MaxValue;
             int range = args.Length >= 6 ? args[5].AsInt() : 2;
 
-            foreach (Item item in World.Items.Values)
+            foreach (KeyValuePair<uint, Item> kv in World.Items)
             {
+                Item item = kv.Value;
                 if (source == Constants.MAX_SERIAL || item.Container == source || item.RootContainer == source)
                 {
                     if (item.Graphic != gfx || item.Container == target || item.RootContainer == target)

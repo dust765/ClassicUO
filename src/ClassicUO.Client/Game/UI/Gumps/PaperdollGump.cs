@@ -401,6 +401,8 @@ namespace ClassicUO.Game.UI.Gumps
                 slot.ScaleWidthAndHeight(Scale).ScaleXAndY(Scale).SetInternalScale(Scale);
             }
 
+            UpdateSlotVisibility();
+
             // Paperdoll control!
             _paperDollInteractable = new PaperDollInteractable(settings.Position_X_Avatar, settings.Position_Y_Avatar, LocalSerial, this, Scale);
             _paperDollInteractable.ScaleXAndY(Scale);
@@ -448,6 +450,26 @@ namespace ClassicUO.Game.UI.Gumps
         public void UpdateTitle(string text)
         {
             _titleLabel.Text = text;
+        }
+
+        public void RequestPaperdollRefresh()
+        {
+            _paperDollInteractable?.RequestRefresh();
+            UpdateSlotVisibility();
+        }
+
+        private void UpdateSlotVisibility()
+        {
+            bool isOwnPaperdoll = World.Player != null && LocalSerial == World.Player.Serial;
+            bool showAll = isOwnPaperdoll && (ProfileManager.CurrentProfile?.ShowAllLayersPaperdoll ?? false);
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                _slots[i].IsVisible = showAll || i < 6;
+            }
+            foreach (EquipmentSlot slot in _slots_right)
+            {
+                slot.IsVisible = showAll;
+            }
         }
 
         private void VirtueMenu_MouseDoubleClickEvent(object sender, MouseDoubleClickEventArgs args)

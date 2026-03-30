@@ -93,6 +93,11 @@ namespace ClassicUO.Dust765.External
             GameActions.LastSpellIndexCursor = 0;
             GameCursor._spellTime = 0;
             // ## BEGIN - END ## // VISUAL HELPERS
+            if (World.Player != null && !World.Player.IsDestroyed)
+            {
+                World.Player.ClearSteps();
+                World.Player.Walker.Reset();
+            }
         }
 
         public override void Dispose()

@@ -218,8 +218,9 @@ namespace ClassicUO.Game.Managers
 
             long ticks = Time.Ticks - 1000;
 
-            foreach (WMapEntity entity in Entities.Values)
+            foreach (KeyValuePair<uint, WMapEntity> kv in Entities)
             {
+                WMapEntity entity = kv.Value;
                 if (entity.LastUpdate < ticks)
                 {
                     _toRemove.Add(entity);

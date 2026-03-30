@@ -437,8 +437,9 @@ namespace ClassicUO.LegionScripting
             int maxDist = args.Length > 0 ? args[0].AsInt() : 12;
             Item nearest = null;
             int bestDist = int.MaxValue;
-            foreach (Item item in World.Items.Values)
+            foreach (KeyValuePair<uint, Item> kv in World.Items)
             {
+                Item item = kv.Value;
                 if (item == null || item.IsDestroyed || !item.IsCorpse || Interpreter.InIgnoreList(item))
                     continue;
                 if (item.Distance > maxDist)

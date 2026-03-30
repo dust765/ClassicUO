@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -41,7 +41,6 @@ using ClassicUO.Resources;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -285,16 +284,23 @@ namespace ClassicUO.Game.UI.Gumps
                 _sortField = fieldValue;
             }
 
-            if (FindControls<NiceButton>().Any(s => s.ButtonParameter == buttonID))
+            NiceButton sortBtn = null;
+            foreach (Control c in Children)
             {
-                NiceButton btn = FindControls<NiceButton>()
-                    .First(s => s.ButtonParameter == buttonID);
+                if (c is NiceButton nb && !nb.IsDisposed && nb.ButtonParameter == buttonID)
+                {
+                    sortBtn = nb;
+                    break;
+                }
+            }
 
+            if (sortBtn != null)
+            {
                 ushort g = (ushort)(_sortAsc ? 0x985 : 0x983);
 
                 _sortOrderIndicator.Graphic = g;
-                _sortOrderIndicator.X = btn.X + btn.Width - 15;
-                _sortOrderIndicator.Y = btn.Y + 5;
+                _sortOrderIndicator.X = sortBtn.X + sortBtn.Width - 15;
+                _sortOrderIndicator.Y = sortBtn.Y + 5;
             }
 
             _updateSkillsNeeded = true;
@@ -373,14 +379,21 @@ namespace ClassicUO.Game.UI.Gumps
                         }
                     }
 
-                    skills = skills.OrderBy(s => pi.GetValue(s, null)).ToList();
+                    skills.Sort((a, b) => ((IComparable)pi.GetValue(a, null)).CompareTo(pi.GetValue(b, null)));
+
                     if (_sortAsc)
                     {
                         skills.Reverse();
                     }
 
-                    var grpReal = skills.Sum(s => s.Base);
-                    var grpVal = skills.Sum(s => s.Value);
+                    float grpReal = 0;
+                    float grpVal = 0;
+
+                    for (int si = 0; si < skills.Count; si++)
+                    {
+                        grpReal += skills[si].Base;
+                        grpVal += skills[si].Value;
+                    }
                     _totalReal += grpReal;
                     _totalValue += grpVal;
                     ;
@@ -459,7 +472,9 @@ namespace ClassicUO.Game.UI.Gumps
             }
             else
             {
-                List<Skill> sortSkills = new List<Skill>(World.Player.Skills.OrderBy(x => pi.GetValue(x, null)));
+                List<Skill> sortSkills = new List<Skill>(World.Player.Skills);
+                sortSkills.Sort((a, b) => ((IComparable)pi.GetValue(a, null)).CompareTo(pi.GetValue(b, null)));
+
                 if (_sortAsc)
                 {
                     sortSkills.Reverse();
@@ -503,9 +518,12 @@ namespace ClassicUO.Game.UI.Gumps
 
             if (_updateSkillsNeeded)
             {
-                foreach (Label label in Children.OfType<Label>())
+                foreach (Control c in Children)
                 {
-                    label.Dispose();
+                    if (c is Label label && !label.IsDisposed)
+                    {
+                        label.Dispose();
+                    }
                 }
 
                 BuildGump();

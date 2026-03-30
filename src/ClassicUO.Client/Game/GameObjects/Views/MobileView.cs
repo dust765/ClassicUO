@@ -224,11 +224,10 @@ namespace ClassicUO.Game.GameObjects
             bool isAttack = Serial == TargetManager.LastAttack;
             bool isUnderMouse =
                 TargetManager.IsTargeting && ReferenceEquals(SelectedObject.Object, this);
-            bool highlightLastAttacker = ProfileManager.CurrentProfile?.PvP_LastAttackerHighlight == true && isAttack;
 
             if (Serial != World.Player.Serial)
             {
-                if (highlightLastAttacker || isUnderMouse)
+                if (isUnderMouse)
                 {
                     overridedHue = Notoriety.GetHue(NotorietyFlag);
                 }
@@ -487,12 +486,14 @@ namespace ClassicUO.Game.GameObjects
 
                     if (isHuman)
                     {
-                        if (ProfileManager.CurrentProfile.HiddenLayers.Contains((int)layer) && ((ProfileManager.CurrentProfile.HideLayersForSelf && Serial == World.Player.Serial) || !ProfileManager.CurrentProfile.HideLayersForSelf))
+                        bool showAllLayers = ProfileManager.CurrentProfile?.ShowAllLayers ?? false;
+
+                        if (!showAllLayers && ProfileManager.CurrentProfile.HiddenLayers.Contains((int)layer) && ((ProfileManager.CurrentProfile.HideLayersForSelf && Serial == World.Player.Serial) || !ProfileManager.CurrentProfile.HideLayersForSelf))
                         {
                             continue;
                         }
 
-                        if (IsCovered(this, layer))
+                        if (!showAllLayers && IsCovered(this, layer))
                         {
                             continue;
                         }

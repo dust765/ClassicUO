@@ -30,6 +30,27 @@ Dust765: 7 Link, 6 Gaechti, 5 Syrupz and jsebold666 (astraroth)
 - 🔥 **No Drama** - Leave your high school mentality at the door
 - 💀 **Pure Innovation** - We're here to build, not to gossip
 
+### 🖼️ **Client graphics**
+
+<table>
+<tr>
+<td align="center" width="50%">
+  <img src="./docs/login.png" alt="Dust765 client — login screen" width="100%"/>
+</td>
+<td align="center" width="50%">
+  <img src="./docs/selectcharacter.png" alt="Dust765 client — character selecton" width="100%"/>
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+  <img src="./docs/create.png" alt="Dust765 client — create character" width="100%"/>
+</td>
+<td align="center" width="50%">
+  <img src="./docs/options.png" alt="Dust765 client — options menu" width="100%"/>
+</td>
+</tr>
+</table>
+
 ### 🎯 **The Mission**
 
 The **Dust765** project isn't just another UO client. It's a **statement**. A statement that says:
@@ -108,7 +129,6 @@ mono mscorlib.dll
 
 - **Windows**: `scripts\build-cross-platform.cmd`
 - **Linux/macOS**: `scripts/build-cross-platform.sh`
-
 
 ### 💡 **How to Contribute**
 

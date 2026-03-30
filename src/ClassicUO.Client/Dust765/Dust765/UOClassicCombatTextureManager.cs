@@ -1,4 +1,5 @@
-﻿using System.IO;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 using ClassicUO.Configuration;
@@ -241,18 +242,23 @@ namespace ClassicUO.Dust765.Dust765
             // Apply performance optimizations
             PerformanceOptimizations.UpdatePerformanceMetrics();
             
-            // Get visible mobiles only
-            var allMobiles = World.Mobiles.Values.ToList();
-            var visibleMobiles = allMobiles.Where(mobile => 
-                PerformanceOptimizations.IsObjectVisible(mobile, Client.Game.Scene.Camera) &&
-                PerformanceOptimizations.ShouldRenderAtLOD(mobile, Client.Game.Scene.Camera)
-            ).ToList();
+            int allMobilesCount = World.Mobiles.Count;
+            var visibleMobiles = new List<Mobile>();
+            foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
+            {
+                Mobile mobile = mkv.Value;
+                if (
+                    PerformanceOptimizations.IsObjectVisible(mobile, Client.Game.Scene.Camera)
+                    && PerformanceOptimizations.ShouldRenderAtLOD(mobile, Client.Game.Scene.Camera)
+                )
+                {
+                    visibleMobiles.Add(mobile);
+                }
+            }
 
-            // Group mobiles by type for batch optimization
             var groupedMobiles = PerformanceOptimizations.GroupObjectsByType(visibleMobiles.Cast<Entity>());
-            
-            // Record performance metrics
-            PerformanceMonitor.RecordObjectCount(allMobiles.Count, visibleMobiles.Count);
+
+            PerformanceMonitor.RecordObjectCount(allMobilesCount, visibleMobiles.Count);
             PerformanceMonitor.Update();
 
             foreach (var group in groupedMobiles)

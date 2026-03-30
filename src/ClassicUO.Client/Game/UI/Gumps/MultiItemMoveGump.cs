@@ -1,4 +1,4 @@
-﻿using ClassicUO.Configuration;
+using ClassicUO.Configuration;
 using ClassicUO.Game.GameObjects;
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.UI.Controls;
@@ -18,6 +18,7 @@ namespace ClassicUO.Game.UI.Gumps
         public static ConcurrentQueue<Item> MoveItems = new ConcurrentQueue<Item>();
 
         public static int ObjDelay = 1000;
+        private static int _moveWorkerRunning;
 
         public MultiItemMoveGump(int x, int y) : base(0, 0)
         {
@@ -141,44 +142,79 @@ namespace ClassicUO.Game.UI.Gumps
 
         private static void processItemMoves(Item container)
         {
-            Task.Factory.StartNew(() =>
+            if (Interlocked.CompareExchange(ref _moveWorkerRunning, 1, 0) != 0)
             {
-                if (container != null)
-                {
-                    while (MoveItems.TryDequeue(out Item moveItem))
-                    {
-                        if (GameActions.PickUp(moveItem.Serial, 0, 0, moveItem.Amount))
-                            GameActions.DropItem(moveItem.Serial, 0xFFFF, 0xFFFF, 0, container);
-                        Task.Delay(ObjDelay).Wait();
-                    }
+                return;
+            }
 
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    if (container != null)
+                    {
+                        while (MoveItems.TryDequeue(out Item moveItem))
+                        {
+                            if (GameActions.PickUp(moveItem.Serial, 0, 0, moveItem.Amount))
+                                GameActions.DropItem(moveItem.Serial, 0xFFFF, 0xFFFF, 0, container);
+                            await Task.Delay(ObjDelay).ConfigureAwait(false);
+                        }
+                    }
+                }
+                finally
+                {
+                    Interlocked.Exchange(ref _moveWorkerRunning, 0);
                 }
             });
         }
 
         private static void processItemMoves(int x, int y, int z)
         {
-            Task.Factory.StartNew(() =>
+            if (Interlocked.CompareExchange(ref _moveWorkerRunning, 1, 0) != 0)
             {
-                while (MoveItems.TryDequeue(out Item moveItem))
+                return;
+            }
+
+            _ = Task.Run(async () =>
+            {
+                try
                 {
-                    Assets.StaticTiles itemData = Assets.TileDataLoader.Instance.StaticData[moveItem.Graphic];
-                    if (GameActions.PickUp(moveItem.Serial, 0, 0, moveItem.Amount))
-                        GameActions.DropItem(moveItem.Serial, x, y, z + (sbyte)(itemData.Height == 0xFF ? 0 : itemData.Height), 0);
-                    Task.Delay(ObjDelay).Wait();
+                    while (MoveItems.TryDequeue(out Item moveItem))
+                    {
+                        Assets.StaticTiles itemData = Assets.TileDataLoader.Instance.StaticData[moveItem.Graphic];
+                        if (GameActions.PickUp(moveItem.Serial, 0, 0, moveItem.Amount))
+                            GameActions.DropItem(moveItem.Serial, x, y, z + (sbyte)(itemData.Height == 0xFF ? 0 : itemData.Height), 0);
+                        await Task.Delay(ObjDelay).ConfigureAwait(false);
+                    }
+                }
+                finally
+                {
+                    Interlocked.Exchange(ref _moveWorkerRunning, 0);
                 }
             });
         }
 
         private static void processItemMoves(uint tradeID)
         {
-            Task.Factory.StartNew(() =>
+            if (Interlocked.CompareExchange(ref _moveWorkerRunning, 1, 0) != 0)
             {
-                while (MoveItems.TryDequeue(out Item moveItem))
+                return;
+            }
+
+            _ = Task.Run(async () =>
+            {
+                try
                 {
-                    if (GameActions.PickUp(moveItem.Serial, 0, 0, moveItem.Amount))
-                        GameActions.DropItem(moveItem.Serial, RandomHelper.GetValue(0, 20), RandomHelper.GetValue(0, 20), 0, tradeID);
-                    Task.Delay(ObjDelay).Wait();
+                    while (MoveItems.TryDequeue(out Item moveItem))
+                    {
+                        if (GameActions.PickUp(moveItem.Serial, 0, 0, moveItem.Amount))
+                            GameActions.DropItem(moveItem.Serial, RandomHelper.GetValue(0, 20), RandomHelper.GetValue(0, 20), 0, tradeID);
+                        await Task.Delay(ObjDelay).ConfigureAwait(false);
+                    }
+                }
+                finally
+                {
+                    Interlocked.Exchange(ref _moveWorkerRunning, 0);
                 }
             });
         }

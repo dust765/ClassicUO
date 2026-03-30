@@ -47,12 +47,14 @@ namespace ClassicUO.Game.Managers
     public class WorldTextManager : TextRenderer
     {
         private readonly Dictionary<uint, OverheadDamage> _damages = new Dictionary<uint, OverheadDamage>();
-        private readonly List<Tuple<uint, uint>> _subst = new List<Tuple<uint, uint>>();
+        private readonly List<(uint oldSerial, uint newSerial)> _subst = new List<(uint, uint)>();
         private readonly List<uint> _toRemoveDamages = new List<uint>();
 
         private UOLabel _dpsOverheadTextBox;
         private string _dpsOverheadLastText = string.Empty;
         private uint _dpsOverheadLastSerial;
+        private uint _lastDamageCounterStamp;
+        private uint _dpsOverheadNextRefreshTick;
 
         public override void Update()
         {
@@ -61,17 +63,37 @@ namespace ClassicUO.Game.Managers
             UpdateDamageOverhead();
 
             uint lastAttack = TargetManager.LastAttack;
-            string text = PvMPvPManager.Instance.GetDamageCounterTextForOverhead(lastAttack);
             var profile = ProfileManager.CurrentProfile;
-            if (text != _dpsOverheadLastText || lastAttack != _dpsOverheadLastSerial)
+            if (profile?.PvM_DamageCounterAsOverhead != true)
             {
-                _dpsOverheadLastText = text ?? string.Empty;
-                _dpsOverheadLastSerial = lastAttack;
                 _dpsOverheadTextBox?.Dispose();
                 _dpsOverheadTextBox = null;
-                if (!string.IsNullOrEmpty(_dpsOverheadLastText) && profile?.PvM_DamageCounterAsOverhead == true)
+                _dpsOverheadLastText = string.Empty;
+                _dpsOverheadLastSerial = 0;
+                _lastDamageCounterStamp = 0;
+            }
+            else
+            {
+                uint stamp = PvMPvPManager.Instance.DamageCounterStamp;
+                bool serialChanged = lastAttack != _dpsOverheadLastSerial;
+                bool stampChanged = stamp != _lastDamageCounterStamp;
+                bool periodic = ClassicUO.Time.Ticks >= _dpsOverheadNextRefreshTick;
+                if (serialChanged || stampChanged || periodic)
                 {
-                    _dpsOverheadTextBox = new UOLabel(_dpsOverheadLastText, profile.OverheadChatFont, profile.DamageHueLastAttck, TEXT_ALIGN_TYPE.TS_CENTER, profile.OverheadChatWidth, FontStyle.BlackBorder) { AcceptMouseInput = false };
+                    _dpsOverheadNextRefreshTick = ClassicUO.Time.Ticks + 200;
+                    _lastDamageCounterStamp = stamp;
+                    string text = PvMPvPManager.Instance.GetDamageCounterTextForOverhead(lastAttack);
+                    if (text != _dpsOverheadLastText || serialChanged)
+                    {
+                        _dpsOverheadLastText = text ?? string.Empty;
+                        _dpsOverheadLastSerial = lastAttack;
+                        _dpsOverheadTextBox?.Dispose();
+                        _dpsOverheadTextBox = null;
+                        if (!string.IsNullOrEmpty(_dpsOverheadLastText))
+                        {
+                            _dpsOverheadTextBox = new UOLabel(_dpsOverheadLastText, profile.OverheadChatFont, profile.DamageHueLastAttck, TEXT_ALIGN_TYPE.TS_CENTER, profile.OverheadChatWidth, FontStyle.BlackBorder) { AcceptMouseInput = false };
+                        }
+                    }
                 }
             }
 
@@ -111,7 +133,7 @@ namespace ClassicUO.Game.Managers
 
                         if (item != null && !ReferenceEquals(item, overheadDamage.Value.Parent))
                         {
-                            _subst.Add(Tuple.Create(overheadDamage.Key, item.Serial));
+                            _subst.Add((overheadDamage.Key, item.Serial));
                             overheadDamage.Value.SetParent(item);
                         }
                     }
@@ -165,12 +187,12 @@ namespace ClassicUO.Game.Managers
         {
             if (_subst.Count != 0)
             {
-                foreach (Tuple<uint, uint> tuple in _subst)
+                foreach ((uint prevSer, uint newSer) in _subst)
                 {
-                    if (_damages.TryGetValue(tuple.Item1, out OverheadDamage dmg))
+                    if (_damages.TryGetValue(prevSer, out OverheadDamage dmg))
                     {
-                        _damages.Remove(tuple.Item1);
-                        _damages[tuple.Item2] = dmg;
+                        _damages.Remove(prevSer);
+                        _damages[newSer] = dmg;
                     }
                 }
 
@@ -206,6 +228,8 @@ namespace ClassicUO.Game.Managers
             _dpsOverheadTextBox = null;
             _dpsOverheadLastText = string.Empty;
             _dpsOverheadLastSerial = 0;
+            _lastDamageCounterStamp = 0;
+            _dpsOverheadNextRefreshTick = 0;
             if (_toRemoveDamages.Count > 0)
             {
                 foreach (uint s in _toRemoveDamages)

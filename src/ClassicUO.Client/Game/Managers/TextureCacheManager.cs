@@ -2,17 +2,17 @@ using ClassicUO.Configuration;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace ClassicUO.Game.Managers
 {
     public static class TextureCacheManager
     {
         private static readonly Dictionary<string, CachedTexture> _textureCache = new Dictionary<string, CachedTexture>();
+        private static readonly List<KeyValuePair<string, CachedTexture>> _cleanupScratch = new List<KeyValuePair<string, CachedTexture>>(1024);
         private static readonly object _cacheLock = new object();
-        private static int _maxCacheSize = 1000;
+        private static int _maxCacheSize = 512;
         private static long _lastCleanupTime = 0;
-        private static readonly long _cleanupInterval = 30000; // 30 seconds
+        private static readonly long _cleanupInterval = 12000;
         
         private class CachedTexture
         {
@@ -24,7 +24,14 @@ namespace ClassicUO.Game.Managers
         
         public static void SetMaxCacheSize(int size)
         {
-            _maxCacheSize = size;
+            if (size < 1)
+                size = 1;
+
+            lock (_cacheLock)
+            {
+                _maxCacheSize = size;
+                TrimExcessLocked();
+            }
         }
         
         public static Texture2D GetOrCreateTexture(string key, Func<Texture2D> textureFactory)
@@ -66,9 +73,9 @@ namespace ClassicUO.Game.Managers
         {
             lock (_cacheLock)
             {
-                foreach (var cached in _textureCache.Values)
+                foreach (KeyValuePair<string, CachedTexture> kv in _textureCache)
                 {
-                    cached.Texture?.Dispose();
+                    kv.Value.Texture?.Dispose();
                 }
                 _textureCache.Clear();
             }
@@ -98,7 +105,13 @@ namespace ClassicUO.Game.Managers
         {
             lock (_cacheLock)
             {
-                return _textureCache.Values.Sum(c => c.Size);
+                long sum = 0;
+                foreach (KeyValuePair<string, CachedTexture> kv in _textureCache)
+                {
+                    sum += kv.Value.Size;
+                }
+
+                return sum;
             }
         }
         
@@ -110,21 +123,37 @@ namespace ClassicUO.Game.Managers
                 
             _lastCleanupTime = now;
             
+            TrimExcessLocked();
+        }
+
+        private static void TrimExcessLocked()
+        {
             if (_textureCache.Count <= _maxCacheSize)
                 return;
-                
-            // Remove least recently used textures
-            var toRemove = _textureCache
-                .OrderBy(kvp => kvp.Value.LastAccessed)
-                .ThenBy(kvp => kvp.Value.AccessCount)
-                .Take(_textureCache.Count - _maxCacheSize)
-                .ToList();
-                
-            foreach (var kvp in toRemove)
+
+            int removeCount = _textureCache.Count - _maxCacheSize;
+            _cleanupScratch.Clear();
+            foreach (KeyValuePair<string, CachedTexture> kv in _textureCache)
             {
+                _cleanupScratch.Add(kv);
+            }
+
+            _cleanupScratch.Sort(CompareCachedTextureEviction);
+
+            for (int i = 0; i < removeCount && i < _cleanupScratch.Count; i++)
+            {
+                KeyValuePair<string, CachedTexture> kvp = _cleanupScratch[i];
                 kvp.Value.Texture?.Dispose();
                 _textureCache.Remove(kvp.Key);
             }
+
+            _cleanupScratch.Clear();
+        }
+
+        private static int CompareCachedTextureEviction(KeyValuePair<string, CachedTexture> a, KeyValuePair<string, CachedTexture> b)
+        {
+            int c = a.Value.LastAccessed.CompareTo(b.Value.LastAccessed);
+            return c != 0 ? c : a.Value.AccessCount.CompareTo(b.Value.AccessCount);
         }
         
         private static long EstimateTextureSize(Texture2D texture)

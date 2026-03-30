@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (C) 2020 project dust765
 // 
@@ -21,18 +21,19 @@
 
 #endregion
 using System;
-using System.Threading;
 using ClassicUO.Dust765.Shared;
 using ClassicUO.Game;
 using ClassicUO.Game.Data;
 using ClassicUO.Game.Managers;
+using ClassicUO.Utility;
 
 namespace ClassicUO.Dust765.Autos
 {
     internal class AutoMeditate
     {
         public static bool IsEnabled { get; set; }
-        public static Thread a_MeditateThread;
+        private static uint _nextCheckTick;
+        private static uint _nextMeditateTick;
 
 		//##AutoMeditate Toggle##//
         public static void Toggle()
@@ -44,11 +45,6 @@ namespace ClassicUO.Dust765.Autos
         public static void Initialize()
         {
             CommandManager.Register("automed", args => Toggle());
-
-            a_MeditateThread = new Thread(new ThreadStart(DoAutoMeditate))
-            {
-                IsBackground = true
-            };
         }
 		
 		//##Default AutoMeditate Status on GameLoad##//
@@ -60,60 +56,34 @@ namespace ClassicUO.Dust765.Autos
 		//##Perform AutoMeditate Update on Toggle/Player Death##//
         public static void Update()
         {
-            if (!IsEnabled || World.Player.IsDead)            
-                DisableAutoMeditate();
-
-            if (IsEnabled)
-                EnableAutoMeditate();            
-        }
-
-		//##Enable AutoMeditate##//
-        private static void EnableAutoMeditate()
-        {
-            if (!a_MeditateThread.IsAlive)
+            if (!IsEnabled || World.Player == null || World.Player.IsDead)
             {
-                a_MeditateThread = new Thread(new ThreadStart(DoAutoMeditate))
-                {
-                    IsBackground = true
-                };
-                a_MeditateThread.Start();
+                return;
             }
-        }
 
-		//##Disable AutoMeditate##//
-        private static void DisableAutoMeditate()
-        {
-            if (a_MeditateThread.IsAlive)
+            uint now = Time.Ticks;
+            if (now < _nextCheckTick)
             {
-                a_MeditateThread.Abort();
+                return;
             }
-        }
-		
-		//##Perform Meditate Checks##//
-        private static void DoAutoMeditate()
-        {
-            DateTime dateTime = DateTime.Now;
-            while (true)
-            {
-                if (World.Player == null || World.Player.IsDead)
-                    DisableAutoMeditate();
 
-                if (/*!World.Player.IsRunning &&*/ World.Player.Steps.Count == 0 && !World.Player.IsDead && World.Player != null && World.Player.Mana < World.Player.ManaMax && TargetManager.IsTargeting == false && ((DateTime.Now - dateTime) > TimeSpan.FromSeconds(2.5)))
-                {
-                    GameActions.Print("Auto Meditating!", 70, MessageType.System);
-                    Meditate();
-                    dateTime = DateTime.Now;
-                    Thread.Sleep(250);
-                }
-                Thread.Sleep(250);
+            _nextCheckTick = now + 250;
+
+            if (now < _nextMeditateTick)
+            {
+                return;
             }
-        }
-		
-		//##Perform UseSkill + Pause##//
-        private static void Meditate()
-        {
-            GameActions.UseSkill(46);
-            Thread.Sleep(15000);//7500
+
+            if (
+                World.Player.Steps.Count == 0
+                && World.Player.Mana < World.Player.ManaMax
+                && !TargetManager.IsTargeting
+            )
+            {
+                GameActions.Print("Auto Meditating!", 70, MessageType.System);
+                GameActions.UseSkill(46);
+                _nextMeditateTick = now + 15000;
+            }
         }
 		
 		//##Perform Message##//

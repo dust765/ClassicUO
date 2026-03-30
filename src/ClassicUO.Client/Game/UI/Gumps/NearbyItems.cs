@@ -55,8 +55,9 @@ namespace ClassicUO.Game.UI.Gumps
         private static List<Item> CollectNearbyItems()
         {
             List<Item> list = new List<Item>();
-            foreach (Item i in World.Items.Values)
+            foreach (KeyValuePair<uint, Item> kv in World.Items)
             {
+                Item i = kv.Value;
                 if (!i.OnGround)
                 {
                     continue;

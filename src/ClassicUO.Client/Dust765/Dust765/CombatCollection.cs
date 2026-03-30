@@ -451,12 +451,17 @@ namespace ClassicUO.Dust765.Dust765
         //GAME\GAMECURSOR.CS
         public static void UpdateSpelltime()
         {
-            GameCursor._spellTime = 30 - ((Time.Ticks - GameCursor._startSpellTime) / 1000); // count down
+            GameCursor._spellTime = 30 - ((Time.Ticks - GameCursor._startSpellTime) / 1000);
 
-            // ## BEGIN - END ## // CURSOR
+            string spellTimeStr = GameCursor._spellTime.ToString();
+
+            if (GameCursor._spellTimeText != null && GameCursor._spellTimeText.Text == spellTimeStr)
+            {
+                return;
+            }
+
             GameCursor._spellTimeText?.Destroy();
-            GameCursor._spellTimeText = RenderedText.Create(GameCursor._spellTime.ToString(), 0x0481, style: FontStyle.BlackBorder);
-            // ## BEGIN - END ## // CURSOR
+            GameCursor._spellTimeText = RenderedText.Create(spellTimeStr, 0x0481, style: FontStyle.BlackBorder);
         }
         public static void StartSpelltime()
         {
@@ -1430,11 +1435,13 @@ namespace ClassicUO.Dust765.Dust765
             // ## BEGIN - END ## // ONCASTINGGUMP
             if (ProfileManager.CurrentProfile.OnCastingGump)
             {
-                GameActions.LastSpellIndex = spell.ID;
+                if (spell != null)
+                    GameActions.LastSpellIndex = spell.ID;
                 // ## BEGIN - END ## // VISUAL HELPERS
                 GameCursor._spellTime = 0;
                 // ## BEGIN - END ## // VISUAL HELPERS
-                World.Player.OnCasting.Start((uint)GameActions.LastSpellIndexCursor);
+                if (!GameActions.iscasting)
+                    World.Player.OnCasting.Start((uint)GameActions.LastSpellIndexCursor);
             }
             // ## BEGIN - END ## // ONCASTINGGUMP
         }
@@ -1464,8 +1471,15 @@ namespace ClassicUO.Dust765.Dust765
         //GAME\GAMEOBJECTS\VIEWS\MOBILEVIEW.CS
         public static void UpdateRange(Mobile mobile)
         {
+            string rangeStr = $"[{mobile.Distance}]";
+
+            if (mobile.RangeTexture != null && mobile.RangeTexture.Text == rangeStr)
+            {
+                return;
+            }
+
             mobile.RangeTexture?.Destroy();
-            mobile.RangeTexture = RenderedText.Create($"[{mobile.Distance}]", 0x0044, 3, false);
+            mobile.RangeTexture = RenderedText.Create(rangeStr, 0x0044, 3, false);
         }
         //GAME\MANAGERS\HEALTHLINESMANAGER.CS
         public static void UpdateOverheads(Mobile mobile)

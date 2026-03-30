@@ -39,7 +39,6 @@ using Microsoft.Xna.Framework.Input;
 using SDL3;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 // ## BEGIN - END ## // MISC
 using ClassicUO.Game.GameObjects;
 // ## BEGIN - END ## // MISC
@@ -299,7 +298,7 @@ namespace ClassicUO.Game.UI.Controls
                 {
                     break;
                 }
-                Control c = Children.ElementAt(i);
+                Control c = Children[i];
 
                 if (c != null && (c.Page == 0 || c.Page == ActivePage))
                 {
@@ -338,7 +337,7 @@ namespace ClassicUO.Game.UI.Controls
                         continue;
                     }
 
-                    Control c = Children.ElementAt(i);
+                    Control c = Children[i];
 
                     if (c == null)
                     {
@@ -418,7 +417,7 @@ namespace ClassicUO.Game.UI.Controls
                         continue;
                     }
 
-                    Control c = Children.ElementAt(i);
+                    Control c = Children[i];
 
                     if (c == null)
                     {
@@ -715,12 +714,42 @@ namespace ClassicUO.Game.UI.Controls
 
         public T[] GetControls<T>() where T : Control
         {
-            return Children.OfType<T>().Where(s => !s.IsDisposed).ToArray();
+            int count = 0;
+            foreach (Control c in Children)
+            {
+                if (c is T && !c.IsDisposed)
+                {
+                    count++;
+                }
+            }
+
+            if (count == 0)
+            {
+                return Array.Empty<T>();
+            }
+
+            var arr = new T[count];
+            int j = 0;
+            foreach (Control c in Children)
+            {
+                if (c is T t && !t.IsDisposed)
+                {
+                    arr[j++] = t;
+                }
+            }
+
+            return arr;
         }
 
         public IEnumerable<T> FindControls<T>() where T : Control
         {
-            return Children.OfType<T>().Where(s => !s.IsDisposed);
+            foreach (Control c in Children)
+            {
+                if (c is T t && !t.IsDisposed)
+                {
+                    yield return t;
+                }
+            }
         }
 
 

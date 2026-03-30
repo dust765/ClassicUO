@@ -51,7 +51,6 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using static SDL3.SDL;
 
 namespace ClassicUO
@@ -69,10 +68,11 @@ namespace ClassicUO
         private uint _totalFrames;
         private uint _lastLegionScriptingUpdate;
         private UltimaBatcher2D _uoSpriteBatch;
-        private bool _suppressedDraw;
         private Texture2D _background;
 
         private static Vector3 bgHueShader = new Vector3(0, 0, 0.3f);
+
+        public static bool FullGameTick { get; private set; }
 
         public GameController()
         {
@@ -564,6 +564,36 @@ namespace ClassicUO
             Time.Ticks = (uint)gameTime.TotalGameTime.TotalMilliseconds;
             Time.Delta = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
+            bool disableFrameLimiting = ProfileManager.CurrentProfile?.DisableFrameLimiting ?? false;
+            bool fullGameTick = true;
+            double frameMs = _intervalFixedUpdate[0];
+            if (!disableFrameLimiting)
+            {
+                frameMs = _intervalFixedUpdate[
+                    !IsActive
+                    && ProfileManager.CurrentProfile != null
+                    && ProfileManager.CurrentProfile.ReduceFPSWhenInactive
+                        ? 1
+                        : 0
+                ];
+                _totalElapsed += gameTime.ElapsedGameTime.TotalMilliseconds;
+                if (_totalElapsed > frameMs)
+                {
+                    _totalElapsed %= frameMs;
+                    fullGameTick = true;
+                }
+                else
+                {
+                    fullGameTick = false;
+                }
+            }
+            else
+            {
+                _totalElapsed = 0;
+            }
+
+            FullGameTick = fullGameTick;
+
             Mouse.Update();
 
             long queuedBytes = NetClient.Socket.QueuedReceiveBytes;
@@ -578,14 +608,21 @@ namespace ClassicUO
                 packetBudget = MAX_PACKETS_PER_FRAME * 2;
             }
 
-            while (packetBudget > 0 && NetClient.Socket.TryDequeuePacket(out byte[] message))
+            while (packetBudget > 0 && NetClient.Socket.TryDequeuePacket(out byte[] message, out int messageLength))
             {
-                int parsed = PacketHandlers.Handler.ParsePackets(message, packetBudget);
-                NetClient.Socket.Statistics.TotalPacketsReceived += (uint)parsed;
-
-                if (parsed > 0)
+                try
                 {
-                    packetBudget -= parsed;
+                    int parsed = PacketHandlers.Handler.ParsePackets(message.AsSpan(0, messageLength), packetBudget);
+                    NetClient.Socket.Statistics.TotalPacketsReceived += (uint)parsed;
+
+                    if (parsed > 0)
+                    {
+                        packetBudget -= parsed;
+                    }
+                }
+                finally
+                {
+                    NetClient.Socket.ReturnPacketBuffer(message);
                 }
             }
 
@@ -631,7 +668,6 @@ namespace ClassicUO
                 UIManager.SlowUpdate();
             }
 
-            _totalElapsed += gameTime.ElapsedGameTime.TotalMilliseconds;
             _currentFpsTime += gameTime.ElapsedGameTime.TotalMilliseconds;
 
             if (_currentFpsTime >= 1000)
@@ -644,37 +680,6 @@ namespace ClassicUO
 
                 _totalFrames = 0;
                 _currentFpsTime = 0;
-            }
-
-            // Verificar se o frame limiting deve ser desabilitado
-            bool disableFrameLimiting = ProfileManager.CurrentProfile?.DisableFrameLimiting ?? false;
-            
-            if (!disableFrameLimiting)
-            {
-                double x = _intervalFixedUpdate[
-                    !IsActive
-                    && ProfileManager.CurrentProfile != null
-                    && ProfileManager.CurrentProfile.ReduceFPSWhenInactive
-                        ? 1
-                        : 0
-                ];
-                _suppressedDraw = false;
-
-                if (_totalElapsed > x)
-                {
-                    _totalElapsed %= x;
-                }
-                else
-                {
-                    _suppressedDraw = true;
-                    SuppressDraw();
-                }
-            }
-            else
-            {
-                // Frame limiting completamente desabilitado - renderizar sempre
-                _suppressedDraw = false;
-                _totalElapsed = 0; // Reset para evitar acúmulo
             }
 
             GameCursor?.Update();
@@ -748,7 +753,7 @@ namespace ClassicUO
 
         protected override bool BeginDraw()
         {
-            return !_suppressedDraw && base.BeginDraw();
+            return base.BeginDraw();
         }
 
         private void WindowOnClientSizeChanged(object sender, EventArgs e)

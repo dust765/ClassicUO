@@ -1429,8 +1429,9 @@ namespace ClassicUO.Game.GameObjects
                     return;
                 }
 
-                foreach (Item item in World.Items.Values)
+                foreach (KeyValuePair<uint, Item> kv in World.Items)
                 {
+                    Item item = kv.Value;
                     if (!item.IsDestroyed && item.IsCorpse && item.Distance <= ProfileManager.CurrentProfile.AutoOpenCorpseRange && !AutoOpenedCorpses.Contains(item.Serial))
                     {
                         AutoOpenedCorpses.Add(item.Serial);
@@ -1443,8 +1444,9 @@ namespace ClassicUO.Game.GameObjects
         // ## BEGIN - END ## // MACROS
         public void OpenCorpses(byte range)
         {
-            foreach (Item item in World.Items.Values)
+            foreach (KeyValuePair<uint, Item> kv in World.Items)
             {
+                Item item = kv.Value;
                 if (!item.IsDestroyed && item.IsCorpse && item.Distance <= range && item.Graphic == 0x2006)
                 {
                     ManualOpenedCorpses.Add(item.Serial);
@@ -1456,8 +1458,9 @@ namespace ClassicUO.Game.GameObjects
         // ## BEGIN - END ## // ADVMACROS
         public void OpenCorpsesSafe(byte range)
         {
-            foreach (Item item in World.Items.Values)
+            foreach (KeyValuePair<uint, Item> kv in World.Items)
             {
+                Item item = kv.Value;
                 if (!item.IsDestroyed && item.IsCorpse && item.Distance <= range && item.Graphic == 0x2006)
                 {
                     if (item.LootFlag == ProfileManager.CurrentProfile.UOClassicCombatAL_SL_Gray || item.LootFlag == ProfileManager.CurrentProfile.UOClassicCombatAL_SL_Green || item.LootFlag == ProfileManager.CurrentProfile.UOClassicCombatAL_SL_Red)
@@ -1488,7 +1491,22 @@ namespace ClassicUO.Game.GameObjects
                 int x = X, y = Y, z = Z;
                 Pathfinder.GetNewXY((byte)Direction, ref x, ref y);
 
-                if (World.Items.Values.Any(s => s.ItemData.IsDoor && s.X == x && s.Y == y && s.Z - 15 <= z && s.Z + 15 >= z))
+                bool doorAhead = false;
+                ClassicUO.Game.Map.Map map = World.Map;
+
+                if (map != null)
+                {
+                    for (GameObject obj = map.GetTile(x, y); obj != null; obj = obj.TNext)
+                    {
+                        if (obj is Item s && s.ItemData.IsDoor && s.Z - 15 <= z && s.Z + 15 >= z)
+                        {
+                            doorAhead = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (doorAhead)
                 {
                     GameActions.OpenDoor();
                 }
@@ -1541,15 +1559,10 @@ namespace ClassicUO.Game.GameObjects
 
         public void CloseRangedGumps()
         {
-            for (int i = 0; i < UIManager.Gumps.Count; i++)
+            for (LinkedListNode<Gump> n = UIManager.Gumps.First; n != null; n = n.Next)
             {
-                if (UIManager.Gumps.Count > i)
-                    continue;
+                Gump gump = n.Value;
 
-                Gump gump = UIManager.Gumps.ElementAt(i);
-                //}
-                //foreach (Gump gump in UIManager.Gumps)
-                //{
                 switch (gump)
                 {
                     case PaperDollGump _:
@@ -1713,7 +1726,7 @@ namespace ClassicUO.Game.GameObjects
             else
             {
 
-                if (Walker.WalkingFailed || Walker.LastStepRequestTime > Time.Ticks || Walker.StepsCount >= Constants.MAX_STEP_COUNT || Client.Version >= ClientVersion.CV_60142 && IsParalyzed)
+                if (Walker.WalkingFailed || Walker.LastStepRequestTime > Time.Ticks || Walker.StepsCount >= Constants.MAX_STEP_COUNT || Walker.TeleportFreezeUntil > Time.Ticks || Client.Version >= ClientVersion.CV_60142 && IsParalyzed)
                 {
                     return false;
                 }
@@ -1945,7 +1958,7 @@ namespace ClassicUO.Game.GameObjects
 
         public bool WalkNotAvoid(Direction direction, bool run, bool swing = false)
         {
-            if (Walker.WalkingFailed || Walker.LastStepRequestTime > Time.Ticks || Walker.StepsCount >= Constants.MAX_STEP_COUNT || Client.Version >= ClientVersion.CV_60142 && IsParalyzed)
+            if (Walker.WalkingFailed || Walker.LastStepRequestTime > Time.Ticks || Walker.StepsCount >= Constants.MAX_STEP_COUNT || Walker.TeleportFreezeUntil > Time.Ticks || Client.Version >= ClientVersion.CV_60142 && IsParalyzed)
             {
                 return false;
             }

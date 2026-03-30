@@ -11,7 +11,6 @@ using ClassicUO.Resources;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Xml.Linq;
 
 namespace ClassicUO.Game.UI.Gumps
@@ -171,8 +170,13 @@ namespace ClassicUO.Game.UI.Gumps
             text = text.ToLower();
 
             List<ShopItem> remove = new List<ShopItem>();
-            foreach (ShopItem i in scrollArea.Children.OfType<ShopItem>()) //Remove current shop items
-                remove.Add(i);
+            foreach (Control c in scrollArea.Children)
+            {
+                if (c is ShopItem si && !si.IsDisposed)
+                {
+                    remove.Add(si);
+                }
+            }
             foreach (ShopItem i in remove)
                 scrollArea.Children.Remove(i); //Actually remove them since we can't modify enumerators
 
@@ -259,12 +263,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                 buySellButton.MouseUp += (sender, e) =>
                 {
-                    Dictionary<uint, ushort> theItem = new Dictionary<uint, ushort>
-                    {
-                        { serial, (ushort)quantity.Value }
-                    };
-
-                    Tuple<uint, ushort>[] item = theItem.Select(t => new Tuple<uint, ushort>(t.Key, (ushort)t.Value)).ToArray();
+                    Tuple<uint, ushort>[] item = { new Tuple<uint, ushort>(serial, (ushort)quantity.Value) };
 
                     if (isPurchase)
                     {
@@ -312,12 +311,7 @@ namespace ClassicUO.Game.UI.Gumps
                 {
                     if (Keyboard.Shift)
                     {
-                        Dictionary<uint, ushort> theItem = new Dictionary<uint, ushort>
-                        {
-                            { Serial, (ushort)Count }
-                        };
-
-                        Tuple<uint, ushort>[] item = theItem.Select(t => new Tuple<uint, ushort>(t.Key, (ushort)t.Value)).ToArray();
+                        Tuple<uint, ushort>[] item = { new Tuple<uint, ushort>(Serial, (ushort)Count) };
 
                         if (isPurchase)
                         {

@@ -46,6 +46,7 @@ using ClassicUO.Utility;
 using ClassicUO.Utility.Logging;
 using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -293,14 +294,14 @@ namespace ClassicUO.Game.Scenes
 
         private Gump GetGumpForStep()
         {
-            foreach (Item item in World.Items.Values)
+            foreach (KeyValuePair<uint, Item> ikv in World.Items)
             {
-                World.RemoveItem(item);
+                World.RemoveItem(ikv.Value);
             }
 
-            foreach (Mobile mobile in World.Mobiles.Values)
+            foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
             {
-                World.RemoveMobile(mobile);
+                World.RemoveMobile(mkv.Value);
             }
 
             World.Mobiles.Clear();

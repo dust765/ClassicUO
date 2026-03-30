@@ -67,17 +67,26 @@ namespace ClassicUO.Dust765.UI.Gumps
             int contentY = 0;
             string[] sections =
             {
-                "/c[yellow]v3.0.8/cd",
+                "/c[yellow]v3.0.9/cd",
                 "",
-                "/c[yellow]Features/cd",
-                "- Add Search in Options",
+                "/c[yellow]Performance (GC/GPU/FPS)/cd",
+                "- Frustum culling: skip rendering objects outside viewport to reduce GPU load",
+                "- Batch optimization: group objects by type for fewer draw calls",
+                "- LOD system: reduce detail for distant objects to improve FPS",
+                "- Texture streaming and occlusion culling (optional, Ultra quality)",
+                "- Performance monitor: FPS and object count overlay (commands: [perftest], [perfstats], [perfquality])",
+                "- SDL optimizations: high-resolution timer and hints for high FPS",
+                "- Graphics quality presets: Low/Medium/High apply optimized shadow and effect settings",
+                "- ArrayPool usage for buffers to reduce GC pressure in networking and rendering",
                 "",
                 "/c[yellow]Fixes/cd",
-                "- Fix nameplateoverheadgump",
-                "- Fix Target hue by notoriety",
-                "- Fix Show nearly item gump",
-                "- Fix OnCasting after recall",
-                "- Show Guild in World Map",
+                "- Enable title bar stats: checkbox can now be unchecked when using CUO window style",
+                "- Options: scroll area no longer overlaps OK/Apply/Default/Cancel buttons on Nameplate Options and related pages",
+                "- Paperdoll: Show all equipment layers option now refreshes correctly when changed in Options",
+                "- Paperdoll: equipment slots visibility - shows all 17 slots when option is checked, only 6 left slots when unchecked",
+                "- Paperdoll: Show all equipment layers applies only to player's own paperdoll, not other players' paperdolls",
+                "- Nameplate Options: scrollbar area adjusted to stay above bottom buttons",
+                ""
             };
 
             foreach (string line in sections)

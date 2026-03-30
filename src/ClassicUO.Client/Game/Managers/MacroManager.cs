@@ -1409,7 +1409,19 @@ namespace ClassicUO.Game.Managers
                     // ## BEGIN - END ## // LINES
                     // ## BEGIN - END ## // UI/GUMPS
                     // ## BEGIN - END ## // TAZUO
-                    UIManager.Gumps.Where(s => !(s is TopBarGump) && !(s is BuffGump) && !(s is ImprovedBuffGump) && !(s is WorldViewportGump) && !(s is UOClassicCombatLTBar) && !(s is BandageGump) && !(s is UOClassicCombatLines) && !(s is UOClassicCombatAL) && !(s is UOClassicCombatBuffbar) && !(s is UOClassicCombatSelf) && !(s is ECBuffGump) && !(s is ECDebuffGump) && !(s is ECStateGump) && !(s is ModernCooldownBar)).ToList().ForEach(s => s.Dispose());
+                    for (LinkedListNode<Gump> n = UIManager.Gumps.Last; n != null;)
+                    {
+                        LinkedListNode<Gump> prev = n.Previous;
+                        Gump gump = n.Value;
+
+                        if (!(gump is TopBarGump) && !(gump is BuffGump) && !(gump is ImprovedBuffGump) && !(gump is WorldViewportGump) && !(gump is UOClassicCombatLTBar) && !(gump is BandageGump) && !(gump is UOClassicCombatLines) && !(gump is UOClassicCombatAL) && !(gump is UOClassicCombatBuffbar) && !(gump is UOClassicCombatSelf) && !(gump is ECBuffGump) && !(gump is ECDebuffGump) && !(gump is ECStateGump) && !(gump is ModernCooldownBar))
+                        {
+                            gump.Dispose();
+                        }
+
+                        n = prev;
+                    }
+
                     // ## BEGIN - END ## // TAZUO
 
 
@@ -2010,12 +2022,9 @@ namespace ClassicUO.Game.Managers
 
                 case MacroType.CloseAllHealthBars:
 
-                    //Includes HealthBarGump/HealthBarGumpCustom
-                    IEnumerable<BaseHealthBarGump> healthBarGumps = UIManager.Gumps.OfType<BaseHealthBarGump>();
-
-                    foreach (BaseHealthBarGump healthbar in healthBarGumps)
+                    for (LinkedListNode<Gump> n = UIManager.Gumps.Last; n != null; n = n.Previous)
                     {
-                        if (UIManager.AnchorManager[healthbar] == null && healthbar.LocalSerial != World.Player)
+                        if (n.Value is BaseHealthBarGump healthbar && !healthbar.IsDisposed && UIManager.AnchorManager[healthbar] == null && healthbar.LocalSerial != World.Player)
                         {
                             healthbar.Dispose();
                         }
@@ -2034,18 +2043,22 @@ namespace ClassicUO.Game.Managers
                     break;
 
                 case MacroType.CloseInactiveHealthBars:
-                    IEnumerable<BaseHealthBarGump> inactiveHealthBarGumps = UIManager.Gumps.OfType<BaseHealthBarGump>().Where(hb => hb.IsInactive);
-
-                    foreach (var healthbar in inactiveHealthBarGumps)
+                    for (LinkedListNode<Gump> n = UIManager.Gumps.Last; n != null; n = n.Previous)
                     {
-                        if (healthbar.LocalSerial == World.Player) continue;
-
-                        if (UIManager.AnchorManager[healthbar] != null)
+                        if (n.Value is BaseHealthBarGump healthbar && !healthbar.IsDisposed && healthbar.IsInactive)
                         {
-                            UIManager.AnchorManager[healthbar].DetachControl(healthbar);
-                        }
+                            if (healthbar.LocalSerial == World.Player)
+                            {
+                                continue;
+                            }
 
-                        healthbar.Dispose();
+                            if (UIManager.AnchorManager[healthbar] != null)
+                            {
+                                UIManager.AnchorManager[healthbar].DetachControl(healthbar);
+                            }
+
+                            healthbar.Dispose();
+                        }
                     }
                     break;
 
@@ -2053,20 +2066,22 @@ namespace ClassicUO.Game.Managers
                     var gridLootType = ProfileManager.CurrentProfile?.GridLootType; // 0 = none, 1 = only grid, 2 = both
                     if (gridLootType == 0 || gridLootType == 2)
                     {
-                        IEnumerable<ContainerGump> containerGumps = UIManager.Gumps.OfType<ContainerGump>().Where(cg => cg.Graphic == ContainerGump.CORPSES_GUMP);
-
-                        foreach (var containerGump in containerGumps)
+                        for (LinkedListNode<Gump> n = UIManager.Gumps.Last; n != null; n = n.Previous)
                         {
-                            containerGump.Dispose();
+                            if (n.Value is ContainerGump cg && !cg.IsDisposed && cg.Graphic == ContainerGump.CORPSES_GUMP)
+                            {
+                                cg.Dispose();
+                            }
                         }
                     }
                     if (gridLootType == 1 || gridLootType == 2)
                     {
-                        IEnumerable<GridLootGump> gridLootGumps = UIManager.Gumps.OfType<GridLootGump>();
-
-                        foreach (var gridLootGump in gridLootGumps)
+                        for (LinkedListNode<Gump> n = UIManager.Gumps.Last; n != null; n = n.Previous)
                         {
-                            gridLootGump.Dispose();
+                            if (n.Value is GridLootGump gl && !gl.IsDisposed)
+                            {
+                                gl.Dispose();
+                            }
                         }
                     }
                     break;

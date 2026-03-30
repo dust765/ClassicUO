@@ -42,6 +42,7 @@ using ClassicUO.Resources;
 using ClassicUO.Utility;
 using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Generic;
 using static ClassicUO.Network.NetClient;
 
 namespace ClassicUO.Game
@@ -1165,16 +1166,18 @@ namespace ClassicUO.Game
 
         public static void AllNames()
         {
-            foreach (Mobile mobile in World.Mobiles.Values)
+            foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
             {
+                Mobile mobile = mkv.Value;
                 if (mobile != World.Player)
                 {
                     Socket.Send_ClickRequest(mobile.Serial);
                 }
             }
 
-            foreach (Item item in World.Items.Values)
+            foreach (KeyValuePair<uint, Item> ikv in World.Items)
             {
+                Item item = ikv.Value;
                 if (item.IsCorpse)
                 {
                     Socket.Send_ClickRequest(item.Serial);

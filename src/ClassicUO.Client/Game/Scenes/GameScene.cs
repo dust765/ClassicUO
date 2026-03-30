@@ -83,6 +83,8 @@ namespace ClassicUO.Game.Scenes
 
         private uint _time_cleanup = Time.Ticks + 5000;
         private uint _timeToUpdateNativeTitleStats;
+        private uint _timeTextServerEntities;
+        private ushort _lastPreloadX, _lastPreloadY;
         private static XBREffect _xbr;
         private bool _alphaChanged;
         private long _alphaTimer;
@@ -769,6 +771,25 @@ namespace ClassicUO.Game.Scenes
 
         private void FillGameObjectList()
         {
+            // Pre-grow arrays to last frame's high-water-mark — avoids mid-frame Array.Resize + GC
+            if (_renderListStaticsArray.Length <= _hwmStatics)
+                Array.Resize(ref _renderListStaticsArray, _hwmStatics + 256);
+            if (_renderListTransparentArray.Length <= _hwmTransparent)
+                Array.Resize(ref _renderListTransparentArray, _hwmTransparent + 256);
+            if (_renderListAnimationsArray.Length <= _hwmAnimations)
+                Array.Resize(ref _renderListAnimationsArray, _hwmAnimations + 256);
+            if (_renderListEffectsArray.Length <= _hwmEffects)
+                Array.Resize(ref _renderListEffectsArray, _hwmEffects + 128);
+            if (_foliages.Length <= _hwmFoliages)
+                Array.Resize(ref _foliages, _hwmFoliages + 64);
+
+            // Update high-water-marks from last frame
+            _hwmStatics = Math.Max(_hwmStatics, _renderListStaticsCount);
+            _hwmTransparent = Math.Max(_hwmTransparent, _renderListTransparentObjectsCount);
+            _hwmAnimations = Math.Max(_hwmAnimations, _renderListAnimationCount);
+            _hwmEffects = Math.Max(_hwmEffects, _renderListEffectCount);
+            _hwmFoliages = Math.Max(_hwmFoliages, _foliageCount);
+
             _renderListStaticsCount = 0;
             _renderListTransparentObjectsCount = 0;
             _renderListAnimationCount = 0;
@@ -848,24 +869,25 @@ namespace ClassicUO.Game.Scenes
                     if (chunk == null || chunk.IsDestroyed)
                         continue;
 
-                    for (int x = 0; x < 8; x++)
+                    int chunkBaseX = chunkX << 3;
+                    int chunkBaseY = chunkY << 3;
+                    int tileStartX = Math.Max(0, minX - chunkBaseX);
+                    int tileEndX   = Math.Min(7, maxX - chunkBaseX);
+                    int tileStartY = Math.Max(0, minY - chunkBaseY);
+                    int tileEndY   = Math.Min(7, maxY - chunkBaseY);
+
+                    for (int x = tileStartX; x <= tileEndX; x++)
                     {
-                        for (int y = 0; y < 8; y++)
+                        for (int y = tileStartY; y <= tileEndY; y++)
                         {
-                            int worldX = (chunkX << 3) + x;
-                            int worldY = (chunkY << 3) + y;
-
-                            if (worldX < minX || worldX > maxX || worldY < minY || worldY > maxY)
-                                continue;
-
                             GameObject firstObj = chunk.GetHeadObject(x, y);
                             if (firstObj == null || firstObj.IsDestroyed)
                                 continue;
 
                             AddTileToRenderList(
                                 firstObj,
-                                worldX,
-                                worldY,
+                                chunkBaseX + x,
+                                chunkBaseY + y,
                                 use_handles,
                                 150,
                                 maxCotZ,
@@ -893,8 +915,12 @@ namespace ClassicUO.Game.Scenes
                 }
             }
 
-            UpdateTextServerEntities(World.Mobiles, true);
-            UpdateTextServerEntities(World.Items, false);
+            if (UpdateDrawPosition || Time.Ticks >= _timeTextServerEntities)
+            {
+                _timeTextServerEntities = Time.Ticks + 100;
+                UpdateTextServerEntities(World.Mobiles, true);
+                UpdateTextServerEntities(World.Items, false);
+            }
 
             UpdateDrawPosition = false;
         }
@@ -933,10 +959,16 @@ namespace ClassicUO.Game.Scenes
             // Preload chunks around the player for smoother rendering after teleport
             if (World.InGame && World.Map != null && World.Player != null)
             {
-                World.Map.PreloadChunksAround(World.Player.X, World.Player.Y, 3, 8);
+                if (World.Player.X != _lastPreloadX || World.Player.Y != _lastPreloadY)
+                {
+                    _lastPreloadX = World.Player.X;
+                    _lastPreloadY = World.Player.Y;
+                    World.Map.PreloadChunksAround(World.Player.X, World.Player.Y, 3, 8);
+                }
             }
 
-            PacketHandlers.SendMegaClilocRequests();
+            if (GameController.FullGameTick)
+                PacketHandlers.SendMegaClilocRequests();
 
             if (_forceStopScene)
             {

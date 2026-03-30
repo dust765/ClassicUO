@@ -15,6 +15,7 @@ using ClassicUO.Game;
 using ClassicUO.Input;
 using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Generic;
 
 namespace ClassicUO.Game.UI.Gumps
 {
@@ -92,8 +93,9 @@ namespace ClassicUO.Game.UI.Gumps
                     int cx = camera.Bounds.X + camera.Bounds.Width / 2;
                     int cy = camera.Bounds.Y + camera.Bounds.Height / 2;
                     int bestDist = int.MaxValue;
-                    foreach (Mobile mob in World.Mobiles.Values)
+                    foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
                     {
+                        Mobile mob = mkv.Value;
                         if (mob.IsHuman || mob.IsDestroyed || !mob.AllowedToDraw)
                             continue;
                         int gx = camera.Bounds.X + mob.RealScreenPosition.X + 22 + (int)mob.Offset.X;

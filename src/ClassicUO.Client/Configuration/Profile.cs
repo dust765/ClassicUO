@@ -296,7 +296,7 @@ namespace ClassicUO.Configuration
         public bool CBBlackBGToggled { get; set; }
 
         public bool ShowInfoBar { get; set; }
-        public bool ShowHPInTitleBar { get; set; } = true;
+        public bool ShowHPInTitleBar { get; set; } = false;
         public bool EnableTitleBarStats { get; set; }
         public TitleBarStatsMode TitleBarStatsMode { get; set; } = TitleBarStatsMode.Text;
         public int InfoBarHighlightType { get; set; } // 0 = text colour changes, 1 = underline
@@ -491,16 +491,10 @@ namespace ClassicUO.Configuration
         // ## BEGIN - END ## // PvM/PvP
         public bool PvM_DamageCounterOnLastTarget { get; set; } = false;
         public bool PvM_DamageCounterAsOverhead { get; set; } = false;
-        public bool PvM_AggroIndicatorOnHealthBar { get; set; } = false;
-        public bool PvM_CorpseFilterByNotoriety { get; set; } = false;
-        public int PvM_CorpseFilterMode { get; set; } = 0;
         public bool PvM_LowHpAlertOnLastTarget { get; set; } = false;
         public bool PvM_KillCountMarkerPerSession { get; set; } = false;
         public bool PvM_LootHighlightOnCorpse { get; set; } = false;
-        public bool PvP_CriminalAttackableAlert { get; set; } = false;
-        public bool PvP_WarModeIndicator { get; set; } = false;
         public bool PvP_GreyCriminalTimer { get; set; } = false;
-        public bool PvP_LastAttackerHighlight { get; set; } = false;
         public bool PvP_SpellRangeOnCursor { get; set; } = true;
         public bool PvP_QuickTargetEnemyList { get; set; } = false;
         public bool PvP_OptimizedMode { get; set; } = true;
@@ -508,8 +502,6 @@ namespace ClassicUO.Configuration
         public bool PvX_NameOverheadProfilesByContext { get; set; } = false;
         public int PvM_NameOverheadProfileFlags { get; set; } = (int)NameOverheadOptions.MobilesAndCorpses;
         public int PvP_NameOverheadProfileFlags { get; set; } = (int)(NameOverheadOptions.Criminal | NameOverheadOptions.Gray | NameOverheadOptions.Enemy | NameOverheadOptions.Murderer);
-        public bool PvX_ConfigurableSoundsPerEvent { get; set; } = false;
-        public int PvX_SoundCriminalAlert { get; set; } = 0;
         public bool PvX_BlockBeneficialOnEnemies { get; set; } = false;
         public bool PvX_LastTargetDirectionIndicator { get; set; } = false;
         public bool PvX_LockLastTarget { get; set; } = false;
@@ -559,13 +551,13 @@ namespace ClassicUO.Configuration
         public bool UOClassicCombatLines_ToggleHMBlue { get; set; } = false;
         
         // ## BEGIN - END ## // PERFORMANCE SETTINGS
-        public int GraphicsQuality { get; set; } = 2; // 0 = Low, 1 = Medium, 2 = High
+        public int GraphicsQuality { get; set; } = 0; // 0 = Low, 1 = Medium, 2 = High
         public bool EnableFrustumCulling { get; set; } = true;
-        public bool EnableTextureCaching { get; set; } = true;
-        public bool EnableChunkPreload { get; set; } = true;
-        public int MaxRenderDistance { get; set; } = 24; // Max view range
+        public bool EnableTextureCaching { get; set; } = false;
+        public bool EnableChunkPreload { get; set; } = false;
+        public int MaxRenderDistance { get; set; } = 18; // Max view range
         public bool UseRenderTarget { get; set; } = true;
-        public float RenderTargetScale { get; set; } = 1f;
+        public float RenderTargetScale { get; set; } = 0.85f;
         public bool EnableLOD { get; set; } = true;
         public int LODDistanceTiles { get; set; } = 24;
         public int ImageRenderingMode { get; set; } = 0;
@@ -720,7 +712,7 @@ namespace ClassicUO.Configuration
         public bool PerformanceBatchOptimization { get; set; } = true;
         public bool PerformanceLODSystem { get; set; } = true;
         public bool PerformanceTextureStreaming { get; set; } = true;
-        public bool PerformanceOcclusionCulling { get; set; } = false;
+        public bool PerformanceOcclusionCulling { get; set; } = true;
         public int PerformanceQualityLevel { get; set; } = 2; // 0=Low, 1=Medium, 2=High, 3=Ultra
         public bool PerformanceShowStats { get; set; } = false;
         // ## BEGIN - END ## // VISUALRESPONSEMANAGER
@@ -1017,6 +1009,19 @@ namespace ClassicUO.Configuration
         public bool EnableNearbyItemGump { get; set; } = false;
         public int NearbyItemGumpHotkeyKey { get; set; }
         public uint NearbyItemGumpHotkeyMod { get; set; }
+
+        public void EnsurePerformanceFeaturesEnabled()
+        {
+            PerformanceOptimizations = true;
+            PerformanceFrustumCulling = true;
+            PerformanceBatchOptimization = true;
+            PerformanceLODSystem = true;
+            PerformanceTextureStreaming = true;
+            PerformanceOcclusionCulling = true;
+            EnableFrustumCulling = true;
+            EnableLOD = true;
+            OptimizeBackgroundRendering = true;
+        }
 
         public void Save(string path, bool saveGumps = true)
         {

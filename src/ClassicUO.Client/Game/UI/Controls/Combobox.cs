@@ -159,7 +159,7 @@ namespace ClassicUO.Game.UI.Controls
                 return;
             }
 
-            int comboY = ScreenCoordinateY + Offset.Y;
+            int comboY = ScreenCoordinateY + Offset.Y + Height;
 
             if (comboY < 0)
             {
@@ -174,7 +174,7 @@ namespace ClassicUO.Game.UI.Controls
             (
                 new ComboboxGump
                 (
-                    ScreenCoordinateX,
+                    ScreenCoordinateX + Offset.X,
                     comboY,
                     Width,
                     _maxHeight,

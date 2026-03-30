@@ -90,8 +90,12 @@ namespace ClassicUO.Network
 
         public void Add(byte id, OnPacketBufferReader handler) => _handlers[id] = handler;
 
-        private byte[] _readingBuffer = new byte[4096];
-        private readonly PacketLogger _packetLogger = new PacketLogger();
+        private const int ReadingBufferInitialSize = 4096;
+        private const int ReadingBufferDoublingCap = 512 * 1024;
+        private const int ReadingBufferShrinkTarget = 65536;
+        private const int ReadingBufferShrinkPacketMax = 4096;
+
+        private byte[] _readingBuffer = new byte[ReadingBufferInitialSize];
         private readonly CircularBuffer _buffer = new CircularBuffer();
         private readonly CircularBuffer _pluginsBuffer = new CircularBuffer();
 
@@ -149,12 +153,31 @@ namespace ClassicUO.Network
 
                     while (packetlength > packetBuffer.Length)
                     {
-                        Array.Resize(ref packetBuffer, packetBuffer.Length * 2);
+                        int cur = packetBuffer.Length;
+                        int next;
+                        if (cur >= ReadingBufferDoublingCap)
+                        {
+                            next = packetlength;
+                        }
+                        else
+                        {
+                            next = cur;
+                            while (next < packetlength && next < ReadingBufferDoublingCap)
+                            {
+                                next = checked(next * 2);
+                            }
+
+                            next = Math.Max(next, packetlength);
+                        }
+
+                        Array.Resize(ref packetBuffer, next);
                     }
 
                     _ = stream.Dequeue(packetBuffer, 0, packetlength);
 
+#if DEBUG
                     PacketLogger.Default?.Log(packetBuffer.AsSpan(0, packetlength), false);
+#endif
 
                     // TODO: the pluging function should allow Span<byte> or unsafe type only.
                     // The current one is a bad style decision.
@@ -164,6 +187,14 @@ namespace ClassicUO.Network
                         AnalyzePacket(packetBuffer.AsSpan(0, packetlength), offset);
 
                         ++packetsCount;
+                    }
+
+                    if (
+                        packetBuffer.Length > ReadingBufferShrinkTarget
+                        && packetlength < ReadingBufferShrinkPacketMax
+                    )
+                    {
+                        Array.Resize(ref packetBuffer, ReadingBufferShrinkTarget);
                     }
 
                     --budget;
@@ -599,7 +630,7 @@ namespace ClassicUO.Network
                     {
                         if (
                             !string.IsNullOrEmpty(World.Player.Name)
-                            && (oldName != World.Player.Name || ProfileManager.CurrentProfile?.ShowHPInTitleBar == true)
+                            && (oldName != World.Player.Name || ProfileManager.CurrentProfile?.ShowHPInTitleBar == true || ProfileManager.CurrentProfile?.EnableTitleBarStats == true)
                         )
                         {
                             Client.Game.SetWindowTitle(World.Player.Name);
@@ -1100,7 +1131,8 @@ namespace ClassicUO.Network
 
             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
             if (
-                ProfileManager.CurrentProfile.VisualResponseManager
+                ProfileManager.CurrentProfile != null
+                && ProfileManager.CurrentProfile.VisualResponseManager
                 && (type == MessageType.System || serial == 0xFFFF_FFFF || serial == 0 || name.ToLower() == "system" && entity == null)
             )
             {
@@ -1962,7 +1994,7 @@ namespace ClassicUO.Network
                     UoAssist.SignalHits();
                     UoAssist.SignalStamina();
                     UoAssist.SignalMana();
-                    if (ProfileManager.CurrentProfile?.ShowHPInTitleBar == true)
+                    if (ProfileManager.CurrentProfile?.ShowHPInTitleBar == true || ProfileManager.CurrentProfile?.EnableTitleBarStats == true)
                         Client.Game.SetWindowTitle(World.Player.Name);
                 }
             }
@@ -3604,7 +3636,7 @@ namespace ClassicUO.Network
             if (entity == World.Player)
             {
                 UoAssist.SignalHits();
-                if (ProfileManager.CurrentProfile?.ShowHPInTitleBar == true)
+                if (ProfileManager.CurrentProfile?.ShowHPInTitleBar == true || ProfileManager.CurrentProfile?.EnableTitleBarStats == true)
                     Client.Game.SetWindowTitle(World.Player.Name);
             }
         }
@@ -3887,7 +3919,8 @@ namespace ClassicUO.Network
 
             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
             if (
-                ProfileManager.CurrentProfile.VisualResponseManager
+                ProfileManager.CurrentProfile != null
+                && ProfileManager.CurrentProfile.VisualResponseManager
                 && (type == MessageType.System || serial == 0xFFFF_FFFF || serial == 0 || name.ToLower() == "system" && entity == null)
             )
             {
@@ -4908,8 +4941,9 @@ namespace ClassicUO.Network
                     byte animID = p.ReadUInt8();
                     byte frameCount = p.ReadUInt8();
 
-                    foreach (Mobile m in World.Mobiles.Values)
+                    foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
                     {
+                        Mobile m = mkv.Value;
                         if ((m.Serial & 0xFFFF) == serial)
                         {
                             m.SetAnimation(animID);
@@ -4962,7 +4996,10 @@ namespace ClassicUO.Network
             }
 
             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
-            if (ProfileManager.CurrentProfile.VisualResponseManager)
+            if (
+                ProfileManager.CurrentProfile != null
+                && ProfileManager.CurrentProfile.VisualResponseManager
+            )
             {
                 World.VisualResponseManager.OnCliloc(cliloc);
             }
@@ -6771,7 +6808,13 @@ namespace ClassicUO.Network
 
                 World.Player.Walker.ResendPacketResync = false;
                 World.Player.CloseRangedGumps();
+                bool teleported = World.Player.X != x || World.Player.Y != y;
                 World.Player.SetInWorldTile(x, y, z);
+                if (teleported && World.Map != null)
+                {
+                    World.Player.Walker.TeleportFreezeUntil = Time.Ticks + 250;
+                    World.Map.PreloadChunksAround(x, y, 4, int.MaxValue);
+                }
                 World.Player.UpdateAbilities();
                 // ## BEGIN - END ## // ONCASTINGGUMP
                 if (ProfileManager.CurrentProfile.OnCastingGump) {

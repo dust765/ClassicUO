@@ -105,9 +105,40 @@ namespace ClassicUO.Game.Managers
         }
 
         public static bool IsTemporarilyShowing { get; private set; }
-        public static bool IsShowing => IsPermaToggled || IsTemporarilyShowing || Keyboard.Ctrl && Keyboard.Shift;
+
+        private static bool _cachedIsShowing;
+        private static uint _isShowingCacheTime;
+
+        public static bool IsShowing
+        {
+            get
+            {
+                if (Time.Ticks - _isShowingCacheTime > 16)
+                {
+                    _cachedIsShowing = IsPermaToggled || IsTemporarilyShowing || Keyboard.Ctrl && Keyboard.Shift;
+                    _isShowingCacheTime = Time.Ticks;
+                }
+                return _cachedIsShowing;
+            }
+        }
+
+        public static void InvalidateShowingCache() => _isShowingCacheTime = 0;
 
         private static List<NameOverheadOption> Options { get; set; } = new List<NameOverheadOption>();
+
+        // O(1) hotkey lookup — rebuilt when options are added/removed
+        private static Dictionary<(SDL.SDL_Keycode key, bool alt, bool ctrl, bool shift), NameOverheadOption>
+            _hotkeyIndex = new();
+
+        private static void RebuildHotkeyIndex()
+        {
+            _hotkeyIndex.Clear();
+            foreach (var opt in Options)
+            {
+                if (opt.Key != SDL.SDL_Keycode.SDLK_UNKNOWN)
+                    _hotkeyIndex[(opt.Key, opt.Alt, opt.Ctrl, opt.Shift)] = opt;
+            }
+        }
 
         public static string Search { get; set; } = string.Empty;
 
@@ -253,6 +284,7 @@ namespace ClassicUO.Game.Managers
                 return;
 
             IsPermaToggled = toggled;
+            InvalidateShowingCache();
             _gump?.UpdateCheckboxes();
         }
 
@@ -266,6 +298,7 @@ namespace ClassicUO.Game.Managers
 
                 Options.Clear();
                 CreateDefaultEntries();
+                RebuildHotkeyIndex();
                 Save();
 
                 return;
@@ -297,6 +330,8 @@ namespace ClassicUO.Game.Managers
                     Options.Add(option);
                 }
             }
+
+            RebuildHotkeyIndex();
         }
 
         public static void Save()
@@ -346,18 +381,21 @@ namespace ClassicUO.Game.Managers
         public static void AddOption(NameOverheadOption option)
         {
             Options.Add(option);
+            RebuildHotkeyIndex();
             _gump?.RedrawOverheadOptions();
         }
 
         public static void RemoveOption(NameOverheadOption option)
         {
             Options.Remove(option);
+            RebuildHotkeyIndex();
             _gump?.RedrawOverheadOptions();
         }
 
         public static NameOverheadOption FindOptionByHotkey(SDL.SDL_Keycode key, bool alt, bool ctrl, bool shift)
         {
-            return Options.FirstOrDefault(o => o.Key == key && o.Alt == alt && o.Ctrl == ctrl && o.Shift == shift);
+            _hotkeyIndex.TryGetValue((key, alt, ctrl, shift), out var result);
+            return result;
         }
 
         public static List<NameOverheadOption> GetAllOptions() => Options;
@@ -382,6 +420,7 @@ namespace ClassicUO.Game.Managers
             SetActiveOption(option);
 
             IsTemporarilyShowing = true;
+            InvalidateShowingCache();
         }
 
         public static void RegisterKeyUp(SDL.SDL_Keycode keySym)
@@ -392,6 +431,7 @@ namespace ClassicUO.Game.Managers
             _lastKeySym = SDL.SDL_Keycode.SDLK_UNKNOWN;
 
             IsTemporarilyShowing = false;
+            InvalidateShowingCache();
         }
 
         public static void SetActiveOption(NameOverheadOption option)

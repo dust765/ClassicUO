@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (C) 2020 project dust765
 // 
@@ -21,7 +21,7 @@
 
 #endregion
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using ClassicUO.Configuration;
 using Microsoft.Xna.Framework;
 using ClassicUO.Game;
@@ -36,148 +36,148 @@ namespace ClassicUO.Dust765.Macros
     {
         public static void GrabFriendlyBars()
         {
-            GameObject _fbarObject;
-            _fbarObject = SelectedObject.Object as GameObject;
-
-            foreach (Mobile mobile in World.Mobiles.Values)
+            foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
             {
-                if (World.Mobiles.Get(mobile).Distance < 18)
+                Mobile mobile = mkv.Value;
+
+                if (mobile.Distance >= 18)
                 {
-                    if (mobile.Name == null || mobile.Name.Length == 0)
-                    {
-                        return;
-                    }
-                    else
-                        foreach (Mobile mobile1 in World.Mobiles.Values)
-                        {
-                            if ((mobile.NotorietyFlag == NotorietyFlag.Innocent) && (mobile != World.Player) && (mobile.NotorietyFlag != NotorietyFlag.Invulnerable))
-                            {
-                                Entity entity = World.Get(mobile.Serial);
-                                Point offset = ProfileManager.CurrentProfile.PullFriendlyBars;
-                                var _dragginObject = SelectedObject.Object as GameObject;
-
-                                if (Math.Abs(offset.X) > Constants.MIN_PICKUP_DRAG_DISTANCE_PIXELS || Math.Abs(offset.Y) > Constants.MIN_PICKUP_DRAG_DISTANCE_PIXELS)
-                                {
-                                    GameObject obj = ProfileManager.CurrentProfile.SallosEasyGrab && SelectedObject.Object is GameObject o ? o : _dragginObject;
-                                    GameActions.RequestMobileStatus(entity.Serial);
-                                    var customgump = UIManager.GetGump<HealthBarGumpCustom>(entity.Serial);
-                                    if (customgump != null)
-                                    {
-                                        customgump.Dispose();
-                                    }
-
-                                    if (entity.Serial == World.Player)
-                                        StatusGumpBase.GetStatusGump()?.Dispose();
-                                    var BAR = UIManager.Gumps.OfType<HealthBarGumpCustom>().OrderBy(s => mobile.NotorietyFlag).Count();
-
-                                    Rectangle rect = new Rectangle(0, 0, HealthBarGumpCustom.HPB_WIDTH, HealthBarGumpCustom.HPB_HEIGHT_SINGLELINE);
-                                    HealthBarGumpCustom currentCustomHealthBarGump;
-                                    UIManager.Add(currentCustomHealthBarGump = new HealthBarGumpCustom(entity) { X = ProfileManager.CurrentProfile.PullFriendlyBarsFinalLocation.X - (rect.Width >> 1), Y = ProfileManager.CurrentProfile.PullFriendlyBarsFinalLocation.Y + (36 * BAR) });
-
-                                    break;
-                                }
-                            }
-                        }
                     continue;
                 }
+
+                if (mobile.Name == null || mobile.Name.Length == 0)
+                {
+                    return;
+                }
+
+                if (mobile.NotorietyFlag != NotorietyFlag.Innocent || mobile == World.Player || mobile.NotorietyFlag == NotorietyFlag.Invulnerable)
+                {
+                    continue;
+                }
+
+                Entity entity = World.Get(mobile.Serial);
+                Point offset = ProfileManager.CurrentProfile.PullFriendlyBars;
+
+                if (Math.Abs(offset.X) <= Constants.MIN_PICKUP_DRAG_DISTANCE_PIXELS && Math.Abs(offset.Y) <= Constants.MIN_PICKUP_DRAG_DISTANCE_PIXELS)
+                {
+                    continue;
+                }
+
+                GameActions.RequestMobileStatus(entity.Serial);
+                HealthBarGumpCustom customgump = UIManager.GetGump<HealthBarGumpCustom>(entity.Serial);
+
+                if (customgump != null)
+                {
+                    customgump.Dispose();
+                }
+
+                if (entity.Serial == World.Player)
+                {
+                    StatusGumpBase.GetStatusGump()?.Dispose();
+                }
+
+                int bar = UIManager.CountHealthBarGumpCustom();
+                Rectangle rect = new Rectangle(0, 0, HealthBarGumpCustom.HPB_WIDTH, HealthBarGumpCustom.HPB_HEIGHT_SINGLELINE);
+                UIManager.Add(new HealthBarGumpCustom(entity) { X = ProfileManager.CurrentProfile.PullFriendlyBarsFinalLocation.X - (rect.Width >> 1), Y = ProfileManager.CurrentProfile.PullFriendlyBarsFinalLocation.Y + (36 * bar) });
+                break;
             }
         }
 
         public static void GrabEnemyBars()
         {
-            GameObject _ebarObject1;
-            _ebarObject1 = SelectedObject.Object as GameObject;
-
-            foreach (Mobile mobile in World.Mobiles.Values)
+            foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
             {
-                if (World.Mobiles.Get(mobile).Distance < 18)
+                Mobile mobile = mkv.Value;
+
+                if (mobile.Distance >= 18)
                 {
-                    if (mobile.Name == null || mobile.Name.Length == 0)
-                    {
-                        return;
-                    }
-                    else
-                        foreach (Mobile mobile1 in World.Mobiles.Values)
-                        {
-                            if ((mobile.NotorietyFlag == NotorietyFlag.Criminal || mobile.NotorietyFlag == NotorietyFlag.Enemy || mobile.NotorietyFlag == NotorietyFlag.Gray || mobile.NotorietyFlag == NotorietyFlag.Murderer) && (World.Party.Leader != mobile || World.Party.Members.Length > 0 && !World.Party.Contains(mobile)) && (mobile != World.Player) && (mobile.NotorietyFlag != NotorietyFlag.Invulnerable))
-                            {
-                                Entity entity = World.Get(mobile.Serial);
-                                Point offset = ProfileManager.CurrentProfile.PullEnemyBars;
-                                var _dragginObject = SelectedObject.Object as GameObject;
-
-                                if (Math.Abs(offset.X) > Constants.MIN_PICKUP_DRAG_DISTANCE_PIXELS || Math.Abs(offset.Y) > Constants.MIN_PICKUP_DRAG_DISTANCE_PIXELS)
-                                {
-                                    GameObject obj = ProfileManager.CurrentProfile.SallosEasyGrab && SelectedObject.Object is GameObject o ? o : _dragginObject;
-                                    GameActions.RequestMobileStatus(entity.Serial);
-                                    var customgump = UIManager.GetGump<HealthBarGumpCustom>(entity.Serial);
-                                    if (customgump != null)
-                                    {
-                                        customgump.Dispose();
-                                    }
-
-                                    if (entity.Serial == World.Player)
-                                        StatusGumpBase.GetStatusGump()?.Dispose();
-                                    var BAR = UIManager.Gumps.OfType<HealthBarGumpCustom>().OrderBy(s => mobile.NotorietyFlag).Count();
-
-                                    Rectangle rect = new Rectangle(0, 0, HealthBarGumpCustom.HPB_WIDTH, HealthBarGumpCustom.HPB_HEIGHT_SINGLELINE);
-                                    HealthBarGumpCustom currentCustomHealthBarGump;
-                                    UIManager.Add(currentCustomHealthBarGump = new HealthBarGumpCustom(entity) { X = ProfileManager.CurrentProfile.PullEnemyBarsFinalLocation.X - (rect.Width >> 1), Y = ProfileManager.CurrentProfile.PullEnemyBarsFinalLocation.Y + (36 * BAR) });
-
-                                    break;
-                                }
-                            }
-                        }
                     continue;
                 }
+
+                if (mobile.Name == null || mobile.Name.Length == 0)
+                {
+                    return;
+                }
+
+                if ((mobile.NotorietyFlag != NotorietyFlag.Criminal && mobile.NotorietyFlag != NotorietyFlag.Enemy && mobile.NotorietyFlag != NotorietyFlag.Gray && mobile.NotorietyFlag != NotorietyFlag.Murderer) || (World.Party.Leader == mobile && (World.Party.Members.Length == 0 || World.Party.Contains(mobile))) || mobile == World.Player || mobile.NotorietyFlag == NotorietyFlag.Invulnerable)
+                {
+                    continue;
+                }
+
+                Entity entity = World.Get(mobile.Serial);
+                Point offset = ProfileManager.CurrentProfile.PullEnemyBars;
+
+                if (Math.Abs(offset.X) <= Constants.MIN_PICKUP_DRAG_DISTANCE_PIXELS && Math.Abs(offset.Y) <= Constants.MIN_PICKUP_DRAG_DISTANCE_PIXELS)
+                {
+                    continue;
+                }
+
+                GameActions.RequestMobileStatus(entity.Serial);
+                HealthBarGumpCustom customgump = UIManager.GetGump<HealthBarGumpCustom>(entity.Serial);
+
+                if (customgump != null)
+                {
+                    customgump.Dispose();
+                }
+
+                if (entity.Serial == World.Player)
+                {
+                    StatusGumpBase.GetStatusGump()?.Dispose();
+                }
+
+                int bar = UIManager.CountHealthBarGumpCustom();
+                Rectangle rect = new Rectangle(0, 0, HealthBarGumpCustom.HPB_WIDTH, HealthBarGumpCustom.HPB_HEIGHT_SINGLELINE);
+                UIManager.Add(new HealthBarGumpCustom(entity) { X = ProfileManager.CurrentProfile.PullEnemyBarsFinalLocation.X - (rect.Width >> 1), Y = ProfileManager.CurrentProfile.PullEnemyBarsFinalLocation.Y + (36 * bar) });
+                break;
             }
         }
 
         public static void GrabPartyAllyBars()
         {
-            GameObject _ebarObject2;
-            _ebarObject2 = SelectedObject.Object as GameObject;
-
-            foreach (Mobile mobile in World.Mobiles.Values)
+            foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
             {
-                if (World.Mobiles.Get(mobile).Distance < 18)
+                Mobile mobile = mkv.Value;
+
+                if (mobile.Distance >= 18)
                 {
-                    if (mobile.Name == null || mobile.Name.Length == 0)
-                    {
-                        return;
-                    }
-                    else
-                        foreach (Mobile mobile1 in World.Mobiles.Values)
-                        {
-                            if ((mobile.NotorietyFlag == NotorietyFlag.Ally || World.Party.Leader == mobile || World.Party.Members.Length > 0 && World.Party.Contains(mobile)) && (mobile != World.Player) && (mobile.NotorietyFlag != NotorietyFlag.Invulnerable))
-                            {
-                                Entity entity = World.Get(mobile.Serial);
-                                Point offset = ProfileManager.CurrentProfile.PullPartyAllyBars;//new Point(1470, 214);
-                                var _dragginObject = SelectedObject.Object as GameObject;
-
-                                if (Math.Abs(offset.X) > Constants.MIN_PICKUP_DRAG_DISTANCE_PIXELS || Math.Abs(offset.Y) > Constants.MIN_PICKUP_DRAG_DISTANCE_PIXELS)
-                                {
-                                    GameObject obj = ProfileManager.CurrentProfile.SallosEasyGrab && SelectedObject.Object is GameObject o ? o : _dragginObject;
-                                    GameActions.RequestMobileStatus(entity.Serial);
-                                    var customgump = UIManager.GetGump<HealthBarGumpCustom>(entity.Serial);
-                                    if (customgump != null)
-                                    {
-                                        customgump.Dispose();
-                                    }
-
-                                    if (entity.Serial == World.Player)
-                                        StatusGumpBase.GetStatusGump()?.Dispose();
-                                    var BAR = UIManager.Gumps.OfType<HealthBarGumpCustom>().OrderBy(s => mobile.NotorietyFlag).Count();
-
-                                    Rectangle rect = new Rectangle(0, 0, HealthBarGumpCustom.HPB_WIDTH, HealthBarGumpCustom.HPB_HEIGHT_SINGLELINE);
-                                    HealthBarGumpCustom currentCustomHealthBarGump;
-                                    UIManager.Add(currentCustomHealthBarGump = new HealthBarGumpCustom(entity) { X = ProfileManager.CurrentProfile.PullPartyAllyBarsFinalLocation.X - (rect.Width >> 1), Y = ProfileManager.CurrentProfile.PullPartyAllyBarsFinalLocation.Y + (36 * BAR) });
-
-                                    break;
-                                }
-                            }
-                        }
                     continue;
                 }
+
+                if (mobile.Name == null || mobile.Name.Length == 0)
+                {
+                    return;
+                }
+
+                if ((mobile.NotorietyFlag != NotorietyFlag.Ally && World.Party.Leader != mobile && (World.Party.Members.Length == 0 || !World.Party.Contains(mobile))) || mobile == World.Player || mobile.NotorietyFlag == NotorietyFlag.Invulnerable)
+                {
+                    continue;
+                }
+
+                Entity entity = World.Get(mobile.Serial);
+                Point offset = ProfileManager.CurrentProfile.PullPartyAllyBars;
+
+                if (Math.Abs(offset.X) <= Constants.MIN_PICKUP_DRAG_DISTANCE_PIXELS && Math.Abs(offset.Y) <= Constants.MIN_PICKUP_DRAG_DISTANCE_PIXELS)
+                {
+                    continue;
+                }
+
+                GameActions.RequestMobileStatus(entity.Serial);
+                HealthBarGumpCustom customgump = UIManager.GetGump<HealthBarGumpCustom>(entity.Serial);
+
+                if (customgump != null)
+                {
+                    customgump.Dispose();
+                }
+
+                if (entity.Serial == World.Player)
+                {
+                    StatusGumpBase.GetStatusGump()?.Dispose();
+                }
+
+                int bar = UIManager.CountHealthBarGumpCustom();
+                Rectangle rect = new Rectangle(0, 0, HealthBarGumpCustom.HPB_WIDTH, HealthBarGumpCustom.HPB_HEIGHT_SINGLELINE);
+                UIManager.Add(new HealthBarGumpCustom(entity) { X = ProfileManager.CurrentProfile.PullPartyAllyBarsFinalLocation.X - (rect.Width >> 1), Y = ProfileManager.CurrentProfile.PullPartyAllyBarsFinalLocation.Y + (36 * bar) });
+                break;
             }
         }
     }

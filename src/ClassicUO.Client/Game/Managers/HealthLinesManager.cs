@@ -30,6 +30,7 @@
 
 #endregion
 
+using System.Collections.Generic;
 using ClassicUO.Configuration;
 using ClassicUO.Game.Data;
 // ## BEGIN - END ## // OVERHEAD / UNDERCHAR
@@ -147,8 +148,9 @@ namespace ClassicUO.Game.Managers
 
             int showWhen = ProfileManager.CurrentProfile.MobileHPShowWhen;
 
-            foreach (Mobile mobile in World.Mobiles.Values)
+            foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
             {
+                Mobile mobile = mkv.Value;
                 if (mobile.IsDestroyed)
                 {
                     continue;

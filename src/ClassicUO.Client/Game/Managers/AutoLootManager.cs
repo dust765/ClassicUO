@@ -24,6 +24,7 @@ namespace ClassicUO.Game.Managers
         private bool loaded = false;
         private string savePath = Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Profiles", "AutoLoot.json");
         private bool lootTaskRunning = false;
+        private int _lootTaskRunningFlag = 0;
         private ProgressBarGump progressBarGump;
         private int currentLootTotalCount = 0;
 
@@ -35,15 +36,15 @@ namespace ClassicUO.Game.Managers
         /// </summary>
         public void StartLooting()
         {
-            if (loaded && !lootTaskRunning)
+            if (loaded && System.Threading.Interlocked.CompareExchange(ref _lootTaskRunningFlag, 1, 0) == 0)
             {
                 int delay = ProfileManager.CurrentProfile == null ? 1000 : ProfileManager.CurrentProfile.MoveMultiObjectDelay;
-                Task.Factory.StartNew(() =>
+                _ = Task.Run(async () =>
                 {
-                    Task.Delay(delay).Wait();
                     try
                     {
                         lootTaskRunning = true;
+                        await Task.Delay(delay).ConfigureAwait(false);
                         if (lootItems != null && !lootItems.IsEmpty)
                         {
                             int totalToLoot = Math.Max(1, currentLootTotalCount);
@@ -77,7 +78,7 @@ namespace ClassicUO.Game.Managers
                                 if (m != null)
                                 {
                                     GameActions.GrabItem(m, m.Amount);
-                                    Task.Delay(delay).Wait();
+                                    await Task.Delay(delay).ConfigureAwait(false);
                                 }
                             }
                         }
@@ -90,6 +91,7 @@ namespace ClassicUO.Game.Managers
                         lootTaskRunning = false;
                         MainThreadQueue.EnqueueAction(() => { progressBarGump?.Dispose(); progressBarGump = null; });
                         currentLootTotalCount = 0;
+                        System.Threading.Interlocked.Exchange(ref _lootTaskRunningFlag, 0);
                     }
                 });
             }
@@ -199,7 +201,7 @@ namespace ClassicUO.Game.Managers
 
         private void Load()
         {
-            Task.Factory.StartNew(() =>
+            _ = Task.Run(() =>
             {
                 if (!File.Exists(savePath))
                 {

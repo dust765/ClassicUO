@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -31,8 +31,6 @@
 #endregion
 
 using System.Collections.Generic;
-using System.Linq;
-
 namespace ClassicUO.Game.UI.Controls
 {
     public class RadioButton : Checkbox
@@ -88,15 +86,18 @@ namespace ClassicUO.Game.UI.Controls
 
         private bool HandleClick()
         {
-            IEnumerable<RadioButton> en = Parent?.FindControls<RadioButton>().Where(s => s.GroupIndex == GroupIndex && s != this);
-
-            if (en == null)
+            if (Parent == null)
             {
                 return false;
             }
 
-            foreach (RadioButton button in en)
+            foreach (RadioButton button in Parent.FindControls<RadioButton>())
             {
+                if (button.GroupIndex != GroupIndex || button == this)
+                {
+                    continue;
+                }
+
                 button.IsChecked = false;
             }
 

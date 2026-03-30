@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -31,6 +31,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 using ClassicUO.Game.Data;
@@ -173,8 +174,9 @@ namespace ClassicUO.Game.UI.Gumps
 
                 Texture2D mobilesTextureDot = SolidColorTextureCache.GetTexture(Color.Red);
 
-                foreach (Mobile mob in World.Mobiles.Values)
+                foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
                 {
+                    Mobile mob = mkv.Value;
                     if (mob == World.Player)
                     {
                         continue;

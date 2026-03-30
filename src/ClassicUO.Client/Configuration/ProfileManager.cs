@@ -152,6 +152,8 @@ namespace ClassicUO.Configuration
             {
                 profile.WindowClientBounds = new Point(profile.WindowClientBounds.X, ClassicUO.Game.Constants.MIN_GAME_WINDOW_HEIGHT);
             }
+
+            profile.EnsurePerformanceFeaturesEnabled();
         }
 
         public static void UnLoadProfile()

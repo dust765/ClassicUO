@@ -13,7 +13,6 @@ using ClassicUO.Renderer;
 using ClassicUO.Utility;
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace ClassicUO.Game.UI.Gumps
 {
@@ -57,13 +56,22 @@ namespace ClassicUO.Game.UI.Gumps
             _rows.Clear();
             if (!World.InGame || World.Player == null || ProfileManager.CurrentProfile?.PvP_QuickTargetEnemyList != true)
                 return;
-            int y = 0;
-            foreach (Mobile m in World.Mobiles.Values.OrderBy(m => m.Distance))
+            List<Mobile> enemies = new List<Mobile>();
+            foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
             {
+                Mobile m = mkv.Value;
                 if (m.IsDestroyed || m == World.Player || m.Distance > ENEMY_RANGE) continue;
                 if (m.NotorietyFlag != NotorietyFlag.Criminal && m.NotorietyFlag != NotorietyFlag.Gray
                     && m.NotorietyFlag != NotorietyFlag.Enemy && m.NotorietyFlag != NotorietyFlag.Murderer)
                     continue;
+                enemies.Add(m);
+            }
+
+            enemies.Sort(static (a, b) => a.Distance.CompareTo(b.Distance));
+
+            int y = 0;
+            foreach (Mobile m in enemies)
+            {
                 var row = new EnemyRowControl(m) { Y = y };
                 row.MouseUp += (s, e) =>
                 {
