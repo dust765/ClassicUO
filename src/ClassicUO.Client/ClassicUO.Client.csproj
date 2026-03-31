@@ -1,8 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <TargetFramework>net48</TargetFramework>
     <ApplicationIcon>cuoicon.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>ClassicUO</AssemblyName>
@@ -18,7 +16,7 @@
     <OutputPath>$(ProjectDir)..\..\bin\Release\</OutputPath>
     <PublishDir>$(ProjectDir)..\..\bin\dist\</PublishDir>
     <Optimize>true</Optimize>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
@@ -67,13 +65,14 @@
     <Folder Include="Dust765\Dust765\" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="System.Windows.Forms" />
-  </ItemGroup>
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="IronPython" Version="2.7.12" />
-    <PackageReference Include="Sentry" Version="6.1.0" />
+    <PackageReference Include="IronPython" Version="3.4.1" />
+    <PackageReference Include="Sentry" Version="5.10.0" />
     <ProjectReference Include="..\..\external\FNA\FNA.Core.csproj" />
     <ProjectReference Include="..\..\external\UOSteam\UOScript\UOScript.csproj" />
     <ProjectReference Include="..\ClassicUO.Assets\ClassicUO.Assets.csproj" />
@@ -125,20 +124,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
-    <PackageReference Include="System.CodeDom" Version="4.7.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.5" />
+    <PackageReference Include="System.CodeDom" Version="8.0.0" />
     <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="2.1.13" />
-    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="cuoapi">
       <HintPath>..\..\external\cuoapi\cuoapi.dll</HintPath>
     </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Update="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 
   <ItemGroup>
