@@ -94,7 +94,7 @@ jobs:
         run: dotnet publish "${{ env.BOOT_PROJECT_PATH }}" -c Release -f "${{ matrix.bootTfm }}" -o "${{ env.CUO_OUTPUT_PATH }}" /p:AssemblyVersion=${{ env.CUO_ASSEMBLY_VERSION }} /p:FileVersion=${{ env.CUO_ASSEMBLY_VERSION }} /p:OutputType=${{ matrix.bootOutputType }}
 
       - name: Build ClassicUO (NativeAOT)
-        run: dotnet publish "${{ env.CUO_PROJECT_PATH }}" -c Release -r "${{ matrix.target }}" -o "${{ env.CUO_OUTPUT_PATH }}" /p:AssemblyVersion=${{ env.CUO_ASSEMBLY_VERSION }} /p:FileVersion=${{ env.CUO_ASSEMBLY_VERSION }} /p:NativeLib=Shared /p:OutputType=Library /p:BuildNativeAot=true /p:TargetFramework=${{ matrix.tfm }}
+        run: dotnet publish "${{ env.CUO_PROJECT_PATH }}" -c Release -r "${{ matrix.target }}" -o "${{ env.CUO_OUTPUT_PATH }}" /p:AssemblyVersion=${{ env.CUO_ASSEMBLY_VERSION }} /p:FileVersion=${{ env.CUO_ASSEMBLY_VERSION }} /p:NativeLib=Shared /p:OutputType=Library /p:BuildNativeAot=true /p:TargetFramework=${{ matrix.tfm }} /p:DeleteExistingFiles=false
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           SENTRY_ENV: production
