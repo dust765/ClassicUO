@@ -32,6 +32,7 @@ ARCH=$(uname -m)
 case $OS in
     Linux*)
         PLATFORM="linux"
+        DOTNET_TFM="net10.0"
         if [ "$ARCH" = "x86_64" ]; then
             RUNTIME="linux-x64"
             PLATFORM_SUFFIX="x64"
@@ -45,6 +46,7 @@ case $OS in
         ;;
     Darwin*)
         PLATFORM="macos"
+        DOTNET_TFM="net10.0"
         if [ "$ARCH" = "x86_64" ]; then
             RUNTIME="osx-x64"
             PLATFORM_SUFFIX="x64"
@@ -58,6 +60,7 @@ case $OS in
         ;;
     CYGWIN*|MINGW*|MSYS*)
         PLATFORM="windows"
+        DOTNET_TFM="net10.0-windows"
         RUNTIME="win-x64"
         PLATFORM_SUFFIX="x64"
         ;;
@@ -79,7 +82,7 @@ dotnet build "$PROJECT_PATH" -c "$CONFIG" -p:Platform="$PLATFORM_SUFFIX" -o "$OU
 
 echo "Publishing self-contained..."
 PUBLISH_DIR="$OUTPUT_BASE/publish-$PLATFORM-$PLATFORM_SUFFIX"
-dotnet publish "$PROJECT_PATH" -c "$CONFIG" -p:Platform="$PLATFORM_SUFFIX" -r "$RUNTIME" --self-contained true -o "$PUBLISH_DIR"
+dotnet publish "$PROJECT_PATH" -c "$CONFIG" -f "$DOTNET_TFM" -p:Platform="$PLATFORM_SUFFIX" -r "$RUNTIME" --self-contained true -o "$PUBLISH_DIR"
 
 echo "Build completed successfully!"
 echo "Executable location: $PUBLISH_DIR/ClassicUO"

@@ -7,9 +7,10 @@ export PATH="$PATH:/c/Program Files (x86)/Microsoft Visual Studio/Installer"
 
 # Define paths and project details
 bootstrap_project="../src/ClassicUO.Bootstrap/src/ClassicUO.Bootstrap.csproj"
-client_project="../src/ClassicUO.Client"
+client_project="../src/ClassicUO.Client/ClassicUO.Client.csproj"
 output_directory="../bin/dist"
 target=""
+tfm=""
 
 # Determine the platform
 platform=$(uname -s)
@@ -17,16 +18,16 @@ platform=$(uname -s)
 # Build for the appropriate platform
 case $platform in
   Linux)
-    # Add Linux-specific build commands here
     target="linux-x64"
+    tfm="net10.0"
     ;;
   Darwin)
-    # Add macOS-specific build commands here
-   target="osx-x64"
+    target="osx-x64"
+    tfm="net10.0"
     ;;
   MINGW* | CYGWIN* | MSYS*)
-    # Add Windows-specific build commands here
     target="win-x64"
+    tfm="net10.0-windows"
     ;;
   *)
     echo "Unsupported platform: $platform"
@@ -36,4 +37,4 @@ esac
 
 
 dotnet publish "$bootstrap_project" -c Release -o "$output_directory"
-dotnet publish "$client_project" -c Release -p:NativeLib=Shared -p:OutputType=Library -r $target -o "$output_directory"
+dotnet publish "$client_project" -c Release -f "$tfm" -r "$target" -p:NativeLib=Shared -p:OutputType=Library -o "$output_directory"
