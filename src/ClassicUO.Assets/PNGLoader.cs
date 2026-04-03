@@ -26,6 +26,18 @@ namespace ClassicUO.Assets
         public static PNGLoader _instance;
         public static PNGLoader Instance => _instance ?? (_instance = new PNGLoader());
 
+        public Texture2D GetDataClientImage(string executableDirectory, string fileName)
+        {
+            if (string.IsNullOrEmpty(executableDirectory) || string.IsNullOrEmpty(fileName))
+                return null;
+            string path = Path.Combine(executableDirectory, "Data", "Client", fileName);
+            Texture2D texture = GetImageTexture(path);
+            if (texture != null)
+                return texture;
+            EmbeddedArt.TryGetValue(fileName, out texture);
+            return texture;
+        }
+
         public Texture2D GetImageTexture(string fullImagePath)
         {
             Texture2D texture = null;
