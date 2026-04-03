@@ -1,7 +1,6 @@
 using System;
 using ClassicUO.Assets;
 using ClassicUO.Utility;
-using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SDL3;

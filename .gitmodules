@@ -7,6 +7,3 @@
 [submodule "external/FileEmbed"]
 	path = external/FileEmbed
 	url = https://github.com/SirCxyrtyx/FileEmbed.git
-[submodule "external/FontStashSharp"]
-	path = external/FontStashSharp
-	url = https://github.com/FontStashSharp/FontStashSharp.git

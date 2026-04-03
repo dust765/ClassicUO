@@ -49,7 +49,6 @@ using System.IO;
 using System.Collections.Generic;
 using System.Text.Json;
 using static ClassicUO.Game.UI.Controls.PaperDollInteractable;
-using FontStashSharp.RichText;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using ClassicUO.Renderer;
