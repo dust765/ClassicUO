@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -58,7 +58,7 @@ namespace ClassicUO.Game.GameObjects
         public ushort OriginalHue { get; private set; }
         // ## BEGIN - END ## // ART / HUE CHANGES
 
-        public ref StaticTiles ItemData => ref TileDataLoader.Instance.StaticData[Graphic];
+        public ref StaticTiles ItemData => ref UOFileManager.Current.TileData.StaticData[Graphic];
 
         public bool IsVegetation;
         public int Index;

@@ -465,7 +465,7 @@ namespace ClassicUO.Game.UI.Controls
             Client.Game.Animations.ConvertBodyIfNeeded(ref graphic);
 
             if (
-                AnimationsLoader.Instance.EquipConversions.TryGetValue(
+                UOFileManager.Current.Animations.EquipConversions.TryGetValue(
                     graphic,
                     out Dictionary<ushort, EquipConvData> dict
                 )

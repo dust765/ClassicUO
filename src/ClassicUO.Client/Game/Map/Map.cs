@@ -48,7 +48,7 @@ namespace ClassicUO.Game.Map
         public Map(int index)
         {
             Index = index;
-            BlocksCount = MapLoader.Instance.MapBlocksSize[Index, 0] * MapLoader.Instance.MapBlocksSize[Index, 1];
+            BlocksCount = UOFileManager.Current.Maps.MapBlocksSize[Index, 0] * UOFileManager.Current.Maps.MapBlocksSize[Index, 1];
             if (_terrainChunks == null || BlocksCount > _terrainChunks.Length)
                 _terrainChunks = new Chunk[BlocksCount];
             ClearBockAccess();
@@ -212,12 +212,12 @@ namespace ClassicUO.Game.Map
                         continue;
                     }
 
-                    if (obj.Graphic >= TileDataLoader.Instance.StaticData.Length)
+                    if (obj.Graphic >= UOFileManager.Current.TileData.StaticData.Length)
                     {
                         continue;
                     }
 
-                    if (!TileDataLoader.Instance.StaticData[obj.Graphic].IsRoof || Math.Abs(z - obj.Z) > 6)
+                    if (!UOFileManager.Current.TileData.StaticData[obj.Graphic].IsRoof || Math.Abs(z - obj.Z) > 6)
                     {
                         continue;
                     }
@@ -251,8 +251,8 @@ namespace ClassicUO.Game.Map
         {
             int block = GetBlock(blockX, blockY);
             int map = Index;
-            MapLoader.Instance.SanitizeMapIndex(ref map);
-            IndexMap[] list = MapLoader.Instance.BlockData[map];
+            UOFileManager.Current.Maps.SanitizeMapIndex(ref map);
+            IndexMap[] list = UOFileManager.Current.Maps.BlockData[map];
 
             return ref block >= list.Length ? ref IndexMap.Invalid : ref list[block];
         }
@@ -260,7 +260,7 @@ namespace ClassicUO.Game.Map
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int GetBlock(int blockX, int blockY)
         {
-            return blockX * MapLoader.Instance.MapBlocksSize[Index, 1] + blockY;
+            return blockX * UOFileManager.Current.Maps.MapBlocksSize[Index, 1] + blockY;
         }
 
         public IEnumerable<Chunk> GetUsedChunks()
@@ -276,8 +276,8 @@ namespace ClassicUO.Game.Map
             int loaded = 0;
             int startBlockX = Math.Max(0, (centerX >> 3) - radius);
             int startBlockY = Math.Max(0, (centerY >> 3) - radius);
-            int endBlockX = Math.Min(MapLoader.Instance.MapBlocksSize[Index, 0] - 1, (centerX >> 3) + radius);
-            int endBlockY = Math.Min(MapLoader.Instance.MapBlocksSize[Index, 1] - 1, (centerY >> 3) + radius);
+            int endBlockX = Math.Min(UOFileManager.Current.Maps.MapBlocksSize[Index, 0] - 1, (centerX >> 3) + radius);
+            int endBlockY = Math.Min(UOFileManager.Current.Maps.MapBlocksSize[Index, 1] - 1, (centerY >> 3) + radius);
 
             for (int bx = startBlockX; bx <= endBlockX && loaded < maxPerCall; bx++)
             {

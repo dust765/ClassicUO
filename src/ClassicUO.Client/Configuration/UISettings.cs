@@ -4,13 +4,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace ClassicUO.Configuration
 {
     internal abstract class UISettings
     {
         private static string savePath { get { return Path.Combine(CUOEnviroment.ExecutablePath, "Data", "UI"); } }
-        private static readonly JsonSerializerOptions serializerOptions = new JsonSerializerOptions() { WriteIndented = true };
         private static Dictionary<string, string> preload = new Dictionary<string, string>();
 
         public static string ReadJsonFile(string name)
@@ -29,7 +29,7 @@ namespace ClassicUO.Configuration
             return string.Empty;
         }
 
-        public static UISettings Load<T>(string name)
+        public static UISettings Load<T>(string name, JsonTypeInfo<T> typeInfo) where T : UISettings
         {
             string jsonData;
 
@@ -48,7 +48,7 @@ namespace ClassicUO.Configuration
                 return null;
             }
 
-            var obj = JsonSerializer.Deserialize<T>(jsonData);
+            var obj = JsonSerializer.Deserialize<T>(jsonData, typeInfo);
 
             if (obj is UISettings settings)
             {
@@ -58,13 +58,13 @@ namespace ClassicUO.Configuration
             return null;
         }
 
-        public static void Save<T>(string name, object settings)
+        public static void Save<T>(string name, T settings, JsonTypeInfo<T> typeInfo) where T : UISettings
         {
-            string fileSaveData = JsonSerializer.Serialize((T)settings, serializerOptions);
+            string fileSaveData = JsonSerializer.Serialize(settings, typeInfo);
 
             try
             {
-                if (!File.Exists(savePath))
+                if (!Directory.Exists(savePath))
                 {
                     Directory.CreateDirectory(savePath);
                 }

@@ -651,7 +651,6 @@ namespace ClassicUO.Configuration
         public Point PullPartyAllyBars { get; set; } = new Point(1470, 214);
         public Point PullPartyAllyBarsFinalLocation { get; set; } = new Point(1550, 0); // X difference needs to be 120 to get bars next to one another
         public uint CustomSerial { get; set; }
-        public uint Mimic_PlayerSerial { get; set; }
         // ## BEGIN - END ## // ADVMACROS
         // ## BEGIN - END ## // AUTOMATIONS
         public bool AutoWorldmapMarker { get; set; }
@@ -1361,15 +1360,6 @@ namespace ClassicUO.Configuration
                                     break;
                                 case GumpType.DurabilityGump:
                                     gump = new DurabilitysGump();
-                                    break;
-                                case GumpType.ScriptManager:
-                                    gump = new LegionScripting.ScriptManagerGump();
-                                    break;
-                                case GumpType.LegionScriptStudio:
-                                    gump = new LegionScripting.LegionScriptStudioGump();
-                                    break;
-                                case GumpType.RunningScripts:
-                                    gump = new LegionScripting.RunningScriptsGump();
                                     break;
                             }
 

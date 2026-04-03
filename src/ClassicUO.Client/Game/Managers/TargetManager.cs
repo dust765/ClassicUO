@@ -553,16 +553,6 @@ namespace ClassicUO.Game.Managers
                             ProfileManager.CurrentProfile.CustomSerial = serial;
                             GameActions.Print($"Custom UOClassicEquipment Item set: {serial}", 88);
                         }
-                        else if ((TargetingType == TargetType.Neutral && SerialHelper.IsMobile(serial)))
-                        {
-                            Mobile mobile = entity as Mobile;
-
-                            if ((!World.Player.IsDead && !mobile.IsDead) && serial != World.Player)
-                            {
-                                ProfileManager.CurrentProfile.Mimic_PlayerSerial = entity;
-                                GameActions.Print($"Mimic Player Serial Set: {entity.Name} : {entity.Serial}", 88);
-                            }
-                        }
 
                         ClearTargetingWithoutTargetCancelPacket();
 
@@ -596,12 +586,12 @@ namespace ClassicUO.Game.Managers
             }
             else
             {
-                if (graphic >= TileDataLoader.Instance.StaticData.Length)
+                if (graphic >= UOFileManager.Current.TileData.StaticData.Length)
                 {
                     return;
                 }
 
-                ref StaticTiles itemData = ref TileDataLoader.Instance.StaticData[graphic];
+                ref StaticTiles itemData = ref UOFileManager.Current.TileData.StaticData[graphic];
 
                 if (Client.Version >= ClientVersion.CV_7090 && itemData.IsSurface)
                 {

@@ -1,7 +1,6 @@
 using System;
 using ClassicUO.Assets;
 using ClassicUO.Utility;
-using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SDL3;
@@ -18,7 +17,7 @@ namespace ClassicUO.Renderer.Arts
         public Art(GraphicsDevice device)
         {
             _atlas = new TextureAtlas(device, 4096, 4096, SurfaceFormat.Color);
-            _spriteInfos = new SpriteInfo[ArtLoader.Instance.Entries.Length];
+            _spriteInfos = new SpriteInfo[UOFileManager.Current.Arts.Entries.Length];
             _realArtBounds = new Rectangle[_spriteInfos.Length];
         }
 
@@ -37,11 +36,11 @@ namespace ClassicUO.Renderer.Arts
 
             if (spriteInfo.Texture == null)
             {
-                ArtInfo artInfo = PNGLoader.Instance.LoadArtTexture(idx);
+                ArtInfo artInfo = UOFileManager.Current.Png.LoadArtTexture(idx);
 
                 if (artInfo.Pixels == null || artInfo.Pixels.IsEmpty)
                 {
-                    artInfo = ArtLoader.Instance.GetArt(idx);
+                    artInfo = UOFileManager.Current.Arts.GetArt(idx);
                 }
                 if (!artInfo.Pixels.IsEmpty)
                 {
@@ -94,7 +93,7 @@ namespace ClassicUO.Renderer.Arts
         {
             hotX = hotY = 0;
 
-            var artInfo = ArtLoader.Instance.GetArt((uint)(index + 0x4000));
+            var artInfo = UOFileManager.Current.Arts.GetArt((uint)(index + 0x4000));
 
             if (artInfo.Pixels.IsEmpty)
             {
@@ -154,7 +153,7 @@ namespace ClassicUO.Renderer.Arts
                             {
                                 c.PackedValue = *pixels_ptr;
                                 *pixels_ptr =
-                                    HuesLoader.Instance.ApplyHueRgba8888(HuesHelper.Color32To16(*pixels_ptr), customHue);
+                                    UOFileManager.Current.Hues.ApplyHueRgba8888(HuesHelper.Color32To16(*pixels_ptr), customHue);
                             }
                         }
 

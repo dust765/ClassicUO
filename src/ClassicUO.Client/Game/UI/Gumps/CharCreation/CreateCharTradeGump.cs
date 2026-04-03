@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -92,7 +92,7 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
             //TextLabelAscii(AControl parent, int x, int y, int font, int hue, string text, int width = 400)
             Add
             (
-                new Label(ClilocLoader.Instance.GetString(3000326), unicode, hue, font: font)
+                new Label(UOFileManager.Current.Clilocs.GetString(3000326), unicode, hue, font: font)
                 {
                     X = 148, Y = 132
                 }
@@ -101,7 +101,7 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
             // strength, dexterity, intelligence
             Add
             (
-                new Label(ClilocLoader.Instance.GetString(3000111), unicode, 1, font: 1)
+                new Label(UOFileManager.Current.Clilocs.GetString(3000111), unicode, 1, font: 1)
                 {
                     X = 158, Y = 170
                 }
@@ -109,7 +109,7 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
 
             Add
             (
-                new Label(ClilocLoader.Instance.GetString(3000112), unicode, 1, font: 1)
+                new Label(UOFileManager.Current.Clilocs.GetString(3000112), unicode, 1, font: 1)
                 {
                     X = 158, Y = 250
                 }
@@ -117,7 +117,7 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
 
             Add
             (
-                new Label(ClilocLoader.Instance.GetString(3000113), unicode, 1, font: 1)
+                new Label(UOFileManager.Current.Clilocs.GetString(3000113), unicode, 1, font: 1)
                 {
                     X = 158, Y = 330
                 }
@@ -173,7 +173,7 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
 
             var clientFlags = World.ClientLockedFeatures.Flags;
 
-            _skillList = SkillsLoader.Instance.SortedSkills
+            _skillList = UOFileManager.Current.Skills.SortedSkills
                          .Where(s =>
                                      // All standard client versions ignore these skills by defualt
                                      //s.Index != 26 && // MagicResist
@@ -346,14 +346,14 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
 
                 if (duplicated > 0)
                 {
-                    UIManager.GetGump<CharCreationGump>()?.ShowMessage(ClilocLoader.Instance.GetString(1080032));
+                    UIManager.GetGump<CharCreationGump>()?.ShowMessage(UOFileManager.Current.Clilocs.GetString(1080032));
 
                     return false;
                 }
             }
             else
             {
-                UIManager.GetGump<CharCreationGump>()?.ShowMessage(Client.Version <= ClientVersion.CV_5090 ? ResGumps.YouMustHaveThreeUniqueSkillsChosen : ClilocLoader.Instance.GetString(1080032));
+                UIManager.GetGump<CharCreationGump>()?.ShowMessage(Client.Version <= ClientVersion.CV_5090 ? ResGumps.YouMustHaveThreeUniqueSkillsChosen : UOFileManager.Current.Clilocs.GetString(1080032));
 
                 return false;
             }

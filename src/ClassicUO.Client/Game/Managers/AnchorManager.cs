@@ -334,9 +334,9 @@ namespace ClassicUO.Game.Managers
                         if (gump != null)
                         {
                             writer.WriteStartElement("gump");
-                            gump.Save(writer);
                             writer.WriteAttributeString("matrix_x", x.ToString());
                             writer.WriteAttributeString("matrix_y", y.ToString());
+                            gump.Save(writer);
                             writer.WriteEndElement();
                         }
                     }

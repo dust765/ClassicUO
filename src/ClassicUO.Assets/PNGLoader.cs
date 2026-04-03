@@ -183,6 +183,16 @@ namespace ClassicUO.Assets
                 {
                     string strExeFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
                     exePath = Path.GetDirectoryName(strExeFilePath);
+                    if (string.IsNullOrEmpty(exePath))
+                    {
+                        exePath = AppContext.BaseDirectory;
+                    }
+
+                    exePath = exePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                    if (string.IsNullOrEmpty(exePath))
+                    {
+                        return;
+                    }
 
                     string gumpPath = Path.Combine(exePath, IMAGES_FOLDER, GUMP_EXTERNAL_FOLDER);
                     if (Directory.Exists(gumpPath))
@@ -244,7 +254,7 @@ namespace ClassicUO.Assets
 
                         if (gumpInfo.Pixels == null || gumpInfo.Pixels.IsEmpty)
                         {
-                            gumpInfo = GumpsLoader.Instance.GetGump(i);
+                            gumpInfo = UOFileManager.Current.Gumps.GetGump(i);
                             if (gumpInfo.Pixels != null && !gumpInfo.Pixels.IsEmpty)
                                 continue;
                         }

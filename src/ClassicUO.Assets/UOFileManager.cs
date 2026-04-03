@@ -1,4 +1,4 @@
-#region license
+﻿#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -43,26 +43,39 @@ using System.Threading.Tasks;
 
 namespace ClassicUO.Assets
 {
-    public class UOFileManager
+    public sealed class UOFileManager
     {
-        public static string GetUOFilePath(string file)
+        public static UOFileManager Current { get; private set; }
+
+        private readonly UOFilesOverrideMap _overrideMap = new UOFilesOverrideMap();
+        private readonly string _basePath;
+
+        public static ClientVersion Version;
+        public static string BasePath;
+        public static bool IsUOPInstallation;
+
+        private UOFileManager(string basePath)
         {
-            if (!UOFilesOverrideMap.Instance.TryGetValue(file.ToLowerInvariant(), out string uoFilePath))
+            _basePath = basePath;
+        }
+
+        public string ResolveUOFilePath(string file)
+        {
+            if (!_overrideMap.TryGetValue(file.ToLowerInvariant(), out string uoFilePath))
             {
-                uoFilePath = Path.Combine(BasePath, file);
+                uoFilePath = Path.Combine(_basePath, file);
             }
 
-            //If the file with the given name doesn't exist, check for it with alternative casing if not on windows
             if (!PlatformHelper.IsWindows && !File.Exists(uoFilePath))
             {
                 FileInfo finfo = new FileInfo(uoFilePath);
-                var dir = Path.GetFullPath(finfo.DirectoryName ?? BasePath);
+                var dir = Path.GetFullPath(finfo.DirectoryName ?? _basePath);
 
                 if (Directory.Exists(dir))
                 {
                     var files = Directory.GetFiles(dir);
                     var matches = 0;
-                    
+
                     foreach (var f in files)
                     {
                         if (string.Equals(f, uoFilePath, StringComparison.OrdinalIgnoreCase))
@@ -76,46 +89,88 @@ namespace ClassicUO.Assets
                     {
                         Log.Warn($"Multiple files with ambiguous case found for {file}, using {Path.GetFileName(uoFilePath)}. Check your data directory for duplicate files.");
                     }
-                }             
+                }
             }
 
             return uoFilePath;
         }
 
-        public static ClientVersion Version;
-        public static string BasePath;
-        public static bool IsUOPInstallation;
+        public static string GetUOFilePath(string file)
+        {
+            return Current?.ResolveUOFilePath(file) ?? Path.Combine(BasePath ?? string.Empty, file);
+        }
+
+        public AnimationsLoader Animations => AnimationsLoader.Instance;
+
+        public AnimDataLoader AnimData => AnimDataLoader.Instance;
+
+        public ArtLoader Arts => ArtLoader.Instance;
+
+        public MapLoader Maps
+        {
+            get => MapLoader.Instance;
+            set => MapLoader.Instance = value;
+        }
+
+        public ClilocLoader Clilocs => ClilocLoader.Instance;
+
+        public GumpsLoader Gumps => GumpsLoader.Instance;
+
+        public FontsLoader Fonts => FontsLoader.Instance;
+
+        public HuesLoader Hues => HuesLoader.Instance;
+
+        public TileDataLoader TileData => TileDataLoader.Instance;
+
+        public MultiLoader Multis => MultiLoader.Instance;
+
+        public SkillsLoader Skills => SkillsLoader.Instance;
+
+        public ProfessionLoader Professions => ProfessionLoader.Instance;
+
+        public TexmapsLoader Texmaps => TexmapsLoader.Instance;
+
+        public SpeechesLoader Speeches => SpeechesLoader.Instance;
+
+        public LightsLoader Lights => LightsLoader.Instance;
+
+        public SoundsLoader Sounds => SoundsLoader.Instance;
+
+        public MultiMapLoader MultiMaps => MultiMapLoader.Instance;
+
+        public PNGLoader Png => PNGLoader.Instance;
 
         public static void Load(ClientVersion version, string basePath, bool useVerdata, string lang)
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
 
+            Current = new UOFileManager(basePath);
+            Current._overrideMap.Load();
+
             Version = version;
             BasePath = basePath;
-
-            UOFilesOverrideMap.Instance.Load(); // need to load this first so that it manages can perform the file overrides if needed
 
             IsUOPInstallation = Version >= ClientVersion.CV_7000 && File.Exists(GetUOFilePath("MainMisc.uop"));
 
             List<Task> tasks = new List<Task>
             {
-                AnimationsLoader.Instance.Load(),
-                AnimDataLoader.Instance.Load(),
-                ArtLoader.Instance.Load(),
-                MapLoader.Instance.Load(),
-                ClilocLoader.Instance.Load(lang),
-                GumpsLoader.Instance.Load(),
-                FontsLoader.Instance.Load(),
-                HuesLoader.Instance.Load(),
-                TileDataLoader.Instance.Load(),
-                MultiLoader.Instance.Load(),
-                SkillsLoader.Instance.Load().ContinueWith(t => ProfessionLoader.Instance.Load()),
-                TexmapsLoader.Instance.Load(),
-                SpeechesLoader.Instance.Load(),
-                LightsLoader.Instance.Load(),
-                SoundsLoader.Instance.Load(),
-                MultiMapLoader.Instance.Load(),
-                PNGLoader.Instance.Load(),
+                Current.Animations.Load(),
+                Current.AnimData.Load(),
+                Current.Arts.Load(),
+                Current.Maps.Load(),
+                Current.Clilocs.Load(lang),
+                Current.Gumps.Load(),
+                Current.Fonts.Load(),
+                Current.Hues.Load(),
+                Current.TileData.Load(),
+                Current.Multis.Load(),
+                Current.Skills.Load().ContinueWith(t => Current.Professions.Load()),
+                Current.Texmaps.Load(),
+                Current.Speeches.Load(),
+                Current.Lights.Load(),
+                Current.Sounds.Load(),
+                Current.MultiMaps.Load(),
+                Current.Png.Load(),
             };
 
             if (!Task.WhenAll(tasks).Wait(TimeSpan.FromSeconds(15)))
@@ -149,17 +204,17 @@ namespace ClassicUO.Assets
 
                         if (vh.FileID == 0)
                         {
-                            MapLoader.Instance.PatchMapBlock(vh.BlockID, vh.Position);
+                            Current.Maps.PatchMapBlock(vh.BlockID, vh.Position);
                         }
                         else if (vh.FileID == 2)
                         {
-                            MapLoader.Instance.PatchStaticBlock(vh.BlockID, ((ulong) verdata.StartAddress.ToInt64() + vh.Position), vh.Length);
+                            Current.Maps.PatchStaticBlock(vh.BlockID, ((ulong) verdata.StartAddress.ToInt64() + vh.Position), vh.Length);
                         }
                         else if (vh.FileID == 4)
                         {
-                            if (vh.BlockID < ArtLoader.Instance.Entries.Length)
+                            if (vh.BlockID < Current.Arts.Entries.Length)
                             {
-                                ArtLoader.Instance.Entries[vh.BlockID] = new UOFileIndex
+                                Current.Arts.Entries[vh.BlockID] = new UOFileIndex
                                 (
                                     verdata.StartAddress,
                                     (uint) verdata.Length,
@@ -171,7 +226,7 @@ namespace ClassicUO.Assets
                         }
                         else if (vh.FileID == 12)
                         {
-                            GumpsLoader.Instance.Entries[vh.BlockID] = new UOFileIndex
+                            Current.Gumps.Entries[vh.BlockID] = new UOFileIndex
                             (
                                 verdata.StartAddress,
                                 (uint) verdata.Length,
@@ -183,9 +238,9 @@ namespace ClassicUO.Assets
                                 (short) (vh.GumpData & 0xFFFF)
                             );
                         }
-                        else if (vh.FileID == 14 && vh.BlockID < MultiLoader.Instance.Count)
+                        else if (vh.FileID == 14 && vh.BlockID < Current.Multis.Count)
                         {
-                            MultiLoader.Instance.Entries[vh.BlockID] = new UOFileIndex
+                            Current.Multis.Entries[vh.BlockID] = new UOFileIndex
                             (
                                 verdata.StartAddress,
                                 (uint) verdata.Length,
@@ -194,9 +249,9 @@ namespace ClassicUO.Assets
                                 0
                             );
                         }
-                        else if (vh.FileID == 16 && vh.BlockID < SkillsLoader.Instance.SkillsCount)
+                        else if (vh.FileID == 16 && vh.BlockID < Current.Skills.SkillsCount)
                         {
-                            SkillEntry skill = SkillsLoader.Instance.Skills[(int) vh.BlockID];
+                            SkillEntry skill = Current.Skills.Skills[(int) vh.BlockID];
 
                             if (skill != null)
                             {
@@ -220,7 +275,7 @@ namespace ClassicUO.Assets
                             {
                                 int offset = (int) (vh.BlockID * 32);
 
-                                if (offset + 32 > TileDataLoader.Instance.LandData.Length)
+                                if (offset + 32 > Current.TileData.LandData.Length)
                                 {
                                     continue;
                                 }
@@ -240,14 +295,14 @@ namespace ClassicUO.Assets
                                         flags = verdata.ReadULong();
                                     }
 
-                                    TileDataLoader.Instance.LandData[offset + j] = new LandTiles(flags, verdata.ReadUShort(), verdata.ReadASCII(20));
+                                    Current.TileData.LandData[offset + j] = new LandTiles(flags, verdata.ReadUShort(), verdata.ReadASCII(20));
                                 }
                             }
                             else if (vh.Length == 1188)
                             {
                                 int offset = (int) ((vh.BlockID - 0x0200) * 32);
 
-                                if (offset + 32 > TileDataLoader.Instance.StaticData.Length)
+                                if (offset + 32 > Current.TileData.StaticData.Length)
                                 {
                                     continue;
                                 }
@@ -267,7 +322,7 @@ namespace ClassicUO.Assets
                                         flags = verdata.ReadULong();
                                     }
 
-                                    TileDataLoader.Instance.StaticData[offset + j] = new StaticTiles
+                                    Current.TileData.StaticData[offset + j] = new StaticTiles
                                     (
                                         flags,
                                         verdata.ReadByte(),
@@ -284,11 +339,11 @@ namespace ClassicUO.Assets
                         }
                         else if (vh.FileID == 32)
                         {
-                            if (vh.BlockID < HuesLoader.Instance.HuesCount)
+                            if (vh.BlockID < Current.Hues.HuesCount)
                             {
                                 VerdataHuesGroup group = Marshal.PtrToStructure<VerdataHuesGroup>(verdata.StartAddress + (int) vh.Position);
 
-                                HuesGroup[] hues = HuesLoader.Instance.HuesRange;
+                                HuesGroup[] hues = Current.Hues.HuesRange;
 
                                 hues[vh.BlockID].Header = group.Header;
 
@@ -315,8 +370,7 @@ namespace ClassicUO.Assets
 
         public static void MapLoaderReLoad(MapLoader newloader)
         {
-            MapLoader.Instance?.Dispose();
-            MapLoader.Instance = newloader;
+            Current.Maps = newloader;
         }
 
         private static void Read_Art_def()
@@ -325,8 +379,8 @@ namespace ClassicUO.Assets
 
             if (File.Exists(pathdef))
             {
-                TileDataLoader tiledataLoader =  TileDataLoader.Instance;
-                ArtLoader artLoader = ArtLoader.Instance;
+                TileDataLoader tiledataLoader = Current.TileData;
+                ArtLoader artLoader = Current.Arts;
                 
                 using (DefReader reader = new DefReader(pathdef, 1))
                 {

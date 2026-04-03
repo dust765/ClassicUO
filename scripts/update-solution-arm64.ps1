@@ -21,8 +21,7 @@ $projectConfigs = @(
     @{Id="6B932930-D24C-43BB-8877-85B4F3F7A57B"; Name="ClassicUO.Utility"},
     @{Id="535BE739-1314-4F8D-B24B-06890DDD3B8D"; Name="ClassicUO.Renderer"},
     @{Id="69C1A629-F519-4F5A-85D5-4E0317CD267F"; Name="ClassicUO.IO"},
-    @{Id="5AF00B6D-70C2-4CB0-A5D8-41F488F0DDF2"; Name="MP3Sharp"},
-    @{Id="5ACA68DA-A282-434D-919F-B243A801D4C3"; Name="FontStashSharp.FNA.Core"}
+    @{Id="5AF00B6D-70C2-4CB0-A5D8-41F488F0DDF2"; Name="MP3Sharp"}
 )
 
 # Generate ARM64 and x64 configurations for each project

@@ -60,7 +60,7 @@ namespace ClassicUO.Game.UI.Controls
 
             string iconPath = Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Client", "logodust.png");
             if (File.Exists(iconPath))
-                _iconTexture = PNGLoader.Instance.GetImageTexture(iconPath);
+                _iconTexture = UOFileManager.Current.Png.GetImageTexture(iconPath);
         }
 
         public override void Update()

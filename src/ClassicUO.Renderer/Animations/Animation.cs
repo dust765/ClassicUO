@@ -66,7 +66,7 @@ namespace ClassicUO.Renderer.Animations
 
             if (uop)
             {
-                AnimationsLoader.Instance.ReplaceUopGroup(animID, ref group);
+                UOFileManager.Current.Animations.ReplaceUopGroup(animID, ref group);
             }
 
             uint packed32 = (uint)((group | (direction << 8) | ((uop ? 0x01 : 0x00) << 16)));
@@ -91,7 +91,7 @@ namespace ClassicUO.Renderer.Animations
         {
             dir &= 0x7F;
             bool mirror = false;
-            AnimationsLoader.Instance.GetAnimDirection(ref dir, ref mirror);
+            UOFileManager.Current.Animations.GetAnimDirection(ref dir, ref mirror);
 
             if (frameIndex == 0xFF)
             {
@@ -149,7 +149,7 @@ namespace ClassicUO.Renderer.Animations
                 if (index == null)
                 {
                     index = new IndexAnimation();
-                    var indices = AnimationsLoader.Instance.GetIndices
+                    var indices = UOFileManager.Current.Animations.GetIndices
                     (
                         UOFileManager.Version,
                         id,
@@ -194,7 +194,7 @@ namespace ClassicUO.Renderer.Animations
 
                 if (index.FileIndex == 0)
                 {
-                    var replaced = isCorpse ? AnimationsLoader.Instance.ReplaceCorpse(ref id, ref hue) : AnimationsLoader.Instance.ReplaceBody(ref id, ref hue);
+                    var replaced = isCorpse ? UOFileManager.Current.Animations.ReplaceCorpse(ref id, ref hue) : UOFileManager.Current.Animations.ReplaceBody(ref id, ref hue);
                     if (replaced)
                     {
                         if (id >= _dataIndex.Length)
@@ -212,7 +212,7 @@ namespace ClassicUO.Renderer.Animations
 
             if (useUOP)
             {
-                AnimationsLoader.Instance.ReplaceUopGroup(id, ref action);
+                UOFileManager.Current.Animations.ReplaceUopGroup(id, ref action);
             }
 
             // NOTE:
@@ -260,7 +260,7 @@ namespace ClassicUO.Renderer.Animations
                         Unknown = uopGroupObj.DecompressedLength
                     };
 
-                    frames = AnimationsLoader.Instance.ReadUOPAnimationFrames(
+                    frames = UOFileManager.Current.Animations.ReadUOPAnimationFrames(
                         id,
                         action,
                         dir,
@@ -277,7 +277,7 @@ namespace ClassicUO.Renderer.Animations
                         Size = groupObj.Direction[dir].Size,
                     };
 
-                    frames = AnimationsLoader.Instance.ReadMULAnimationFrames(index.FileIndex, ff);
+                    frames = UOFileManager.Current.Animations.ReadMULAnimationFrames(index.FileIndex, ff);
                 }
 
                 if (frames.IsEmpty)
@@ -323,7 +323,7 @@ namespace ClassicUO.Renderer.Animations
 
         public void UpdateAnimationTable(BodyConvFlags flags)
         {
-            AnimationsLoader.Instance.ProcessBodyConvDef(flags);
+            UOFileManager.Current.Animations.ProcessBodyConvDef(flags);
             //if (flags != _lastFlags)
             //{
             //    if (_lastFlags != (BodyConvFlags)(-1))
@@ -355,7 +355,7 @@ namespace ClassicUO.Renderer.Animations
 
             if (_dataIndex[graphic] != null && _dataIndex[graphic].FileIndex == 0 && !_dataIndex[graphic].Flags.HasFlag(AnimationFlags.UseUopAnimation))
             {
-                _ = isCorpse ? AnimationsLoader.Instance.ReplaceCorpse(ref graphic, ref hue) : AnimationsLoader.Instance.ReplaceBody(ref graphic, ref hue);
+                _ = isCorpse ? UOFileManager.Current.Animations.ReplaceCorpse(ref graphic, ref hue) : UOFileManager.Current.Animations.ReplaceBody(ref graphic, ref hue);
             }
         }
 

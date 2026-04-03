@@ -1,4 +1,4 @@
-﻿using ClassicUO.Assets;
+using ClassicUO.Assets;
 using ClassicUO.IO.Audio;
 using System;
 using System.Collections.Generic;
@@ -29,7 +29,7 @@ namespace ClassicUO.Renderer.Sounds
             {
                 ref IO.Audio.Sound sound = ref _sounds[index];
 
-                if (sound == null && SoundsLoader.Instance.TryGetSound(index, out byte[] data, out string name))
+                if (sound == null && UOFileManager.Current.Sounds.TryGetSound(index, out byte[] data, out string name))
                 {
                     sound = new UOSound(name, index, data);
                 }
@@ -46,7 +46,7 @@ namespace ClassicUO.Renderer.Sounds
             {
                 ref IO.Audio.Sound music = ref _musics[index];
 
-                if (music == null && SoundsLoader.Instance.TryGetMusicData(index, out string name, out bool loop))
+                if (music == null && UOFileManager.Current.Sounds.TryGetMusicData(index, out string name, out bool loop))
                 {
                     var path = _useDigitalMusicFolder ? $"Music/Digital/{name}" : $"Music/{name}";
                     if (!path.EndsWith(".mp3", StringComparison.InvariantCultureIgnoreCase))

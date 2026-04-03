@@ -218,7 +218,7 @@ namespace ClassicUO.Game.UI.Gumps
                     }
                 //case BorderStyle.Style9:
                 //    {
-                //        if (Assets.GumpsLoader.Instance.GetGumpTexture(40313, out var bounds) != null)
+                //        if (Assets.UOFileManager.Current.Gumps.GetGumpTexture(40313, out var bounds) != null)
                 //        {
                 //            graphic = 40313;
                 //            borderSize = 75;

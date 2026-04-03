@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -51,7 +51,7 @@ namespace ClassicUO.Game.GameObjects
             Hue = hue;
             AllowedToDraw = CanBeDrawn(graphic);
             AlphaHue = 0xFF;
-            AnimDataFrame = AnimDataLoader.Instance?.CalculateCurrentGraphic(graphic) ?? default;
+            AnimDataFrame = UOFileManager.Current.AnimData?.CalculateCurrentGraphic(graphic) ?? default;
             IsEnabled = true;
             AnimIndex = 0;
             

@@ -63,10 +63,11 @@ namespace ClassicUO
 
         private readonly Texture2D[] _hueSamplers = new Texture2D[3];
         private bool _ignoreNextTextInput;
+        private bool _pluginsInitialized;
         private readonly float[] _intervalFixedUpdate = new float[2];
         private double _totalElapsed, _currentFpsTime, _nextSlowUpdate;
         private uint _totalFrames;
-        private uint _lastLegionScriptingUpdate;
+        private uint _lastMainThreadQueueTicks;
         private UltimaBatcher2D _uoSpriteBatch;
         private Texture2D _background;
 
@@ -173,7 +174,7 @@ namespace ClassicUO
 
             fixed (uint* ptr = buffer)
             {
-                HuesLoader.Instance.CreateShaderColors(buffer);
+                UOFileManager.Current.Hues.CreateShaderColors(buffer);
                 _hueSamplers[0].SetDataPointerEXT(
                     0,
                     null,
@@ -206,8 +207,8 @@ namespace ClassicUO
 
             Fonts.Initialize(GraphicsDevice);
             SolidColorTextureCache.Initialize(GraphicsDevice);
-            PNGLoader.Instance.GraphicsDevice = GraphicsDevice;
-            System.Threading.Tasks.Task loadResourceAssets = PNGLoader.Instance.LoadResourceAssets();
+            UOFileManager.Current.Png.GraphicsDevice = GraphicsDevice;
+            System.Threading.Tasks.Task loadResourceAssets = UOFileManager.Current.Png.LoadResourceAssets();
 
             Animations = new Renderer.Animations.Animations(GraphicsDevice);
             Arts = new Renderer.Arts.Art(GraphicsDevice);
@@ -231,6 +232,8 @@ namespace ClassicUO
 
             SetScene(new LoginScene());
             SetWindowPositionBySettings();
+
+            _pluginsInitialized = true;
         }
 
         protected override void UnloadContent()
@@ -255,23 +258,23 @@ namespace ClassicUO
             }
             Plugin.OnClosing();
 
-            ArtLoader.Instance.Dispose();
-            GumpsLoader.Instance.Dispose();
-            TexmapsLoader.Instance.Dispose();
-            AnimationsLoader.Instance.Dispose();
-            LightsLoader.Instance.Dispose();
-            TileDataLoader.Instance.Dispose();
-            AnimDataLoader.Instance.Dispose();
-            ClilocLoader.Instance.Dispose();
-            FontsLoader.Instance.Dispose();
-            HuesLoader.Instance.Dispose();
-            MapLoader.Instance.Dispose();
-            MultiLoader.Instance.Dispose();
-            MultiMapLoader.Instance.Dispose();
-            ProfessionLoader.Instance.Dispose();
-            SkillsLoader.Instance.Dispose();
-            SoundsLoader.Instance.Dispose();
-            SpeechesLoader.Instance.Dispose();
+            UOFileManager.Current.Arts.Dispose();
+            UOFileManager.Current.Gumps.Dispose();
+            UOFileManager.Current.Texmaps.Dispose();
+            UOFileManager.Current.Animations.Dispose();
+            UOFileManager.Current.Lights.Dispose();
+            UOFileManager.Current.TileData.Dispose();
+            UOFileManager.Current.AnimData.Dispose();
+            UOFileManager.Current.Clilocs.Dispose();
+            UOFileManager.Current.Fonts.Dispose();
+            UOFileManager.Current.Hues.Dispose();
+            UOFileManager.Current.Maps.Dispose();
+            UOFileManager.Current.Multis.Dispose();
+            UOFileManager.Current.MultiMaps.Dispose();
+            UOFileManager.Current.Professions.Dispose();
+            UOFileManager.Current.Skills.Dispose();
+            UOFileManager.Current.Sounds.Dispose();
+            UOFileManager.Current.Speeches.Dispose();
             Verdata.File?.Dispose();
             World.Map?.Destroy();
 
@@ -653,10 +656,10 @@ namespace ClassicUO
             }
 
             UIManager.Update();
-            if (Time.Ticks - _lastLegionScriptingUpdate >= 50)
+            if (Time.Ticks - _lastMainThreadQueueTicks >= 50)
             {
-                _lastLegionScriptingUpdate = Time.Ticks;
-                LegionScripting.LegionScripting.OnUpdate();
+                _lastMainThreadQueueTicks = Time.Ticks;
+                MainThreadQueue.Process();
             }
 
             if (World.InGame)
@@ -781,17 +784,8 @@ namespace ClassicUO
         private bool HandleSdlEvent(IntPtr userData, SDL_Event* sdlEvent)
         {
             SDL_EventType eventType = (SDL_EventType)sdlEvent->type;
-            bool isKeyEvent =
-                eventType == SDL_EventType.SDL_EVENT_KEY_DOWN
-                || eventType == SDL_EventType.SDL_EVENT_KEY_UP;
 
-            int wndProcResult = 0;
-            if (!isKeyEvent)
-            {
-                wndProcResult = Plugin.ProcessWndProc(sdlEvent);
-            }
-
-            if (wndProcResult != 0)
+            if (_pluginsInitialized && Plugin.ProcessWndProc(sdlEvent) != 0)
             {
                 if (eventType == SDL_EventType.SDL_EVENT_MOUSE_MOTION)
                 {
@@ -855,7 +849,18 @@ namespace ClassicUO
                     }
                     else
                     {
-                        _ignoreNextTextInput = true;
+                        // Plugin consumed this key entirely. Never suppress subsequent text input:
+                        // the plugin's internal state (e.g. ClassicAssist toggling hotkeys on/off)
+                        // must not affect the client's text input pipeline.
+                        _ignoreNextTextInput = false;
+
+                        if (UIManager.KeyboardFocusControl is Game.UI.Controls.StbTextBox)
+                        {
+                            UIManager.KeyboardFocusControl.InvokeKeyDown(
+                                (SDL_Keycode)sdlEvent->key.key,
+                                sdlEvent->key.mod
+                            );
+                        }
                     }
 
                     break;

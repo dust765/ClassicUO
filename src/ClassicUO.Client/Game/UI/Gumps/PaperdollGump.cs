@@ -46,7 +46,7 @@ using System.Xml;
 
 namespace ClassicUO.Game.UI.Gumps
 {
-    internal class PaperDollGump : TextContainerGump
+    internal partial class PaperDollGump : TextContainerGump
     {
         private static readonly ushort[] PeaceModeBtnGumps = { 0x07e5, 0x07e6, 0x07e7 };
         private static readonly ushort[] WarModeBtnGumps = { 0x07e8, 0x07e9, 0x07ea };
@@ -84,6 +84,10 @@ namespace ClassicUO.Game.UI.Gumps
             BuildGump();
         }
 
+        [System.Text.Json.Serialization.JsonSourceGenerationOptions(WriteIndented = true)]
+        [System.Text.Json.Serialization.JsonSerializable(typeof(Settings))]
+        private sealed partial class PaperDollGumpUISettingsCtx : System.Text.Json.Serialization.JsonSerializerContext { }
+
         private static Settings _settings;
         private static Settings settings
         {
@@ -91,11 +95,11 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 if (_settings == null)
                 {
-                    _settings = (Settings)Settings.Load<Settings>(typeof(PaperDollGump).ToString());
+                    _settings = (Settings)Settings.Load<Settings>(typeof(PaperDollGump).ToString(), PaperDollGumpUISettingsCtx.Default.Settings);
                     if (_settings == null)
                     {
                         _settings = new Settings();
-                        Settings.Save<Settings>(typeof(PaperDollGump).ToString(), _settings);
+                        Settings.Save<Settings>(typeof(PaperDollGump).ToString(), _settings, PaperDollGumpUISettingsCtx.Default.Settings);
                     }
                     return _settings;
                 }

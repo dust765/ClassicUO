@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -66,7 +66,7 @@ namespace ClassicUO.Game.UI.Gumps
         {
             GumpPic pic = new GumpPic(0, 0, Graphic, 0);
             Add(pic);
-            pic.SetTooltip(ClilocLoader.Instance.GetString(1112198 + (Graphic - 0x5DD0)), 200);
+            pic.SetTooltip(UOFileManager.Current.Clilocs.GetString(1112198 + (Graphic - 0x5DD0)), 200);
         }
 
         protected override bool OnMouseDoubleClick(int x, int y, MouseButtonType button)

@@ -80,11 +80,11 @@ namespace ClassicUO.Game.GameObjects
 
             //UIManager.Add(new OnCastingGump.CastTimerProgressBar());
 
-            Skills = new Skill[SkillsLoader.Instance.SkillsCount];
+            Skills = new Skill[UOFileManager.Current.Skills.SkillsCount];
 
             for (int i = 0; i < Skills.Length; i++)
             {
-                SkillEntry skill = SkillsLoader.Instance.Skills[i];
+                SkillEntry skill = UOFileManager.Current.Skills.Skills[i];
                 Skills[i] = new Skill(skill.Name, skill.Index, skill.HasAction);
             }
 
@@ -370,7 +370,7 @@ namespace ClassicUO.Game.GameObjects
 
                     ushort testGraphic = (ushort)(equippedGraphic - 1);
 
-                    if (TileDataLoader.Instance.StaticData[testGraphic].AnimID == imageID)
+                    if (UOFileManager.Current.TileData.StaticData[testGraphic].AnimID == imageID)
                     {
                         graphic1 = testGraphic;
                         count = 2;
@@ -379,7 +379,7 @@ namespace ClassicUO.Game.GameObjects
                     {
                         testGraphic = (ushort)(equippedGraphic + 1);
 
-                        if (TileDataLoader.Instance.StaticData[testGraphic].AnimID == imageID)
+                        if (UOFileManager.Current.TileData.StaticData[testGraphic].AnimID == imageID)
                         {
                             graphic1 = testGraphic;
                             count = 2;
@@ -1770,6 +1770,15 @@ namespace ClassicUO.Game.GameObjects
                 {
                     if (IsObstacle(direction, x, y, z))
                     {
+                        // Se AutoOpenDoors + SmoothDoors ativos e há porta na frente, tenta abrir antes de desviar
+                        if (ProfileManager.CurrentProfile.AutoOpenDoors &&
+                            ProfileManager.CurrentProfile.SmoothDoors &&
+                            IsDoorAhead(direction, x, y, z))
+                        {
+                            GameActions.OpenDoor();
+                            return false; // Aguarda a porta abrir antes de prosseguir
+                        }
+
                         // Tenta evitar o obst�culo
                         Direction newDir = TryToAvoid(direction, x, y, z);
 
@@ -1936,6 +1945,20 @@ namespace ClassicUO.Game.GameObjects
         {
             // Verifica se há um obstáculo usando a função de caminho
             return !Pathfinder.CanWalkObstacules(ref direction, ref x, ref y, ref z);
+        }
+
+        bool IsDoorAhead(Direction direction, int x, int y, sbyte z)
+        {
+            int targetX = x, targetY = y;
+            Pathfinder.GetNewXY((byte)direction, ref targetX, ref targetY);
+            ClassicUO.Game.Map.Map map = World.Map;
+            if (map == null) return false;
+            for (GameObject obj = map.GetTile(targetX, targetY); obj != null; obj = obj.TNext)
+            {
+                if (obj is Item doorItem && doorItem.ItemData.IsDoor && doorItem.Z - 15 <= z && doorItem.Z + 15 >= z)
+                    return true;
+            }
+            return false;
         }
 
         Direction TryToAvoid(Direction direction, int x, int y, sbyte z)

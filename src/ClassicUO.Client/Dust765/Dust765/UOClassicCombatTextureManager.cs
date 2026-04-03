@@ -30,206 +30,73 @@ namespace ClassicUO.Dust765.Dust765
 
         private static Vector3 _hueVector = Vector3.Zero;
 
+        private static Texture2D LoadEmbeddedPng(ref Texture2D cache, string fileName)
+        {
+            if (cache != null && !cache.IsDisposed)
+            {
+                return cache;
+            }
+
+            cache = null;
+            var asm = typeof(CUOEnviroment).Assembly;
+            string r1 = "ClassicUO." + fileName;
+            using (Stream s = asm.GetManifestResourceStream(r1) ?? asm.GetManifestResourceStream("cuo." + fileName))
+            {
+                if (s == null)
+                {
+                    return null;
+                }
+
+                cache = Texture2D.FromStream(Client.Game.GraphicsDevice, s);
+            }
+
+            return cache;
+        }
+
         //TEXTURES ARROW
         private int ARROW_WIDTH_HALF = 14;
         private int ARROW_HEIGHT_HALF = 14;
 
         private static Texture2D _arrowGreen;
-        public static Texture2D ArrowGreen
-        {
-            get
-            {
-                if (_arrowGreen == null || _arrowGreen.IsDisposed)
-                {
-                    Stream stream = typeof(CUOEnviroment).Assembly.GetManifestResourceStream("ClassicUO.arrow_green.png");
-                    _arrowGreen = Texture2D.FromStream(Client.Game.GraphicsDevice, stream);
-                }
-
-                return _arrowGreen;
-            }
-        }
+        public static Texture2D ArrowGreen => LoadEmbeddedPng(ref _arrowGreen, "arrow_green.png");
 
         private static Texture2D _arrowPurple;
-        public static Texture2D ArrowPurple
-        {
-            get
-            {
-                if (_arrowPurple == null || _arrowPurple.IsDisposed)
-                {
-                    Stream stream = typeof(CUOEnviroment).Assembly.GetManifestResourceStream("ClassicUO.arrow_purple.png");
-                    _arrowPurple = Texture2D.FromStream(Client.Game.GraphicsDevice, stream);
-                }
-
-                return _arrowPurple;
-            }
-        }
+        public static Texture2D ArrowPurple => LoadEmbeddedPng(ref _arrowPurple, "arrow_purple.png");
 
         private static Texture2D _arrowRed;
-        public static Texture2D ArrowRed
-        {
-            get
-            {
-                if (_arrowRed == null || _arrowRed.IsDisposed)
-                {
-                    Stream stream = typeof(CUOEnviroment).Assembly.GetManifestResourceStream("ClassicUO.arrow_red.png");
-                    _arrowRed = Texture2D.FromStream(Client.Game.GraphicsDevice, stream);
-                }
-
-                return _arrowRed;
-            }
-        }
+        public static Texture2D ArrowRed => LoadEmbeddedPng(ref _arrowRed, "arrow_red.png");
 
         private static Texture2D _arrowYellow;
-        public static Texture2D ArrowYellow
-        {
-            get
-            {
-                if (_arrowYellow == null || _arrowYellow.IsDisposed)
-                {
-                    Stream stream = typeof(CUOEnviroment).Assembly.GetManifestResourceStream("ClassicUO.arrow_yellow.png");
-                    _arrowYellow = Texture2D.FromStream(Client.Game.GraphicsDevice, stream);
-                }
-
-                return _arrowYellow;
-            }
-        }
+        public static Texture2D ArrowYellow => LoadEmbeddedPng(ref _arrowYellow, "arrow_yellow.png");
 
         private static Texture2D _arrowOrange;
-        public static Texture2D ArrowOrange
-        {
-            get
-            {
-                if (_arrowOrange == null || _arrowOrange.IsDisposed)
-                {
-                    Stream stream = typeof(CUOEnviroment).Assembly.GetManifestResourceStream("ClassicUO.arrow_orange.png");
-                    _arrowOrange = Texture2D.FromStream(Client.Game.GraphicsDevice, stream);
-                }
-
-                return _arrowOrange;
-            }
-        }
+        public static Texture2D ArrowOrange => LoadEmbeddedPng(ref _arrowOrange, "arrow_orange.png");
 
         private static Texture2D _arrowBlue;
-        public static Texture2D ArrowBlue
-        {
-            get
-            {
-                if (_arrowBlue == null || _arrowBlue.IsDisposed)
-                {
-                    Stream stream = typeof(CUOEnviroment).Assembly.GetManifestResourceStream("ClassicUO.arrow_blue2.png");
-                    _arrowBlue = Texture2D.FromStream(Client.Game.GraphicsDevice, stream);
-                }
-
-                return _arrowBlue;
-            }
-        }
+        public static Texture2D ArrowBlue => LoadEmbeddedPng(ref _arrowBlue, "arrow_blue2.png");
         //TEXTURES HALO
         private int HALO_WIDTH_HALF = 25;
 
         private static Texture2D _haloGreen;
-        private static Texture2D HaloGreen
-        {
-            get
-            {
-                if (_haloGreen == null || _haloGreen.IsDisposed)
-                {
-                    Stream stream = typeof(CUOEnviroment).Assembly.GetManifestResourceStream("ClassicUO.halo_green.png");
-                    _haloGreen = Texture2D.FromStream(Client.Game.GraphicsDevice, stream);
-                }
-
-                return _haloGreen;
-            }
-        }
+        private static Texture2D HaloGreen => LoadEmbeddedPng(ref _haloGreen, "halo_green.png");
 
         private static Texture2D _haloPurple;
-        private static Texture2D HaloPurple
-        {
-            get
-            {
-                if (_haloPurple == null || _haloPurple.IsDisposed)
-                {
-                    Stream stream = typeof(CUOEnviroment).Assembly.GetManifestResourceStream("ClassicUO.halo_purple.png");
-                    _haloPurple = Texture2D.FromStream(Client.Game.GraphicsDevice, stream);
-                }
-
-                return _haloPurple;
-            }
-        }
+        private static Texture2D HaloPurple => LoadEmbeddedPng(ref _haloPurple, "halo_purple.png");
 
         private static Texture2D _haloRed;
-        private static Texture2D HaloRed
-        {
-            get
-            {
-                if (_haloRed == null || _haloRed.IsDisposed)
-                {
-                    Stream stream = typeof(CUOEnviroment).Assembly.GetManifestResourceStream("ClassicUO.halo_red.png");
-                    _haloRed = Texture2D.FromStream(Client.Game.GraphicsDevice, stream);
-                }
-
-                return _haloRed;
-            }
-        }
+        private static Texture2D HaloRed => LoadEmbeddedPng(ref _haloRed, "halo_red.png");
 
         private static Texture2D _haloWhite;
-        private static Texture2D HaloWhite
-        {
-            get
-            {
-                if (_haloWhite == null || _haloWhite.IsDisposed)
-                {
-                    Stream stream = typeof(CUOEnviroment).Assembly.GetManifestResourceStream("ClassicUO.halo_white.png");
-                    _haloWhite = Texture2D.FromStream(Client.Game.GraphicsDevice, stream);
-                }
-
-                return _haloWhite;
-            }
-        }
+        private static Texture2D HaloWhite => LoadEmbeddedPng(ref _haloWhite, "halo_white.png");
 
         private static Texture2D _haloYellow;
-        private static Texture2D HaloYellow
-        {
-            get
-            {
-                if (_haloYellow == null || _haloYellow.IsDisposed)
-                {
-                    Stream stream = typeof(CUOEnviroment).Assembly.GetManifestResourceStream("ClassicUO.halo_yellow.png");
-                    _haloYellow = Texture2D.FromStream(Client.Game.GraphicsDevice, stream);
-                }
-
-                return _haloYellow;
-            }
-        }
+        private static Texture2D HaloYellow => LoadEmbeddedPng(ref _haloYellow, "halo_yellow.png");
 
         private static Texture2D _haloOrange;
-        private static Texture2D HaloOrange
-        {
-            get
-            {
-                if (_haloOrange == null || _haloOrange.IsDisposed)
-                {
-                    Stream stream = typeof(CUOEnviroment).Assembly.GetManifestResourceStream("ClassicUO.halo_orange.png");
-                    _haloOrange = Texture2D.FromStream(Client.Game.GraphicsDevice, stream);
-                }
-
-                return _haloOrange;
-            }
-        }
+        private static Texture2D HaloOrange => LoadEmbeddedPng(ref _haloOrange, "halo_orange.png");
 
         private static Texture2D _haloBlue;
-        private static Texture2D HaloBlue
-        {
-            get
-            {
-                if (_haloBlue == null || _haloBlue.IsDisposed)
-                {
-                    Stream stream = typeof(CUOEnviroment).Assembly.GetManifestResourceStream("ClassicUO.halo_blue2.png");
-                    _haloBlue = Texture2D.FromStream(Client.Game.GraphicsDevice, stream);
-                }
-
-                return _haloBlue;
-            }
-        }
+        private static Texture2D HaloBlue => LoadEmbeddedPng(ref _haloBlue, "halo_blue2.png");
         //TEXTURES END
         public void Draw(UltimaBatcher2D batcher)
         {
@@ -290,25 +157,25 @@ namespace ClassicUO.Dust765.Dust765
                     else
                     {
                         //PURPLE HALO FOR: LAST ATTACK, LASTTARGET
-                        if ((TargetManager.LastAttack == mobile.Serial & TargetManager.LastAttack != 0 & ProfileManager.CurrentProfile.TextureManagerPurple) || (TargetManager.LastTargetInfo.Serial == mobile.Serial & TargetManager.LastTargetInfo.Serial != 0 & ProfileManager.CurrentProfile.TextureManagerPurple))
+                        if (HaloPurple != null && ((TargetManager.LastAttack == mobile.Serial & TargetManager.LastAttack != 0 & ProfileManager.CurrentProfile.TextureManagerPurple) || (TargetManager.LastTargetInfo.Serial == mobile.Serial & TargetManager.LastTargetInfo.Serial != 0 & ProfileManager.CurrentProfile.TextureManagerPurple)))
                             batcher.Draw(HaloPurple, new Rectangle(pm.X, pm.Y - 15, HaloPurple.Width, HaloPurple.Height), _hueVector);
 
                         //GREEN HALO FOR: ALLYS AND PARTY
-                        else if (mobile.NotorietyFlag == NotorietyFlag.Ally & ProfileManager.CurrentProfile.TextureManagerGreen || World.Party.Contains(mobile.Serial) & ProfileManager.CurrentProfile.TextureManagerGreen)
+                        else if (HaloGreen != null && (mobile.NotorietyFlag == NotorietyFlag.Ally & ProfileManager.CurrentProfile.TextureManagerGreen || World.Party.Contains(mobile.Serial) & ProfileManager.CurrentProfile.TextureManagerGreen))
                             batcher.Draw(HaloGreen, new Rectangle(pm.X, pm.Y - 15, HaloGreen.Width, HaloGreen.Height), _hueVector);
                         //RED HALO FOR: CRIMINALS, GRAY, MURDERER
                         else if (mobile.NotorietyFlag == NotorietyFlag.Criminal || mobile.NotorietyFlag == NotorietyFlag.Gray || mobile.NotorietyFlag == NotorietyFlag.Murderer)
                         {
-                            if (ProfileManager.CurrentProfile.TextureManagerRed)
+                            if (HaloRed != null && ProfileManager.CurrentProfile.TextureManagerRed)
                             {
                                 batcher.Draw(HaloRed, new Rectangle(pm.X, pm.Y - 15, HaloRed.Width, HaloRed.Height), _hueVector);
                             }
                         }
                         //ORANGE HALO FOR: ENEMY
-                        else if (mobile.NotorietyFlag == NotorietyFlag.Enemy & ProfileManager.CurrentProfile.TextureManagerOrange)
+                        else if (HaloOrange != null && mobile.NotorietyFlag == NotorietyFlag.Enemy & ProfileManager.CurrentProfile.TextureManagerOrange)
                             batcher.Draw(HaloOrange, new Rectangle(pm.X, pm.Y - 15, HaloOrange.Width, HaloOrange.Height), _hueVector);
                         //BLUE HALO FOR: INNOCENT
-                        else if (mobile.NotorietyFlag == NotorietyFlag.Innocent & ProfileManager.CurrentProfile.TextureManagerBlue)
+                        else if (HaloBlue != null && mobile.NotorietyFlag == NotorietyFlag.Innocent & ProfileManager.CurrentProfile.TextureManagerBlue)
                             batcher.Draw(HaloBlue, new Rectangle(pm.X, pm.Y - 15, HaloBlue.Width, HaloBlue.Height), _hueVector);
                     }
 
@@ -344,22 +211,22 @@ namespace ClassicUO.Dust765.Dust765
                     }
 
                     //PURPLE ARROW FOR: LAST ATTACK, LASTTARGET
-                    if ((TargetManager.LastAttack == mobile.Serial & TargetManager.LastAttack != 0 & ProfileManager.CurrentProfile.TextureManagerPurpleArrows) || (TargetManager.LastTargetInfo.Serial == mobile.Serial & TargetManager.LastTargetInfo.Serial != 0 & ProfileManager.CurrentProfile.TextureManagerPurpleArrows))
+                    if (ArrowPurple != null && ((TargetManager.LastAttack == mobile.Serial & TargetManager.LastAttack != 0 & ProfileManager.CurrentProfile.TextureManagerPurpleArrows) || (TargetManager.LastTargetInfo.Serial == mobile.Serial & TargetManager.LastTargetInfo.Serial != 0 & ProfileManager.CurrentProfile.TextureManagerPurpleArrows)))
                         batcher.Draw(ArrowPurple, new Rectangle(p1.X, p1.Y, ArrowPurple.Width, ArrowPurple.Height), _hueVector);
                     //GREEN ARROW FOR: ALLYS AND PARTY
-                    else if ((mobile.NotorietyFlag == NotorietyFlag.Ally & ProfileManager.CurrentProfile.TextureManagerGreenArrows || World.Party.Contains(mobile.Serial)) && mobile != World.Player & ProfileManager.CurrentProfile.TextureManagerGreenArrows)
+                    else if (ArrowGreen != null && (mobile.NotorietyFlag == NotorietyFlag.Ally & ProfileManager.CurrentProfile.TextureManagerGreenArrows || World.Party.Contains(mobile.Serial)) && mobile != World.Player & ProfileManager.CurrentProfile.TextureManagerGreenArrows)
                         batcher.Draw(ArrowGreen, new Rectangle(p1.X, p1.Y, ArrowGreen.Width, ArrowGreen.Height), _hueVector);
                     //RED ARROW FOR: CRIMINALS, GRAY, MURDERER
                     else if (mobile.NotorietyFlag == NotorietyFlag.Criminal || mobile.NotorietyFlag == NotorietyFlag.Gray || mobile.NotorietyFlag == NotorietyFlag.Murderer)
                     {
-                        if (ProfileManager.CurrentProfile.TextureManagerRedArrows)
+                        if (ArrowRed != null && ProfileManager.CurrentProfile.TextureManagerRedArrows)
                             batcher.Draw(ArrowRed, new Rectangle(p1.X, p1.Y, ArrowRed.Width, ArrowRed.Height), _hueVector);
                     }
                     //ORANGE ARROW FOR: ENEMY
-                    else if (mobile.NotorietyFlag == NotorietyFlag.Enemy & ProfileManager.CurrentProfile.TextureManagerOrangeArrows)
+                    else if (ArrowOrange != null && mobile.NotorietyFlag == NotorietyFlag.Enemy & ProfileManager.CurrentProfile.TextureManagerOrangeArrows)
                         batcher.Draw(ArrowOrange, new Rectangle(p1.X, p1.Y, ArrowOrange.Width, ArrowOrange.Height), _hueVector);
                     //BLUE ARROW FOR: INNOCENT
-                    else if (mobile.NotorietyFlag == NotorietyFlag.Innocent & ProfileManager.CurrentProfile.TextureManagerBlueArrows)
+                    else if (ArrowBlue != null && mobile.NotorietyFlag == NotorietyFlag.Innocent & ProfileManager.CurrentProfile.TextureManagerBlueArrows)
                         batcher.Draw(ArrowBlue, new Rectangle(p1.X, p1.Y, ArrowBlue.Width, ArrowBlue.Height), _hueVector);
 
                     batcher.SetBlendState(null);

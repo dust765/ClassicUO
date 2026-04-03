@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -129,13 +129,13 @@ namespace ClassicUO.Game.Managers
             byte* table = stackalloc byte[60];
             int index = 0;
 
-            int count = SkillsLoader.Instance.SkillsCount;
+            int count = UOFileManager.Current.Skills.SkillsCount;
 
             for (int i = 0; i < count; i++)
             {
                 for (int j = 0; j < Count; j++)
                 {
-                    if (SkillsLoader.Instance.GetSortedIndex(i) == _list[j])
+                    if (UOFileManager.Current.Skills.GetSortedIndex(i) == _list[j])
                     {
                         table[index++] = _list[j];
 
@@ -351,7 +351,7 @@ namespace ClassicUO.Game.Managers
 
         private static void MakeDefaultCombat()
         {
-            int count = SkillsLoader.Instance.SkillsCount;
+            int count = UOFileManager.Current.Skills.SkillsCount;
 
             SkillsGroup g = new SkillsGroup();
             g.Name = ResGeneral.Combat;
@@ -414,7 +414,7 @@ namespace ClassicUO.Game.Managers
 
         private static void MakeDefaultMagic()
         {
-            int count = SkillsLoader.Instance.SkillsCount;
+            int count = UOFileManager.Current.Skills.SkillsCount;
 
             SkillsGroup g = new SkillsGroup();
             g.Name = ResGeneral.Magic;
@@ -563,7 +563,7 @@ namespace ClassicUO.Game.Managers
                     {
                         int grp = bin.ReadInt32();
 
-                        if (grp < groups.Length && skillidx < SkillsLoader.Instance.SkillsCount)
+                        if (grp < groups.Length && skillidx < UOFileManager.Current.Skills.SkillsCount)
                         {
                             groups[grp].Add(skillidx++);
                         }

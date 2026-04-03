@@ -181,7 +181,7 @@ namespace ClassicUO.Game.UI.Gumps
                 {
                     while (MoveItems.TryDequeue(out Item moveItem))
                     {
-                        Assets.StaticTiles itemData = Assets.TileDataLoader.Instance.StaticData[moveItem.Graphic];
+                        Assets.StaticTiles itemData = Assets.UOFileManager.Current.TileData.StaticData[moveItem.Graphic];
                         if (GameActions.PickUp(moveItem.Serial, 0, 0, moveItem.Amount))
                             GameActions.DropItem(moveItem.Serial, x, y, z + (sbyte)(itemData.Height == 0xFF ? 0 : itemData.Height), 0);
                         await Task.Delay(ObjDelay).ConfigureAwait(false);

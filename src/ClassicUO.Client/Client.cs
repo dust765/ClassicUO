@@ -56,8 +56,11 @@ namespace ClassicUO
         public static GameController Game { get; private set; }
 
 
-        public static void Run()
+        public static IPluginHost PluginHost { get; private set; }
+
+        public static void Run(IPluginHost pluginHost = null)
         {
+            PluginHost = pluginHost;
             Debug.Assert(Game == null);
 
             SDL.SDL_SetHint(SDL.SDL_HINT_RENDER_VSYNC, "0");
@@ -86,9 +89,22 @@ namespace ClassicUO
 
                 Log.Trace("Loading plugins...");
 
+                PluginHost?.Initialize();
+
                 foreach (string p in Settings.GlobalSettings.Plugins)
                 {
-                    Plugin.Create(p);
+                    if (PluginHost != null)
+                    {
+                        // Running under Bootstrap (NativeAOT): delegate plugin loading to Bootstrap
+                        // which runs on net472 and can Assembly.LoadFile managed plugins.
+                        string fullPluginPath = System.IO.Path.GetFullPath(
+                            System.IO.Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Plugins", p));
+                        PluginHost.LoadPlugin(fullPluginPath);
+                    }
+                    else
+                    {
+                        Plugin.Create(p);
+                    }
                 }
 
                 Log.Trace("Done!");

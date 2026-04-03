@@ -121,7 +121,7 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
                         skill.Lock = Lock.Locked;
                     }
 
-                    UIManager.Add(new LoginMessageBoxGump(ClilocLoader.Instance.GetString(1063016)));
+                    UIManager.Add(new LoginMessageBoxGump(UOFileManager.Current.Clilocs.GetString(1063016)));
 
                     return;
                 }

@@ -284,9 +284,9 @@ namespace ClassicUO.Assets
                                 }
                             }
 
-                            for (int j = 0; j < SkillsLoader.Instance.SkillsCount; j++)
+                            for (int j = 0; j < UOFileManager.Current.Skills.SkillsCount; j++)
                             {
-                                SkillEntry skill = SkillsLoader.Instance.Skills[j];
+                                SkillEntry skill = UOFileManager.Current.Skills.Skills[j];
 
                                 if (strings[1] == skill.Name || ((SkillEntry.HardCodedName) skill.Index).ToString().ToLower() == strings[1].ToLower())
                                 {
@@ -330,7 +330,7 @@ namespace ClassicUO.Assets
 
                     {
                         int.TryParse(strings[1], out nameClilocID);
-                        name = ClilocLoader.Instance.GetString(nameClilocID, true, name);
+                        name = UOFileManager.Current.Clilocs.GetString(nameClilocID, true, name);
 
                         break;
                     }

@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -74,7 +74,7 @@ namespace ClassicUO.Game.UI.Gumps
             const ushort DARK_MODE_JOURNAL_HUE = 903;
 
             string str = ResGumps.DarkMode;
-            int width = FontsLoader.Instance.GetWidthASCII(6, str);
+            int width = UOFileManager.Current.Fonts.GetWidthASCII(6, str);
 
             Checkbox darkMode;
 

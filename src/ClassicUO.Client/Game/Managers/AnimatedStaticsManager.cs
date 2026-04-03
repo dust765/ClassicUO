@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -46,7 +46,7 @@ namespace ClassicUO.Game.Managers
 
         public unsafe void Initialize()
         {
-            UOFile file = AnimDataLoader.Instance.AnimDataFile;
+            UOFile file = UOFileManager.Current.AnimData.AnimDataFile;
 
             if (file == null)
             {
@@ -56,9 +56,9 @@ namespace ClassicUO.Game.Managers
             long startAddr = file.StartAddress.ToInt64();
             uint lastaddr = (uint) (startAddr + file.Length - sizeof(AnimDataFrame));
 
-            for (int i = 0; i < TileDataLoader.Instance.StaticData.Length; i++)
+            for (int i = 0; i < UOFileManager.Current.TileData.StaticData.Length; i++)
             {
-                if (TileDataLoader.Instance.StaticData[i].IsAnimated)
+                if (UOFileManager.Current.TileData.StaticData[i].IsAnimated)
                 {
                     uint addr = (uint) (i * 68 + 4 * (i / 8 + 1));
                     uint offset = (uint) (startAddr + addr);
@@ -85,7 +85,7 @@ namespace ClassicUO.Game.Managers
                 return;
             }
 
-            UOFile file = AnimDataLoader.Instance.AnimDataFile;
+            UOFile file = UOFileManager.Current.AnimData.AnimDataFile;
 
             if (file == null)
             {
@@ -97,7 +97,7 @@ namespace ClassicUO.Game.Managers
             uint next_time = Time.Ticks + 250;
             bool no_animated_field = ProfileManager.CurrentProfile != null && ProfileManager.CurrentProfile.FieldsType != 0;
             long startAddr = file.StartAddress.ToInt64();
-            UOFileIndex[] static_data = ArtLoader.Instance.Entries;
+            UOFileIndex[] static_data = UOFileManager.Current.Arts.Entries;
 
             for (int i = 0; i < _staticInfos.Length; i++)
             {

@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using System.Text.Unicode;
 
 namespace ClassicUO.Configuration
@@ -72,7 +73,8 @@ namespace ClassicUO.Configuration
                 WriteIndented = true,
                 Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Latin1Supplement, UnicodeRanges.Cyrillic, UnicodeRanges.CjkUnifiedIdeographs, UnicodeRanges.HangulSyllables, UnicodeRanges.LatinExtendedA, UnicodeRanges.LatinExtendedB),
                 ReadCommentHandling = JsonCommentHandling.Skip,
-                AllowTrailingCommas = true
+                AllowTrailingCommas = true,
+                TypeInfoResolver = LanguageJsonContext.Default
             };
         }
 
@@ -863,4 +865,18 @@ namespace ClassicUO.Configuration
         public string PvX_LockLastTarget { get; set; } = "Lock last target";
         #endregion
     }
+
+    [JsonSourceGenerationOptions(
+        WriteIndented = true,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        AllowTrailingCommas = true,
+        GenerationMode = JsonSourceGenerationMode.Metadata)]
+    [JsonSerializable(typeof(Language))]
+    [JsonSerializable(typeof(OptionsGumpLanguage))]
+    [JsonSerializable(typeof(LoginLanguage))]
+    [JsonSerializable(typeof(ErrorsLanguage))]
+    [JsonSerializable(typeof(MapLanguage))]
+    [JsonSerializable(typeof(TopBarGumpLanguage))]
+    [JsonSerializable(typeof(Dust765Language))]
+    internal sealed partial class LanguageJsonContext : JsonSerializerContext { }
 }

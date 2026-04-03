@@ -48,7 +48,7 @@ namespace ClassicUO.Game.UI.Gumps
             Width = Height = displaySize;
             _graphic = graphic;
             _hue = hue;
-            _isPartial = graphic < TileDataLoader.Instance.StaticData.Length && TileDataLoader.Instance.StaticData[graphic].IsPartialHue;
+            _isPartial = graphic < UOFileManager.Current.TileData.StaticData.Length && UOFileManager.Current.TileData.StaticData[graphic].IsPartialHue;
             _hueVector = ShaderHueTranslator.GetHueVector(hue, _isPartial, 1f);
             WantUpdateSize = false;
         }
@@ -171,9 +171,9 @@ namespace ClassicUO.Game.UI.Gumps
                 row.Y = startY;
 
                 var nameStr = string.IsNullOrWhiteSpace(item.Name) ? item.Layer.ToString() : item.Name;
-                if (FontsLoader.Instance.GetWidthUnicode(0, nameStr) > nameWidth)
+                if (UOFileManager.Current.Fonts.GetWidthUnicode(0, nameStr) > nameWidth)
                 {
-                    while (nameStr.Length > 2 && FontsLoader.Instance.GetWidthUnicode(0, nameStr + "..") > nameWidth)
+                    while (nameStr.Length > 2 && UOFileManager.Current.Fonts.GetWidthUnicode(0, nameStr + "..") > nameWidth)
                         nameStr = nameStr.Substring(0, nameStr.Length - 1);
                     nameStr += "..";
                 }

@@ -373,7 +373,7 @@ namespace ClassicUO.Game.UI.Gumps
                     for (int i = 0; i < g.Count; i++)
                     {
                         byte index = g.GetSkill(i);
-                        if (index < SkillsLoader.Instance.SkillsCount)
+                        if (index < UOFileManager.Current.Skills.SkillsCount)
                         {
                             skills.Add(World.Player.Skills[index]);
                         }

@@ -11,12 +11,14 @@ namespace ClassicUO.IO
 
         public static UOFilesOverrideMap Instance { get; private set; } = new UOFilesOverrideMap();
 
-        private UOFilesOverrideMap() : base()
+        public UOFilesOverrideMap() : base()
         {
         }
 
         public void Load()
         {
+            Clear();
+
             if (!File.Exists(OverrideFile))
             {
                 Log.Trace($"No Override File found, ignoring.");

@@ -30,13 +30,18 @@ namespace ClassicUO.Dust765
 
             _thread = new Thread(() =>
             {
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
-
-                _form = new SplashForm();
-                _form.Shown += (s, e) => _ready = true;
-
-                Application.Run(_form);
+                try
+                {
+                    Application.EnableVisualStyles();
+                    _form = new SplashForm();
+                    _form.Shown += (s, e) => _ready = true;
+                    Application.Run(_form);
+                }
+                catch (Exception ex)
+                {
+                    _ready = true; // unblock main thread
+                    Console.WriteLine($"[SplashScreen] failed: {ex.GetType().Name}: {ex.Message}");
+                }
             });
 
             _thread.Name = "CUO_SPLASH_THREAD";

@@ -1,7 +1,6 @@
 using ClassicUO.Configuration;
 using ClassicUO.Game.GameObjects;
 using ClassicUO.Game.UI.Gumps;
-using ClassicUO.LegionScripting;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

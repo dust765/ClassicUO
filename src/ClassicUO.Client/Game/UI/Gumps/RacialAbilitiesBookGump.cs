@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -229,7 +229,7 @@ namespace ClassicUO.Game.UI.Gumps
                 }
 
                 Add(pic, page1);
-                pic.SetTooltip(ClilocLoader.Instance.GetString(_tooltipOffset + i), 150);
+                pic.SetTooltip(UOFileManager.Current.Clilocs.GetString(_tooltipOffset + i), 150);
 
                 Add
                 (

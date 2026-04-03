@@ -38,7 +38,6 @@ namespace ClassicUO.Game.Managers // only exception to not being in the 'Interop
             AutoRangeDisplay.Initialize(); //AutoRangeDisplay//
             AutoMeditate.Initialize();  //AUTOMEDITATE##//
             AutoEngage.Initialize();  //AUTOENGAGE##//
-            AutoMimic.Initialize();  //##AUTO MIMIC##//
             Automation.Initialize();
             //AutoWorldMapMarker.LoadCommands();
             Defender.Initialize();

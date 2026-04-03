@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -251,7 +251,7 @@ namespace ClassicUO.Game.Data
             {
                 _ids = ids;
 
-                Labels = labels.Select(o => ClilocLoader.Instance.GetString(o)).ToArray();
+                Labels = labels.Select(o => UOFileManager.Current.Clilocs.GetString(o)).ToArray();
             }
 
             public string[] Labels { get; }

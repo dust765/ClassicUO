@@ -1434,6 +1434,13 @@ namespace ClassicUO.Game.Managers
 
                     break;
 
+                case MacroType.ToggleAvoidObstacules:
+                    ProfileManager.CurrentProfile.AutoAvoidObstacules = !ProfileManager.CurrentProfile.AutoAvoidObstacules;
+
+                    GameActions.Print(ProfileManager.CurrentProfile.AutoAvoidObstacules ? "Avoid Obstacules is now ON." : "Avoid Obstacules is now OFF.");
+
+                    break;
+
                 case MacroType.SaveDesktop:
                     ProfileManager.CurrentProfile?.Save(ProfileManager.ProfilePath);
 
@@ -2270,12 +2277,8 @@ namespace ClassicUO.Game.Managers
                 // ## BEGIN - END ## // LINES
 
                 case MacroType.UseCounterBar:
-                    string counterIndex = ((MacroObjectString)macro).Text;
-
-                    if (!string.IsNullOrEmpty(counterIndex) && int.TryParse(counterIndex, out int cIndex))
-                    {
-                        CounterBarGump.CurrentCounterBarGump?.GetCounterItem(cIndex)?.Use();
-                    }
+                    string counterSlot = ((MacroObjectString)macro).Text?.Trim();
+                    CounterBarGump.CurrentCounterBarGump?.UseSlot(counterSlot);
                     break;
                 case MacroType.ClientCommand:
                     string command = ((MacroObjectString)macro).Text;
@@ -2972,7 +2975,8 @@ namespace ClassicUO.Game.Managers
         StunAbility,
         DisarmAbility,
         ToggleGump,
-        ToggleDurabilityGump
+        ToggleDurabilityGump,
+        ToggleAvoidObstacules
     }
 
     public enum MacroSubType

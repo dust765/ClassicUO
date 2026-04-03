@@ -337,7 +337,6 @@ namespace ClassicUO.Game.Scenes
                 XmlGumpHandler.TryAutoOpenByName(xml);
             }
 
-            LegionScripting.LegionScripting.Init();
         }
 
         private void ChatOnMessageReceived(object sender, MessageEventArgs e)
@@ -478,8 +477,6 @@ namespace ClassicUO.Game.Scenes
             {
                 return;
             }
-
-            LegionScripting.LegionScripting.Unload();
 
             ProfileManager.CurrentProfile.GameWindowPosition = new Point(
                 Camera.Bounds.X,
@@ -730,7 +727,7 @@ namespace ClassicUO.Game.Scenes
                     }
                     else
                     {
-                        ref StaticTiles data = ref TileDataLoader.Instance.StaticData[obj.Graphic];
+                        ref StaticTiles data = ref UOFileManager.Current.TileData.StaticData[obj.Graphic];
                         light.ID = data.Layer;
                     }
                 }
