@@ -2,9 +2,11 @@
 
   <PropertyGroup>
     <LangVersion>Preview</LangVersion>
-    <TargetFramework>net10.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
 
+  <PropertyGroup Condition="'$(MSBuildProjectName)' != 'ClassicUO.Client'">
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">

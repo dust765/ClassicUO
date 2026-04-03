@@ -38,12 +38,12 @@ jobs:
           - os: ubuntu-22.04
             target: linux-x64
             tfm: net10.0
-            bootTfm: net10.0
+            bootTfm: net472
             bootOutputType: Exe
           - os: macos-14
             target: osx-x64
             tfm: net10.0
-            bootTfm: net10.0
+            bootTfm: net472
             bootOutputType: Exe
 
     steps:
@@ -94,7 +94,7 @@ jobs:
         run: dotnet publish "${{ env.BOOT_PROJECT_PATH }}" -c Release -f "${{ matrix.bootTfm }}" -o "${{ env.CUO_OUTPUT_PATH }}" /p:AssemblyVersion=${{ env.CUO_ASSEMBLY_VERSION }} /p:FileVersion=${{ env.CUO_ASSEMBLY_VERSION }} /p:OutputType=${{ matrix.bootOutputType }}
 
       - name: Build ClassicUO (NativeAOT)
-        run: dotnet publish "${{ env.CUO_PROJECT_PATH }}" -c Release -r "${{ matrix.target }}" -o "${{ env.CUO_OUTPUT_PATH }}" /p:AssemblyVersion=${{ env.CUO_ASSEMBLY_VERSION }} /p:FileVersion=${{ env.CUO_ASSEMBLY_VERSION }} /p:NativeLib=Shared /p:OutputType=Library /p:BuildNativeAot=true /p:UseWindowsForms=false /p:TargetFramework=${{ matrix.tfm }}
+        run: dotnet publish "${{ env.CUO_PROJECT_PATH }}" -c Release -r "${{ matrix.target }}" -o "${{ env.CUO_OUTPUT_PATH }}" /p:AssemblyVersion=${{ env.CUO_ASSEMBLY_VERSION }} /p:FileVersion=${{ env.CUO_ASSEMBLY_VERSION }} /p:NativeLib=Shared /p:OutputType=Library /p:BuildNativeAot=true /p:TargetFramework=${{ matrix.tfm }}
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           SENTRY_ENV: production
