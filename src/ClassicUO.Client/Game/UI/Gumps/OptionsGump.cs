@@ -3467,7 +3467,11 @@ namespace ClassicUO.Game.UI.Gumps
 
             startY += 20;
 
-            Label text = AddLabel(rightArea, ResGumps.CellSize, startX, startY);
+            Label text = AddLabel(rightArea, ResGumps.CounterLayout, startX, startY);
+
+            startX += 40;
+            startY += text.Height + 6;
+            text = AddLabel(rightArea, ResGumps.CellSize, startX, startY);
 
             int initialX = startX;
             startX += text.Width + 5;
