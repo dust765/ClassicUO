@@ -744,6 +744,39 @@ when amount is or exceeds</value>
   <data name="Counter_Columns" xml:space="preserve">
     <value>Columns:</value>
   </data>
+  <data name="CounterCompareTo" xml:space="preserve">
+    <value>Compare amount to...</value>
+  </data>
+  <data name="CounterCompareToDialogInvalid" xml:space="preserve">
+    <value>The value must be a valid number!</value>
+  </data>
+  <data name="CounterCompareToDialogText1" xml:space="preserve">
+    <value>Compare to value</value>
+  </data>
+  <data name="CounterCompareToDialogText2" xml:space="preserve">
+    <value>(leave empty to reset)</value>
+  </data>
+  <data name="CounterEmptyHelpText" xml:space="preserve">
+    <value>Drop an item here to start your first counter</value>
+  </data>
+  <data name="CounterErrorSlotNotFound" xml:space="preserve">
+    <value>Counter Bar: Slot number '{0}' could not be found</value>
+  </data>
+  <data name="CounterErrorSlotNotValid" xml:space="preserve">
+    <value>Counter Bar: Slot '{0}' is not a valid number</value>
+  </data>
+  <data name="CounterIgnoreHueOff" xml:space="preserve">
+    <value>Compare Hue (ON)</value>
+  </data>
+  <data name="CounterIgnoreHueOn" xml:space="preserve">
+    <value>Compare Hue (OFF)</value>
+  </data>
+  <data name="CounterReadonlyOff" xml:space="preserve">
+    <value>Read-only mode (OFF)</value>
+  </data>
+  <data name="CounterReadonlyOn" xml:space="preserve">
+    <value>Read-only mode (ON)</value>
+  </data>
   <data name="NoCityFound" xml:space="preserve">
     <value>No city found. Something wrong with the received cities.</value>
   </data>

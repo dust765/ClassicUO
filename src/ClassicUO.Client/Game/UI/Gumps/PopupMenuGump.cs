@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -73,7 +73,7 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 ref PopupMenuItem item = ref data.Items[i];
 
-                string text = ClilocLoader.Instance.GetString(item.Cliloc);
+                string text = UOFileManager.Current.Clilocs.GetString(item.Cliloc);
 
                 ushort hue = item.Hue;
 
@@ -81,7 +81,7 @@ namespace ClassicUO.Game.UI.Gumps
                 {
                     uint h = (HuesHelper.Color16To32(item.ReplacedHue) << 8) | 0xFF;
                     
-                    FontsLoader.Instance.SetUseHTML(true, h);
+                    UOFileManager.Current.Fonts.SetUseHTML(true, h);
                 }
 
                 Label label = new Label(text, true, hue, font: 1)
@@ -90,7 +90,7 @@ namespace ClassicUO.Game.UI.Gumps
                     Y = offsetY
                 };
 
-                FontsLoader.Instance.SetUseHTML(false);
+                UOFileManager.Current.Fonts.SetUseHTML(false);
 
                 HitBox box = new HitBox(10, offsetY, label.Width, label.Height)
                 {

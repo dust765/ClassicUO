@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (C) 2020 project dust765
 // 
@@ -83,10 +83,10 @@ namespace ClassicUO.Dust765.Dust765
             //STOP BANDIES TIMER
             for (int i = 0; i < _stopBandiesAtClilocs.Length; i++)
             {
-                if (ClilocLoader.Instance.GetString(_stopBandiesAtClilocs[i]) == null)
+                if (UOFileManager.Current.Clilocs.GetString(_stopBandiesAtClilocs[i]) == null)
                     continue;
 
-                if (text.StartsWith(ClilocLoader.Instance.GetString(_stopBandiesAtClilocs[i])))
+                if (text.StartsWith(UOFileManager.Current.Clilocs.GetString(_stopBandiesAtClilocs[i])))
                 {
                     UOClassicCombatSelf?.ClilocTriggerStopBandies();
                     return;
@@ -96,10 +96,10 @@ namespace ClassicUO.Dust765.Dust765
             //START BANDIES TIMER
             for (int i = 0; i < _startBandiesAtClilocs.Length; i++)
             {
-                if (ClilocLoader.Instance.GetString(_startBandiesAtClilocs[i]) == null)
+                if (UOFileManager.Current.Clilocs.GetString(_startBandiesAtClilocs[i]) == null)
                     continue;
 
-                if (text.StartsWith(ClilocLoader.Instance.GetString(_startBandiesAtClilocs[i])))
+                if (text.StartsWith(UOFileManager.Current.Clilocs.GetString(_startBandiesAtClilocs[i])))
                 {
                     UOClassicCombatSelf?.ClilocTriggerStartBandies();
                     return;
@@ -110,10 +110,10 @@ namespace ClassicUO.Dust765.Dust765
             //GOT DISARMED
             for (int i = 0; i < _disarmedAtClilocs.Length; i++)
             {
-                if (ClilocLoader.Instance.GetString(_disarmedAtClilocs[i]) == null)
+                if (UOFileManager.Current.Clilocs.GetString(_disarmedAtClilocs[i]) == null)
                     continue;
 
-                if (text.StartsWith(ClilocLoader.Instance.GetString(_disarmedAtClilocs[i])))
+                if (text.StartsWith(UOFileManager.Current.Clilocs.GetString(_disarmedAtClilocs[i])))
                 {
                     UOClassicCombatSelf?.ClilocTriggerGotDisarmed();// ## BEGIN - END ## // SELF
                     UOClassicCombatBuffbar?.ClilocTriggerGotDisarmed();

@@ -30,7 +30,7 @@ namespace ClassicUO.Game.UI.Controls
 
             _renderedText = RenderedText.Create(text ?? string.Empty, 0, 1, true, FontStyle.BlackBorder);
 
-            var texture = GumpsLoader.Instance.GetGumpTexture(_gumpNormal, out Rectangle bounds);
+            var texture = UOFileManager.Current.Gumps.GetGumpTexture(_gumpNormal, out Rectangle bounds);
             Width = bounds.Width;
             Height = bounds.Height;
         }
@@ -53,7 +53,7 @@ namespace ClassicUO.Game.UI.Controls
             else if (_isHovered)
                 gumpID = _gumpHover;
 
-            var texture = GumpsLoader.Instance.GetGumpTexture(gumpID, out Rectangle bounds);
+            var texture = UOFileManager.Current.Gumps.GetGumpTexture(gumpID, out Rectangle bounds);
 
             if (texture != null)
             {

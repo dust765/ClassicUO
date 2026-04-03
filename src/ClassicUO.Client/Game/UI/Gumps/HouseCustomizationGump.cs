@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -659,7 +659,7 @@ namespace ClassicUO.Game.UI.Gumps
 
             _textFixtures.Text = _customHouseManager.Fixtures.ToString();
 
-            string tooltip = ClilocLoader.Instance.Translate(
+            string tooltip = UOFileManager.Current.Clilocs.Translate(
                 1061039,
                 $"{_customHouseManager.MaxComponets}\t{_customHouseManager.MaxFixtures}",
                 true
@@ -1143,7 +1143,7 @@ namespace ClassicUO.Game.UI.Gumps
                     _dataBox.Add(new ScissorControl(true, 121, 36 + y, 384, 60));
 
                     Label text = new Label(
-                        ClilocLoader.Instance.GetString(1062113 + j),
+                        UOFileManager.Current.Clilocs.GetString(1062113 + j),
                         true,
                         0xFFFF,
                         90,

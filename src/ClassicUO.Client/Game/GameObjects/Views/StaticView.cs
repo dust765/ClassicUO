@@ -201,7 +201,7 @@ namespace ClassicUO.Game.GameObjects
                 bool isTree = StaticFilters.IsTree(graphic, out _);
                 // ## BEGIN - END ## // ART / HUE CHANGES
 
-                ref var index = ref ArtLoader.Instance.GetValidRefEntry(graphic + 0x4000);
+                ref var index = ref UOFileManager.Current.Arts.GetValidRefEntry(graphic + 0x4000);
 
                 Point position = RealScreenPosition;
                 position.X -= index.Width;

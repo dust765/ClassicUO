@@ -31,6 +31,7 @@
 #endregion
 
 using ClassicUO.Network.Encryption;
+using ClassicUO.Network.Socket;
 using ClassicUO.Utility;
 using ClassicUO.Utility.Logging;
 using System;
@@ -42,124 +43,6 @@ using System.Threading;
 
 namespace ClassicUO.Network
 {
-    sealed class SocketWrapper : IDisposable
-    {
-        private TcpClient _socket;
-        private System.Net.Sockets.NetworkStream _cachedStream;
-
-        public bool IsConnected => _socket?.Client?.Connected ?? false;
-
-        public EndPoint LocalEndPoint => _socket?.Client?.LocalEndPoint;
-
-
-        public event EventHandler OnConnected, OnDisconnected;
-        public event EventHandler<SocketError> OnError;
-
-
-        private const int ConnectTimeoutMs = 10000;
-
-        public void Connect(string ip, int port)
-        {
-            if (IsConnected) return;
-
-            _socket = new TcpClient();
-            _socket.NoDelay = true;
-            _socket.ReceiveBufferSize = 262144; // 256 KB — fewer syscalls, more stable latency
-            _socket.SendBufferSize = 65536;     // 64 KB send buffer
-
-            try
-            {
-                var result = _socket.BeginConnect(ip, port, null, null);
-                if (!result.AsyncWaitHandle.WaitOne(ConnectTimeoutMs))
-                {
-                    Disconnect();
-                    Log.Error($"connection timeout to {ip}:{port}");
-                    OnError?.Invoke(this, SocketError.TimedOut);
-                    return;
-                }
-
-                _socket.EndConnect(result);
-
-                if (!IsConnected)
-                {
-                    OnError?.Invoke(this, SocketError.NotConnected);
-                    return;
-                }
-
-                _cachedStream = _socket.GetStream(); // cache stream once — avoids per-packet overhead
-                OnConnected?.Invoke(this, EventArgs.Empty);
-            }
-            catch (SocketException socketEx)
-            {
-                Log.Error($"error while connecting {socketEx}");
-                OnError?.Invoke(this, socketEx.SocketErrorCode);
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"error while connecting {ex}");
-                OnError?.Invoke(this, SocketError.SocketError);
-            }
-        }
-
-        public void Send(byte[] buffer, int offset, int count)
-        {
-            var stream = _cachedStream;
-            if (stream == null) return;
-            stream.Write(buffer, offset, count);
-            stream.Flush();
-        }
-
-        public int Read(byte[] buffer)
-        {
-            if (!IsConnected) return 0;
-
-            var available = _socket.Available;
-            if (available == 0)
-                return -1;
-
-            available = Math.Min(buffer.Length, available);
-            var done = 0;
-            var stream = _cachedStream;
-
-            while (done < available)
-            {
-                var toRead = Math.Min(buffer.Length, available - done);
-                var read = stream.Read(buffer, done, toRead);
-
-                if (read <= 0)
-                {
-                    OnDisconnected?.Invoke(this, EventArgs.Empty);
-                    Disconnect();
-                    return 0;
-                }
-
-                done += read;
-            }
-
-            return done;
-        }
-
-        public void Disconnect()
-        {
-            var s = _socket;
-            _socket = null;
-            _cachedStream = null;
-            if (s == null) return;
-            try
-            {
-                if (s.Client?.Connected == true)
-                    s.Close();
-            }
-            catch { }
-            try { s.Dispose(); } catch { }
-        }
-
-        public void Dispose()
-        {
-            Disconnect();
-        }
-    }
-
     internal sealed class NetClient
     {
         private const int BUFF_SIZE = 0x10000;
@@ -174,7 +57,8 @@ namespace ClassicUO.Network
         private readonly byte[] _networkReadBuffer = new byte[4096];
         private readonly Huffman _huffman = new Huffman();
         private bool _isCompressionEnabled;
-        private readonly SocketWrapper _socket;
+        private SocketWrapper _socket;
+        private SocketWrapperType? _socketType;
         private uint? _localIP;
         private readonly CircularBuffer _sendStream;
         private readonly ConcurrentQueue<(byte[] data, int length)> _receiveQueue = new ConcurrentQueue<(byte[] data, int length)>();
@@ -190,19 +74,6 @@ namespace ClassicUO.Network
         {
             Statistics = new NetStatistics(this);
             _sendStream = new CircularBuffer();
-
-            _socket = new SocketWrapper();
-            _socket.OnConnected += (o, e) =>
-            {
-                Statistics.Reset();
-                _pendingDisconnect = false;
-                _networkRunning = true;
-                _networkThread = new Thread(NetworkLoop) { IsBackground = true };
-                _networkThread.Start();
-                Connected?.Invoke(this, EventArgs.Empty);
-            };
-            _socket.OnDisconnected += (o, e) => RaiseDisconnectedOnGameThread(SocketError.Success);
-            _socket.OnError += (o, e) => RaiseDisconnectedOnGameThread(e);
         }
 
         private void RaiseDisconnectedOnGameThread(SocketError e)
@@ -211,9 +82,46 @@ namespace ClassicUO.Network
             _pendingDisconnectError = e;
         }
 
+        private void SetupSocket(SocketWrapperType wrapperType)
+        {
+            _networkRunning = false;
+            if (_networkThread != null && _networkThread.IsAlive)
+            {
+                try
+                {
+                    _networkThread.Join(2000);
+                }
+                catch { }
+
+                _networkThread = null;
+            }
+
+            _socket?.Dispose();
+
+            _socket = wrapperType switch
+            {
+                SocketWrapperType.TcpSocket => new TcpSocketWrapper(),
+                SocketWrapperType.WebSocket => new WebSocketWrapper(),
+                _ => throw new ArgumentOutOfRangeException(nameof(wrapperType), wrapperType, null)
+            };
+
+            _socket.OnConnected += (_, _) =>
+            {
+                Statistics.Reset();
+                _pendingDisconnect = false;
+                _networkRunning = true;
+                _networkThread = new Thread(NetworkLoop) { IsBackground = true };
+                _networkThread.Start();
+                Connected?.Invoke(this, EventArgs.Empty);
+            };
+
+            _socket.OnDisconnected += (_, _) => RaiseDisconnectedOnGameThread(SocketError.Success);
+            _socket.OnError += (_, e) => RaiseDisconnectedOnGameThread(e);
+        }
+
         private void NetworkLoop()
         {
-            while (_networkRunning && _socket.IsConnected)
+            while (_networkRunning && _socket != null && _socket.IsConnected)
             {
                 try
                 {
@@ -302,7 +210,10 @@ namespace ClassicUO.Network
 
         private void ProcessSendFromQueue()
         {
-            if (!_socket.IsConnected) return;
+            if (_socket == null || !_socket.IsConnected)
+            {
+                return;
+            }
             try
             {
                 while (true)
@@ -386,14 +297,43 @@ namespace ClassicUO.Network
 
         public void Connect(string ip, ushort port)
         {
+            if (string.IsNullOrEmpty(ip))
+            {
+                throw new ArgumentNullException(nameof(ip));
+            }
+
             _sendStream.Clear();
             ClearReceiveQueue();
             _huffman.Reset();
             Statistics.Reset();
             _pendingDisconnect = false;
             _receiveBackpressure = false;
+            _localIP = null;
 
-            _socket.Connect(ip, port);
+            bool isWebsocketAddress =
+                ip.StartsWith("ws://", StringComparison.OrdinalIgnoreCase)
+                || ip.StartsWith("wss://", StringComparison.OrdinalIgnoreCase);
+
+            string addr = $"{(isWebsocketAddress ? string.Empty : "tcp://")}{ip}:{port}";
+            if (!Uri.TryCreate(addr, UriKind.Absolute, out Uri uri))
+            {
+                throw new UriFormatException($"NetClient::Connect() invalid Uri {addr}");
+            }
+
+            Log.Trace($"Connecting to {uri}");
+
+            SocketWrapperType want = isWebsocketAddress ? SocketWrapperType.WebSocket : SocketWrapperType.TcpSocket;
+            if (_socketType == null)
+            {
+                _socketType = want;
+            }
+            else if (_socketType != want)
+            {
+                throw new InvalidOperationException("Cannot switch between WebSocket and TCP in the same session.");
+            }
+
+            SetupSocket(_socketType.Value);
+            _socket.Connect(uri);
         }
 
         public void Disconnect()
@@ -402,7 +342,7 @@ namespace ClassicUO.Network
             _isCompressionEnabled = false;
             Statistics.Reset();
             ClearReceiveQueue();
-            _socket.Disconnect();
+            _socket?.Disconnect();
         }
 
         private void ClearReceiveQueue()

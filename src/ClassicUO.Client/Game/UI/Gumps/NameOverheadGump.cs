@@ -193,7 +193,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                     if (string.IsNullOrEmpty(item.ItemData.Name))
                     {
-                        t += ClilocLoader.Instance.GetString(1020000 + item.Graphic, true, t);
+                        t += UOFileManager.Current.Clilocs.GetString(1020000 + item.Graphic, true, t);
                     }
                     else
                     {

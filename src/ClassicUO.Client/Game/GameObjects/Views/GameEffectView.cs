@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -102,7 +102,7 @@ namespace ClassicUO.Game.GameObjects
                 return false;
             }
 
-            ref StaticTiles data = ref TileDataLoader.Instance.StaticData[Graphic];
+            ref StaticTiles data = ref UOFileManager.Current.TileData.StaticData[Graphic];
 
             posX += (int)Offset.X;
             posY += (int)(Offset.Z + Offset.Y);

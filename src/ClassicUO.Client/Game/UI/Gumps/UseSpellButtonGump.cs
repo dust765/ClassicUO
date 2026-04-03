@@ -89,7 +89,7 @@ namespace ClassicUO.Game.UI.Gumps
 
             if (cliloc != 0)
             {
-                SetTooltip(ClilocLoader.Instance.GetString(cliloc), 80);
+                SetTooltip(UOFileManager.Current.Clilocs.GetString(cliloc), 80);
             }
 
             if (ProfileManager.CurrentProfile.SpellIcon_DisplayHotkey)

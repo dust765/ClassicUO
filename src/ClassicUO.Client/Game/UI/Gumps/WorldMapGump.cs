@@ -1281,7 +1281,7 @@ namespace ClassicUO.Game.UI.Gumps
                 return;
             }
 
-            var huesLoader = HuesLoader.Instance;
+            var huesLoader = UOFileManager.Current.Hues;
 
             ref IndexMap indexMap = ref World.Map.GetIndex(chunkX, chunkY);
 
@@ -1442,16 +1442,16 @@ namespace ClassicUO.Game.UI.Gumps
         //            {
         //                int maxX = -1, maxY = -1;
 
-        //                for (int i = 0; i < MapLoader.Instance.MapsDefaultSize.GetLength(0); i++)
+        //                for (int i = 0; i < UOFileManager.Current.Maps.MapsDefaultSize.GetLength(0); i++)
         //                {
-        //                    if (maxX < MapLoader.Instance.MapsDefaultSize[i, 0])
+        //                    if (maxX < UOFileManager.Current.Maps.MapsDefaultSize[i, 0])
         //                    {
-        //                        maxX = MapLoader.Instance.MapsDefaultSize[i, 0];
+        //                        maxX = UOFileManager.Current.Maps.MapsDefaultSize[i, 0];
         //                    }
 
-        //                    if (maxY < MapLoader.Instance.MapsDefaultSize[i, 1])
+        //                    if (maxY < UOFileManager.Current.Maps.MapsDefaultSize[i, 1])
         //                    {
-        //                        maxY = MapLoader.Instance.MapsDefaultSize[i, 1];
+        //                        maxY = UOFileManager.Current.Maps.MapsDefaultSize[i, 1];
         //                    }
         //                }
 
@@ -1470,11 +1470,11 @@ namespace ClassicUO.Game.UI.Gumps
 
         //                try
         //                {
-        //                    int realWidth = MapLoader.Instance.MapsDefaultSize[World.MapIndex, 0];
-        //                    int realHeight = MapLoader.Instance.MapsDefaultSize[World.MapIndex, 1];
+        //                    int realWidth = UOFileManager.Current.Maps.MapsDefaultSize[World.MapIndex, 0];
+        //                    int realHeight = UOFileManager.Current.Maps.MapsDefaultSize[World.MapIndex, 1];
 
-        //                    int fixedWidth = MapLoader.Instance.MapBlocksSize[World.MapIndex, 0];
-        //                    int fixedHeight = MapLoader.Instance.MapBlocksSize[World.MapIndex, 1];
+        //                    int fixedWidth = UOFileManager.Current.Maps.MapBlocksSize[World.MapIndex, 0];
+        //                    int fixedHeight = UOFileManager.Current.Maps.MapBlocksSize[World.MapIndex, 1];
 
         //                    const int CHUNK_UNIT_SIZE = 8;
         //                    const int CHUNK_LAND_SIZE = (CHUNK_UNIT_SIZE + OFFSET_PIX_HALF) * (CHUNK_UNIT_SIZE + OFFSET_PIX_HALF);
@@ -1553,16 +1553,16 @@ namespace ClassicUO.Game.UI.Gumps
                         {
                             int maxX = -1, maxY = -1;
 
-                            for (int i = 0; i < MapLoader.Instance.MapsDefaultSize.GetLength(0); i++)
+                            for (int i = 0; i < UOFileManager.Current.Maps.MapsDefaultSize.GetLength(0); i++)
                             {
-                                if (maxX < MapLoader.Instance.MapsDefaultSize[i, 0])
+                                if (maxX < UOFileManager.Current.Maps.MapsDefaultSize[i, 0])
                                 {
-                                    maxX = MapLoader.Instance.MapsDefaultSize[i, 0];
+                                    maxX = UOFileManager.Current.Maps.MapsDefaultSize[i, 0];
                                 }
 
-                                if (maxY < MapLoader.Instance.MapsDefaultSize[i, 1])
+                                if (maxY < UOFileManager.Current.Maps.MapsDefaultSize[i, 1])
                                 {
-                                    maxY = MapLoader.Instance.MapsDefaultSize[i, 1];
+                                    maxY = UOFileManager.Current.Maps.MapsDefaultSize[i, 1];
                                 }
                             }
 
@@ -1579,11 +1579,11 @@ namespace ClassicUO.Game.UI.Gumps
 
                         try
                         {
-                            int realWidth = MapLoader.Instance.MapsDefaultSize[World.MapIndex, 0];
-                            int realHeight = MapLoader.Instance.MapsDefaultSize[World.MapIndex, 1];
+                            int realWidth = UOFileManager.Current.Maps.MapsDefaultSize[World.MapIndex, 0];
+                            int realHeight = UOFileManager.Current.Maps.MapsDefaultSize[World.MapIndex, 1];
 
-                            int fixedWidth = MapLoader.Instance.MapBlocksSize[World.MapIndex, 0];
-                            int fixedHeight = MapLoader.Instance.MapBlocksSize[World.MapIndex, 1];
+                            int fixedWidth = UOFileManager.Current.Maps.MapBlocksSize[World.MapIndex, 0];
+                            int fixedHeight = UOFileManager.Current.Maps.MapBlocksSize[World.MapIndex, 1];
 
                             int size = (realWidth + OFFSET_PIX) * (realHeight + OFFSET_PIX);
 
@@ -1599,7 +1599,7 @@ namespace ClassicUO.Game.UI.Gumps
                             }
 
 
-                            var huesLoader = HuesLoader.Instance;
+                            var huesLoader = UOFileManager.Current.Hues;
 
                             int bx, by, mapX = 0, mapY = 0, x, y;
 
@@ -3757,14 +3757,14 @@ namespace ClassicUO.Game.UI.Gumps
                     _center.Y = 0;
                 }
 
-                if (_center.X > MapLoader.Instance.MapsDefaultSize[World.MapIndex, 0])
+                if (_center.X > UOFileManager.Current.Maps.MapsDefaultSize[World.MapIndex, 0])
                 {
-                    _center.X = MapLoader.Instance.MapsDefaultSize[World.MapIndex, 0];
+                    _center.X = UOFileManager.Current.Maps.MapsDefaultSize[World.MapIndex, 0];
                 }
 
-                if (_center.Y > MapLoader.Instance.MapsDefaultSize[World.MapIndex, 1])
+                if (_center.Y > UOFileManager.Current.Maps.MapsDefaultSize[World.MapIndex, 1])
                 {
-                    _center.Y = MapLoader.Instance.MapsDefaultSize[World.MapIndex, 1];
+                    _center.Y = UOFileManager.Current.Maps.MapsDefaultSize[World.MapIndex, 1];
                 }
             }
             else

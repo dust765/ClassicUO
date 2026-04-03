@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -207,7 +207,7 @@ namespace ClassicUO.Game.UI.Gumps
         {
             _textBox.Height = Math.Max
             (
-                FontsLoader.Instance.GetHeightUnicode
+                UOFileManager.Current.Fonts.GetHeightUnicode
                 (
                     1,
                     _textBox.Text,

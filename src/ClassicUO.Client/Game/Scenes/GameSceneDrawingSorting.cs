@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -169,7 +169,7 @@ namespace ClassicUO.Game.Scenes
 
                     if (tileZ > pz14 && _maxZ > tileZ)
                     {
-                        ref StaticTiles itemdata = ref TileDataLoader.Instance.StaticData[
+                        ref StaticTiles itemdata = ref UOFileManager.Current.TileData.StaticData[
                             obj.Graphic
                         ];
 
@@ -218,7 +218,7 @@ namespace ClassicUO.Game.Scenes
                         {
                             if (!(obj2 is Land))
                             {
-                                ref StaticTiles itemdata = ref TileDataLoader.Instance.StaticData[
+                                ref StaticTiles itemdata = ref UOFileManager.Current.TileData.StaticData[
                                     obj2.Graphic
                                 ];
 
@@ -674,7 +674,7 @@ namespace ClassicUO.Game.Scenes
 
                         if (tile.Z > obj.Z && (tile is Static || tile is Multi))
                         {
-                            ref var itemData = ref TileDataLoader.Instance.StaticData[tile.Graphic];
+                            ref var itemData = ref UOFileManager.Current.TileData.StaticData[tile.Graphic];
 
                             if (itemData.IsNoShoot || itemData.IsWindow)
                             {
@@ -1062,7 +1062,7 @@ namespace ClassicUO.Game.Scenes
                 {
                     ref StaticTiles itemData = ref (
                         item.IsMulti
-                            ? ref TileDataLoader.Instance.StaticData[item.MultiGraphic]
+                            ? ref UOFileManager.Current.TileData.StaticData[item.MultiGraphic]
                             : ref item.ItemData
                     );
 
@@ -1153,7 +1153,7 @@ namespace ClassicUO.Game.Scenes
                     if (
                         !ProcessAlpha(
                             obj,
-                            ref TileDataLoader.Instance.StaticData[effect.Graphic],
+                            ref UOFileManager.Current.TileData.StaticData[effect.Graphic],
                             false,
                             ref playerScreePos,
                             cotZ,

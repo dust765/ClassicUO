@@ -12,7 +12,7 @@ namespace ClassicUO.Renderer.Texmaps
         public Texmap(GraphicsDevice device)
         {
             _atlas = new TextureAtlas(device, 2048, 2048, SurfaceFormat.Color);
-            _spriteInfos = new SpriteInfo[TexmapsLoader.Instance.Entries.Length];
+            _spriteInfos = new SpriteInfo[UOFileManager.Current.Texmaps.Entries.Length];
         }
 
         public ref readonly SpriteInfo GetTexmap(uint idx)
@@ -24,7 +24,7 @@ namespace ClassicUO.Renderer.Texmaps
 
             if (spriteInfo.Texture == null)
             {
-                var texmapInfo = TexmapsLoader.Instance.GetTexmap(idx);
+                var texmapInfo = UOFileManager.Current.Texmaps.GetTexmap(idx);
                 if (!texmapInfo.Pixels.IsEmpty)
                 {
                     spriteInfo.Texture = _atlas.AddSprite(

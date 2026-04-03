@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -213,8 +213,8 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
                         cityFacet = 5;
                     }
 
-                    x = 62 + MathHelper.PercetangeOf(MapLoader.Instance.MapsDefaultSize[cityFacet, 0] - 2048, c.X, 383);
-                    y = 54 + MathHelper.PercetangeOf(MapLoader.Instance.MapsDefaultSize[cityFacet, 1], c.Y, 384);
+                    x = 62 + MathHelper.PercetangeOf(UOFileManager.Current.Maps.MapsDefaultSize[cityFacet, 0] - 2048, c.X, 383);
+                    y = 54 + MathHelper.PercetangeOf(UOFileManager.Current.Maps.MapsDefaultSize[cityFacet, 1], c.Y, 384);
                 }
                 else if (i < _townButtonsText.Length)
                 {

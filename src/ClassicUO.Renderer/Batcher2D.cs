@@ -1606,13 +1606,13 @@ namespace ClassicUO.Renderer
 
     partial class Resources
     {
-        [EmbedResourceCSharp.FileEmbed("shaders/IsometricWorld.fxc")]
+        [FileEmbed.FileEmbed("shaders/IsometricWorld.fxc")]
         public static partial ReadOnlySpan<byte> GetUOShader();
 
-        [EmbedResourceCSharp.FileEmbed("shaders/xBR.fxc")]
+        [FileEmbed.FileEmbed("shaders/xBR.fxc")]
         public static partial ReadOnlySpan<byte> GetXBRShader();
 
-        [EmbedResourceCSharp.FileEmbed("shaders/OutlineGlow.fxc")]
+        [FileEmbed.FileEmbed("shaders/OutlineGlow.fxc")]
         public static partial ReadOnlySpan<byte> GetOutlineGlowShader();
     }
 }

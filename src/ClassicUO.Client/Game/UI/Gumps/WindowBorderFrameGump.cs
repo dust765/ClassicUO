@@ -60,7 +60,7 @@ namespace ClassicUO.Game.UI.Gumps
             _texBorderLoaded = true;
             string path = Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Client", "windowframe.png");
             if (File.Exists(path))
-                _texBorder = PNGLoader.Instance.GetImageTexture(path);
+                _texBorder = UOFileManager.Current.Png.GetImageTexture(path);
         }
 
         private static void EnsureSystemCursors()

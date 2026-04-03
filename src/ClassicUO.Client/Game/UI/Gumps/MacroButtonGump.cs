@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -140,7 +140,7 @@ namespace ClassicUO.Game.UI.Gumps
                 {
                     ref readonly var texture = ref Client.Game.Gumps.GetGump(value.Value);
                     _bounds = texture.UV;
-                    IsPartialHue = texture.Texture == null ? false : TileDataLoader.Instance.StaticData[value.Value].IsPartialHue;
+                    IsPartialHue = texture.Texture == null ? false : UOFileManager.Current.TileData.StaticData[value.Value].IsPartialHue;
                 }
 
                 Width = (int)(_bounds.Width * factor);
@@ -233,7 +233,7 @@ namespace ClassicUO.Game.UI.Gumps
 
             if (Graphic.HasValue)
             {
-                //var texture = GumpsLoader.Instance.GetGumpTexture(, out Rectangle bounds);
+                //var texture = UOFileManager.Current.Gumps.GetGumpTexture(, out Rectangle bounds);
                 ref readonly var texture = ref Client.Game.Gumps.GetGump(Graphic.Value);
                 if (texture.Texture != null)
                 {

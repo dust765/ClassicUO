@@ -1,4 +1,4 @@
-﻿using ClassicUO.Assets;
+using ClassicUO.Assets;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -19,9 +19,9 @@ namespace ClassicUO.Renderer.MultiMaps
 
         public SpriteInfo GetMap(int? facet, int width, int height, int startX, int startY, int endX, int endY)
         {
-            var multiMapInfo = facet.HasValue && MultiMapLoader.Instance.HasFacet(facet.Value) ?
-                MultiMapLoader.Instance.LoadFacet(facet.Value, width, height, startX, startY, endX, endY) :
-                MultiMapLoader.Instance.LoadMap(width, height, startX, startY, endX, endY);
+            var multiMapInfo = facet.HasValue && UOFileManager.Current.MultiMaps.HasFacet(facet.Value) ?
+                UOFileManager.Current.MultiMaps.LoadFacet(facet.Value, width, height, startX, startY, endX, endY) :
+                UOFileManager.Current.MultiMaps.LoadMap(width, height, startX, startY, endX, endY);
 
             if (multiMapInfo.Pixels.IsEmpty)
                 return default;

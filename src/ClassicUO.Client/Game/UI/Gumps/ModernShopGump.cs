@@ -358,7 +358,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                     if (frames.Length != 0)
                     {
-                        hueVector = ShaderHueTranslator.GetHueVector(hue2, TileDataLoader.Instance.StaticData[Graphic].IsPartialHue, 1f);
+                        hueVector = ShaderHueTranslator.GetHueVector(hue2, UOFileManager.Current.TileData.StaticData[Graphic].IsPartialHue, 1f);
 
                         ref var spriteInfo = ref frames[0];
 
@@ -384,7 +384,7 @@ namespace ClassicUO.Game.UI.Gumps
                 {
                     ref readonly var texture = ref Client.Game.Arts.GetArt((uint)Graphic);
 
-                    hueVector = ShaderHueTranslator.GetHueVector(Hue, TileDataLoader.Instance.StaticData[Graphic].IsPartialHue, 1f);
+                    hueVector = ShaderHueTranslator.GetHueVector(Hue, UOFileManager.Current.TileData.StaticData[Graphic].IsPartialHue, 1f);
 
                     var rect = Client.Game.Arts.GetRealArtBounds(Graphic);
 
@@ -430,7 +430,7 @@ namespace ClassicUO.Game.UI.Gumps
             private static byte GetAnimGroup(ushort graphic)
             {
                 var groupType = Client.Game.Animations.GetAnimType(graphic);
-                switch (AnimationsLoader.Instance.GetGroupIndex(graphic, groupType))
+                switch (UOFileManager.Current.Animations.GetGroupIndex(graphic, groupType))
                 {
                     case AnimationGroups.Low:
                         return (byte)LowAnimationGroup.Stand;

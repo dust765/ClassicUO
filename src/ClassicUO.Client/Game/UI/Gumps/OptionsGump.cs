@@ -174,7 +174,7 @@ namespace ClassicUO.Game.UI.Gumps
         private ModernColorPicker.HueDisplay _poisonColorPickerBox, _paralyzedColorPickerBox, _invulnerableColorPickerBox;
         private NiceButton _randomizeColorsButton;
         private Checkbox _restorezoomCheckbox, _zoomCheckbox;
-        private InputField _rows, _columns, _highlightAmount, _abbreviatedAmount;
+        private InputField _highlightAmount, _abbreviatedAmount;
 
         // speech
         private Checkbox _scaleSpeechDelay, _saveJournalCheckBox;
@@ -954,7 +954,7 @@ namespace ClassicUO.Game.UI.Gumps
                 if (_logoTexture2D == null || _logoTexture2D.IsDisposed)
                 {
                     string logoPath = Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Client", "logodust.png");
-                    _logoTexture2D = PNGLoader.Instance.GetImageTexture(logoPath);
+                    _logoTexture2D = UOFileManager.Current.Png.GetImageTexture(logoPath);
 
                     if (_logoTexture2D == null || _logoTexture2D.IsDisposed)
                     {
@@ -3465,13 +3465,9 @@ namespace ClassicUO.Game.UI.Gumps
             startX += 40;
             startY += _highlightAmount.Height + 2 + 5;
 
-            startY += 40;
+            startY += 20;
 
-            Label text = AddLabel(rightArea, ResGumps.CounterLayout, startX, startY);
-
-            startX += 40;
-            startY += text.Height + 6;
-            text = AddLabel(rightArea, ResGumps.CellSize, startX, startY);
+            Label text = AddLabel(rightArea, ResGumps.CellSize, startX, startY);
 
             int initialX = startX;
             startX += text.Width + 5;
@@ -3487,45 +3483,10 @@ namespace ClassicUO.Game.UI.Gumps
                 80
             );
 
-
             startX = initialX;
             startY += text.Height + 2 + 15;
 
-            _rows = AddInputField
-            (
-                rightArea,
-                startX,
-                startY,
-                50,
-                30,
-                ResGumps.Counter_Rows,
-                50,
-                false,
-                true,
-                30
-            );
-
-            _rows.SetText(_currentProfile.CounterBarRows.ToString());
-
-
-            startX += _rows.Width + 5 + 100;
-
-            _columns = AddInputField
-            (
-                rightArea,
-                startX,
-                startY,
-                50,
-                30,
-                ResGumps.Counter_Columns,
-                50,
-                false,
-                true,
-                30
-            );
-
-            _columns.SetText(_currentProfile.CounterBarColumns.ToString());
-
+            AddLabel(rightArea, "Resize the counter bar window to fit more slots; drop items to add counters.", startX, startY);
 
             Add(rightArea, PAGE);
         }
@@ -5809,7 +5770,6 @@ namespace ClassicUO.Game.UI.Gumps
             section3.Add(AddLabel(null, "use macro to run advanced scripts ONCE:", startX, startY));
             section3.Add(AddLabel(null, "OpenCorpsesSafeLoot (opens non blue 0x2006 corpses within 2 tiles)", startX, startY));
             section3.Add(AddLabel(null, "EquipManager (equip an item)", startX, startY));
-            section3.Add(AddLabel(null, "SetMimic_PlayerSerial (set master or custom serial for EquipManager)", startX, startY));
             section3.Add(AddLabel(null, "AutoPot (disarm 2h layer -> \n healpot below 85%, \n pouch if paralyzed, \n cure if poisoned and not full hp, \n refresh if below 23, \n str pot if str below 100, \n agi pot if dex above 89)", startX, startY));
             section3.Add(AddLabel(null, "DefendPartyKey (if ally / party member in 12 tile range and hits < 64: \n if targeting -> target them, else cast gheal \n if own hits < 64: \n if targeting -> target self and use gheal pot, \n else start casting gheal)", startX, startY));
             section3.Add(AddLabel(null, "DefendSelfKey (if own hits < 64, \n if targeting -> target self and use gheal pot, \n else start casting gheal)", startX, startY));
@@ -6062,8 +6022,6 @@ namespace ClassicUO.Game.UI.Gumps
             startY = section4.Bounds.Bottom + 40;
 
             section5.Add(AddLabel(null, "write in chat to enable / disable:", startX, startY));
-            section5.Add(AddLabel(null, "-mimic (mimic harmful spells 1:1, on beneficial macro defendSelf/defendParty)", startX, startY));
-            section5.Add(AddLabel(null, "Macro: SetMimic_PlayerSerial (define the player to mimic)", startX, startY));
             section5.Add(AddLabel(null, "-marker X Y (place a dot and line to X Y on world map \n use -marker to remove it)", startX, startY));
             section5.Add(_autoWorldmapMarker = AddCheckBox(null, "Auto add marker for MapGumps (ie. T-Maps)", _currentProfile.AutoWorldmapMarker, startX, startY));
             startY += _autoWorldmapMarker.Height + 6;
@@ -6492,8 +6450,6 @@ namespace ClassicUO.Game.UI.Gumps
                     _enableCounters.IsChecked = false;
                     _highlightOnUse.IsChecked = false;
                     _enableAbbreviatedAmount.IsChecked = false;
-                    _columns.SetText("1");
-                    _rows.SetText("1");
                     _cellSize.Value = 40;
                     _highlightOnAmount.IsChecked = false;
                     _highlightAmount.SetText("5");
@@ -7105,43 +7061,27 @@ namespace ClassicUO.Game.UI.Gumps
             bool before = _currentProfile.CounterBarEnabled;
             _currentProfile.CounterBarEnabled = _enableCounters.IsChecked;
             _currentProfile.CounterBarCellSize = _cellSize.Value;
-
-            if (!int.TryParse(_rows.Text, out int v))
-            {
-                v = 1;
-                _rows.SetText("1");
-            }
-
-            _currentProfile.CounterBarRows = v;
-
-            if (!int.TryParse(_columns.Text, out v))
-            {
-                v = 1;
-                _columns.SetText("1");
-            }
-            _currentProfile.CounterBarColumns = v;
             _currentProfile.CounterBarHighlightOnUse = _highlightOnUse.IsChecked;
 
-            if (!int.TryParse(_highlightAmount.Text, out v))
+            if (!int.TryParse(_highlightAmount.Text, out int highlightAmt))
             {
-                v = 5;
+                highlightAmt = 5;
                 _highlightAmount.SetText("5");
             }
-            _currentProfile.CounterBarHighlightAmount = v;
+            _currentProfile.CounterBarHighlightAmount = highlightAmt;
 
-            if (!int.TryParse(_abbreviatedAmount.Text, out v))
+            if (!int.TryParse(_abbreviatedAmount.Text, out int abbrevAmt))
             {
-                v = 1000;
+                abbrevAmt = 1000;
                 _abbreviatedAmount.SetText("1000");
             }
-            _currentProfile.CounterBarAbbreviatedAmount = v;
+            _currentProfile.CounterBarAbbreviatedAmount = abbrevAmt;
             _currentProfile.CounterBarHighlightOnAmount = _highlightOnAmount.IsChecked;
             _currentProfile.CounterBarDisplayAbbreviatedAmount = _enableAbbreviatedAmount.IsChecked;
 
             CounterBarGump counterGump = UIManager.GetGump<CounterBarGump>();
 
-            counterGump?.SetLayout(_currentProfile.CounterBarCellSize, _currentProfile.CounterBarRows, _currentProfile.CounterBarColumns);
-
+            counterGump?.SetCellSize(_currentProfile.CounterBarCellSize);
 
             if (before != _currentProfile.CounterBarEnabled)
             {
@@ -7149,17 +7089,7 @@ namespace ClassicUO.Game.UI.Gumps
                 {
                     if (_currentProfile.CounterBarEnabled)
                     {
-                        UIManager.Add
-                        (
-                            new CounterBarGump
-                            (
-                                200,
-                                200,
-                                _currentProfile.CounterBarCellSize,
-                                _currentProfile.CounterBarRows,
-                                _currentProfile.CounterBarColumns
-                            )
-                        );
+                        UIManager.Add(new CounterBarGump(200, 200, _currentProfile.CounterBarCellSize));
                     }
                 }
                 else
@@ -7462,13 +7392,13 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 if (_blockWoS.IsChecked)
                 {
-                    TileDataLoader.Instance.StaticData[0x038A].Flags |= TileFlag.Impassable;
-                    TileDataLoader.Instance.StaticData[_currentProfile.BlockWoSArt].Flags |= TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[0x038A].Flags |= TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[_currentProfile.BlockWoSArt].Flags |= TileFlag.Impassable;
                 }
                 else
                 {
-                    TileDataLoader.Instance.StaticData[0x038A].Flags &= ~TileFlag.Impassable;
-                    TileDataLoader.Instance.StaticData[_currentProfile.BlockWoSArt].Flags &= ~TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[0x038A].Flags &= ~TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[_currentProfile.BlockWoSArt].Flags &= ~TileFlag.Impassable;
                 }
                 _currentProfile.BlockWoS = _blockWoS.IsChecked;
             }
@@ -7476,13 +7406,13 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 if (_blockWoSFelOnly.IsChecked && World.MapIndex == 0)
                 {
-                    TileDataLoader.Instance.StaticData[0x038A].Flags |= TileFlag.Impassable;
-                    TileDataLoader.Instance.StaticData[_currentProfile.BlockWoSArt].Flags |= TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[0x038A].Flags |= TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[_currentProfile.BlockWoSArt].Flags |= TileFlag.Impassable;
                 }
                 else
                 {
-                    TileDataLoader.Instance.StaticData[0x038A].Flags &= ~TileFlag.Impassable;
-                    TileDataLoader.Instance.StaticData[_currentProfile.BlockWoSArt].Flags &= ~TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[0x038A].Flags &= ~TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[_currentProfile.BlockWoSArt].Flags &= ~TileFlag.Impassable;
                 }
                 _currentProfile.BlockWoSFelOnly = _blockWoSFelOnly.IsChecked;
             }
@@ -7495,17 +7425,17 @@ namespace ClassicUO.Game.UI.Gumps
                     for (int i = 0; i < 31; i++)
                     {
                         //0x3946 to 0x3964 / 14662 to 14692
-                        TileDataLoader.Instance.StaticData[0x3946 + i].Flags |= TileFlag.Impassable;
+                        UOFileManager.Current.TileData.StaticData[0x3946 + i].Flags |= TileFlag.Impassable;
                     }
-                    TileDataLoader.Instance.StaticData[_currentProfile.BlockEnergyFArt].Flags |= TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[_currentProfile.BlockEnergyFArt].Flags |= TileFlag.Impassable;
                 }
                 else
                 {
                     for (int i = 0; i < 31; i++)
                     {
-                        TileDataLoader.Instance.StaticData[0x3946 + i].Flags &= ~TileFlag.Impassable;
+                        UOFileManager.Current.TileData.StaticData[0x3946 + i].Flags &= ~TileFlag.Impassable;
                     }
-                    TileDataLoader.Instance.StaticData[_currentProfile.BlockEnergyFArt].Flags &= ~TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[_currentProfile.BlockEnergyFArt].Flags &= ~TileFlag.Impassable;
                 }
                 _currentProfile.BlockEnergyF = _blockEnergyF.IsChecked;
             }
@@ -7515,17 +7445,17 @@ namespace ClassicUO.Game.UI.Gumps
                 {
                     for (int i = 0; i < 31; i++)
                     {
-                        TileDataLoader.Instance.StaticData[0x3946 + i].Flags |= TileFlag.Impassable;
+                        UOFileManager.Current.TileData.StaticData[0x3946 + i].Flags |= TileFlag.Impassable;
                     }
-                    TileDataLoader.Instance.StaticData[_currentProfile.BlockEnergyFArt].Flags |= TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[_currentProfile.BlockEnergyFArt].Flags |= TileFlag.Impassable;
                 }
                 else
                 {
                     for (int i = 0; i < 31; i++)
                     {
-                        TileDataLoader.Instance.StaticData[0x3946 + i].Flags &= ~TileFlag.Impassable;
+                        UOFileManager.Current.TileData.StaticData[0x3946 + i].Flags &= ~TileFlag.Impassable;
                     }
-                    TileDataLoader.Instance.StaticData[_currentProfile.BlockEnergyFArt].Flags &= ~TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[_currentProfile.BlockEnergyFArt].Flags &= ~TileFlag.Impassable;
                 }
                 _currentProfile.BlockEnergyFFelOnly = _blockEnergyFFelOnly.IsChecked;
             }
@@ -8428,7 +8358,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                 for (byte i = 0; i < max_font; i++)
                 {
-                    if (FontsLoader.Instance.UnicodeFontExists(i))
+                    if (UOFileManager.Current.Fonts.UnicodeFontExists(i))
                     {
                         Add
                         (

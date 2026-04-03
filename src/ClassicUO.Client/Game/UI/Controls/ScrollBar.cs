@@ -93,6 +93,9 @@ namespace ClassicUO.Game.UI.Controls
             }
 
             ref readonly var gumpInfoUp0 = ref Client.Game.Gumps.GetGump(BUTTON_UP_0);
+
+            if (gumpInfoUp0.Texture == null)
+                return false;
             ref readonly var gumpInfoUp1 = ref Client.Game.Gumps.GetGump(BUTTON_UP_1);
             ref readonly var gumpInfoDown0 = ref Client.Game.Gumps.GetGump(BUTTON_DOWN_0);
             ref readonly var gumpInfoDown1 = ref Client.Game.Gumps.GetGump(BUTTON_DOWN_1);

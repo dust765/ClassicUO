@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -212,7 +212,7 @@ namespace ClassicUO.Game.GameObjects
                     }
                 }
 
-                ref UOFileIndex index = ref ArtLoader.Instance.GetValidRefEntry(Graphic + 0x4000);
+                ref UOFileIndex index = ref UOFileManager.Current.Arts.GetValidRefEntry(Graphic + 0x4000);
 
                 Point position = RealScreenPosition;
                 position.X -= index.Width;

@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -113,7 +113,7 @@ namespace ClassicUO.Game.UI.Gumps.Login
             byte font = (byte)(isAsianLang ? 1 : 2);
             ushort hue = (ushort)(isAsianLang ? 0 : 0);
 
-            Add(new UOLabel(ClilocLoader.Instance.GetString(3000050, "Character Selection"), 1, 32, TEXT_ALIGN_TYPE.TS_CENTER, 300, FontStyle.BlackBorder) { X = LoginLayoutHelper.CenterOffsetX(300), Y = LoginLayoutHelper.Y(listTitleY) });
+            Add(new UOLabel(UOFileManager.Current.Clilocs.GetString(3000050, "Character Selection"), 1, 32, TEXT_ALIGN_TYPE.TS_CENTER, 300, FontStyle.BlackBorder) { X = LoginLayoutHelper.CenterOffsetX(300), Y = LoginLayoutHelper.Y(listTitleY) });
 
 
             for (int i = 0, valid = 0; i < loginScene.Characters.Length; i++)

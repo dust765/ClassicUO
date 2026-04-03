@@ -24,7 +24,7 @@ case $platform in
     # Add macOS-specific build commands here
    target="osx-x64"
     ;;
-  MINGW* | CYGWIN*)
+  MINGW* | CYGWIN* | MSYS*)
     # Add Windows-specific build commands here
     target="win-x64"
     ;;
@@ -36,4 +36,4 @@ esac
 
 
 dotnet publish "$bootstrap_project" -c Release -o "$output_directory"
-dotnet publish "$client_project" -c Release -p:NativeLib=Shared -p:OutputType=Library -p:BuildNativeAot=true -p:UseWindowsForms=false -r $target -o "$output_directory"
+dotnet publish "$client_project" -c Release -p:NativeLib=Shared -p:OutputType=Library -r $target -o "$output_directory"

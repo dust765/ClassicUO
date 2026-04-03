@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -119,8 +119,8 @@ namespace ClassicUO.Game
                         return;
                     }
 
-                    int mapWidthInBlocks = MapLoader.Instance.MapBlocksSize[mapId, 0];
-                    int mapHeightInBlocks = MapLoader.Instance.MapBlocksSize[mapId, 1];
+                    int mapWidthInBlocks = UOFileManager.Current.Maps.MapBlocksSize[mapId, 0];
+                    int mapHeightInBlocks = UOFileManager.Current.Maps.MapBlocksSize[mapId, 1];
                     int blocks = mapWidthInBlocks * mapHeightInBlocks;
 
                     if (block < 0 || block >= blocks)
@@ -243,7 +243,7 @@ namespace ClassicUO.Game
                     p.Read(staticsData, 0, totalLength);
 
 
-                    if (block >= 0 && block < MapLoader.Instance.MapBlocksSize[mapId, 0] * MapLoader.Instance.MapBlocksSize[mapId, 1])
+                    if (block >= 0 && block < UOFileManager.Current.Maps.MapBlocksSize[mapId, 0] * UOFileManager.Current.Maps.MapBlocksSize[mapId, 1])
                     {
                         int index = block * 12;
 
@@ -395,9 +395,9 @@ namespace ClassicUO.Game
                         int mapNumber = p.ReadUInt8();
                         validMaps.Add(mapNumber);
 
-                        _UL.MapSizeWrapSize[mapNumber, 0] = Math.Min((ushort) MapLoader.Instance.MapsDefaultSize[0, 0], p.ReadUInt16BE());
+                        _UL.MapSizeWrapSize[mapNumber, 0] = Math.Min((ushort) UOFileManager.Current.Maps.MapsDefaultSize[0, 0], p.ReadUInt16BE());
 
-                        _UL.MapSizeWrapSize[mapNumber, 1] = Math.Min((ushort) MapLoader.Instance.MapsDefaultSize[0, 1], p.ReadUInt16BE());
+                        _UL.MapSizeWrapSize[mapNumber, 1] = Math.Min((ushort) UOFileManager.Current.Maps.MapsDefaultSize[0, 1], p.ReadUInt16BE());
 
                         _UL.MapSizeWrapSize[mapNumber, 2] = Math.Min(p.ReadUInt16BE(), _UL.MapSizeWrapSize[mapNumber, 0]);
                         _UL.MapSizeWrapSize[mapNumber, 3] = Math.Min(p.ReadUInt16BE(), _UL.MapSizeWrapSize[mapNumber, 1]);
@@ -498,8 +498,8 @@ namespace ClassicUO.Game
                 return;
             }
 
-            ushort mapWidthInBlocks = (ushort) MapLoader.Instance.MapBlocksSize[mapId, 0];
-            ushort mapHeightInBlocks = (ushort) MapLoader.Instance.MapBlocksSize[mapId, 1];
+            ushort mapWidthInBlocks = (ushort) UOFileManager.Current.Maps.MapBlocksSize[mapId, 0];
+            ushort mapHeightInBlocks = (ushort) UOFileManager.Current.Maps.MapBlocksSize[mapId, 1];
 
             if (block >= 0 && block < mapWidthInBlocks * mapHeightInBlocks)
             {
@@ -746,7 +746,7 @@ namespace ClassicUO.Game
 
             public override void Dispose()
             {
-                MapLoader.Instance.Dispose();
+                UOFileManager.Current.Maps.Dispose();
             }
 
             public void WriteArray(long position, ArraySegment<byte> seg)

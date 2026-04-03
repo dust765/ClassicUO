@@ -678,14 +678,14 @@ namespace ClassicUO.Assets
 
                                     if (isPartial)
                                     {
-                                        pcl = HuesLoader.Instance.GetPartialHueColor(
+                                        pcl = UOFileManager.Current.Hues.GetPartialHueColor(
                                             pic,
                                             charColor
                                         );
                                     }
                                     else
                                     {
-                                        pcl = HuesLoader.Instance.ApplyHueRgba8888(pic, charColor);
+                                        pcl = UOFileManager.Current.Hues.ApplyHueRgba8888(pic, charColor);
                                     }
 
                                     int block = testY * width + x + w;
@@ -1697,7 +1697,7 @@ namespace ClassicUO.Assets
                 else
                 {
                     datacolor = 
-                        HuesHelper.RgbaToArgb((HuesLoader.Instance.GetHueColorRgba8888(cell, color) << 8) | 0xFF);
+                        HuesHelper.RgbaToArgb((UOFileManager.Current.Hues.GetHueColorRgba8888(cell, color) << 8) | 0xFF);
                 }
 
                 bool isItalic = (flags & UOFONT_ITALIC) != 0;

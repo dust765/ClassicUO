@@ -542,8 +542,12 @@ namespace ClassicUO.Game.UI.Gumps
         }
     }
 
-    internal class HealthBarGumpCustom : BaseHealthBarGump
+    internal partial class HealthBarGumpCustom : BaseHealthBarGump
     {
+        [System.Text.Json.Serialization.JsonSourceGenerationOptions(WriteIndented = true)]
+        [System.Text.Json.Serialization.JsonSerializable(typeof(Settings))]
+        private sealed partial class HBGumpCustomUISettingsCtx : System.Text.Json.Serialization.JsonSerializerContext { }
+
         private static Settings _settings;
         private static Settings settings
         {
@@ -551,11 +555,11 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 if (_settings == null)
                 {
-                    _settings = (Settings)Settings.Load<Settings>(typeof(HealthBarGumpCustom).ToString());
+                    _settings = (Settings)Settings.Load<Settings>(typeof(HealthBarGumpCustom).ToString(), HBGumpCustomUISettingsCtx.Default.Settings);
                     if (_settings == null)
                     {
                         _settings = new Settings();
-                        Settings.Save<Settings>(typeof(HealthBarGumpCustom).ToString(), _settings);
+                        Settings.Save<Settings>(typeof(HealthBarGumpCustom).ToString(), _settings, HBGumpCustomUISettingsCtx.Default.Settings);
                     }
                     return _settings;
                 }
@@ -1766,8 +1770,12 @@ namespace ClassicUO.Game.UI.Gumps
         }
     }
 
-    internal class HealthBarGump : BaseHealthBarGump
+    internal partial class HealthBarGump : BaseHealthBarGump
     {
+        [System.Text.Json.Serialization.JsonSourceGenerationOptions(WriteIndented = true)]
+        [System.Text.Json.Serialization.JsonSerializable(typeof(Settings))]
+        private sealed partial class HBGumpUISettingsCtx : System.Text.Json.Serialization.JsonSerializerContext { }
+
         private static Settings _settings;
         private static Settings settings
         {
@@ -1775,11 +1783,11 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 if (_settings == null)
                 {
-                    _settings = (Settings)Settings.Load<Settings>(typeof(HealthBarGump).ToString());
+                    _settings = (Settings)Settings.Load<Settings>(typeof(HealthBarGump).ToString(), HBGumpUISettingsCtx.Default.Settings);
                     if (_settings == null)
                     {
                         _settings = new Settings();
-                        Settings.Save<Settings>(typeof(HealthBarGump).ToString(), _settings);
+                        Settings.Save<Settings>(typeof(HealthBarGump).ToString(), _settings, HBGumpUISettingsCtx.Default.Settings);
                     }
                     return _settings;
                 }

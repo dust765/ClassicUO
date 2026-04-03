@@ -115,7 +115,7 @@ namespace ClassicUO.Dust765.External
             // stop the timer
             for (int i = 0; i < _stopAtClilocs.Length; i++)
             {
-                if (ClilocLoader.Instance.GetString(_stopAtClilocs[i]) == text)
+                if (UOFileManager.Current.Clilocs.GetString(_stopAtClilocs[i]) == text)
                 {
                     Stop();
                     return;
@@ -241,7 +241,7 @@ namespace ClassicUO.Dust765.External
                 AcceptMouseInput = false
             };
 
-            _icon.Texture = ArtLoader.Instance.GetTexture(0x0E21);
+            _icon.Texture = UOFileManager.Current.Arts.GetTexture(0x0E21);
             _icon.Hue = 0;
             _icon.X = _borderSize;
             _icon.Y = _borderSize; // slight offset due to imgs offset

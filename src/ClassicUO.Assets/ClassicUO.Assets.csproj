@@ -1,39 +1,39 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="gumpartassets\40303.png" />
-    <None Remove="gumpartassets\40304.png" />
-    <None Remove="gumpartassets\40305.png" />
-    <None Remove="gumpartassets\40306.png" />
-    <None Remove="gumpartassets\40307.png" />
-    <None Remove="gumpartassets\40308.png" />
-    <None Remove="gumpartassets\40309.png" />
-    <None Remove="gumpartassets\40310.png" />
-    <None Remove="gumpartassets\40311.png" />
-    <None Remove="gumpartassets\40312.png" />
-    <None Remove="gumpartassets\modern-paperdollgump.png" />
-    <None Remove="gumpartassets\loginbg.png" />
-    <None Remove="gumpartassets\logodust.png" />
+    <None Remove="gumpartassets\40303.png" Condition="Exists('gumpartassets\40303.png')" />
+    <None Remove="gumpartassets\40304.png" Condition="Exists('gumpartassets\40304.png')" />
+    <None Remove="gumpartassets\40305.png" Condition="Exists('gumpartassets\40305.png')" />
+    <None Remove="gumpartassets\40306.png" Condition="Exists('gumpartassets\40306.png')" />
+    <None Remove="gumpartassets\40307.png" Condition="Exists('gumpartassets\40307.png')" />
+    <None Remove="gumpartassets\40308.png" Condition="Exists('gumpartassets\40308.png')" />
+    <None Remove="gumpartassets\40309.png" Condition="Exists('gumpartassets\40309.png')" />
+    <None Remove="gumpartassets\40310.png" Condition="Exists('gumpartassets\40310.png')" />
+    <None Remove="gumpartassets\40311.png" Condition="Exists('gumpartassets\40311.png')" />
+    <None Remove="gumpartassets\40312.png" Condition="Exists('gumpartassets\40312.png')" />
+    <None Remove="gumpartassets\modern-paperdollgump.png" Condition="Exists('gumpartassets\modern-paperdollgump.png')" />
+    <None Remove="gumpartassets\loginbg.png" Condition="Exists('gumpartassets\loginbg.png')" />
+    <None Remove="gumpartassets\logodust.png" Condition="Exists('gumpartassets\logodust.png')" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="gumpartassets\40303.png" />
-    <EmbeddedResource Include="gumpartassets\40304.png" />
-    <EmbeddedResource Include="gumpartassets\40305.png" />
-    <EmbeddedResource Include="gumpartassets\40306.png" />
-    <EmbeddedResource Include="gumpartassets\40307.png" />
-    <EmbeddedResource Include="gumpartassets\40308.png" />
-    <EmbeddedResource Include="gumpartassets\40309.png" />
-    <EmbeddedResource Include="gumpartassets\40310.png" />
-    <EmbeddedResource Include="gumpartassets\40311.png" />
-    <EmbeddedResource Include="gumpartassets\40312.png" />
-    <EmbeddedResource Include="gumpartassets\modern-paperdollgump.png" />
-    <EmbeddedResource Include="gumpartassets\loginbg.png" />
-    <EmbeddedResource Include="gumpartassets\logodust.png" />
+    <EmbeddedResource Include="gumpartassets\40303.png" Condition="Exists('gumpartassets\40303.png')" />
+    <EmbeddedResource Include="gumpartassets\40304.png" Condition="Exists('gumpartassets\40304.png')" />
+    <EmbeddedResource Include="gumpartassets\40305.png" Condition="Exists('gumpartassets\40305.png')" />
+    <EmbeddedResource Include="gumpartassets\40306.png" Condition="Exists('gumpartassets\40306.png')" />
+    <EmbeddedResource Include="gumpartassets\40307.png" Condition="Exists('gumpartassets\40307.png')" />
+    <EmbeddedResource Include="gumpartassets\40308.png" Condition="Exists('gumpartassets\40308.png')" />
+    <EmbeddedResource Include="gumpartassets\40309.png" Condition="Exists('gumpartassets\40309.png')" />
+    <EmbeddedResource Include="gumpartassets\40310.png" Condition="Exists('gumpartassets\40310.png')" />
+    <EmbeddedResource Include="gumpartassets\40311.png" Condition="Exists('gumpartassets\40311.png')" />
+    <EmbeddedResource Include="gumpartassets\40312.png" Condition="Exists('gumpartassets\40312.png')" />
+    <EmbeddedResource Include="gumpartassets\modern-paperdollgump.png" Condition="Exists('gumpartassets\modern-paperdollgump.png')" />
+    <EmbeddedResource Include="gumpartassets\loginbg.png" Condition="Exists('gumpartassets\loginbg.png')" />
+    <EmbeddedResource Include="gumpartassets\logodust.png" Condition="Exists('gumpartassets\logodust.png')" />
   </ItemGroup>
 
   <ItemGroup>
@@ -44,8 +44,8 @@
 
   <Target Name="CopyExternalImages" AfterTargets="Build">
     <ItemGroup>
-      <ExternalImages Include="gumpartassets\loginbg.png" />
-      <ExternalImages Include="gumpartassets\logodust.png" />
+      <ExternalImages Include="gumpartassets\loginbg.png" Condition="Exists('gumpartassets\loginbg.png')" />
+      <ExternalImages Include="gumpartassets\logodust.png" Condition="Exists('gumpartassets\logodust.png')" />
     </ItemGroup>
     
     <MakeDir Directories="$(OutputPath)ExternalImages" />

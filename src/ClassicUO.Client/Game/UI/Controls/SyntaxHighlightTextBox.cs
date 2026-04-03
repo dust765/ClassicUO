@@ -134,8 +134,8 @@ namespace ClassicUO.Game.UI.Controls
             if (string.IsNullOrEmpty(token))
                 return 0;
             return _rendererText.IsUnicode
-                ? FontsLoader.Instance.GetWidthUnicode(_rendererText.Font, token)
-                : FontsLoader.Instance.GetWidthASCII(_rendererText.Font, token);
+                ? UOFileManager.Current.Fonts.GetWidthUnicode(_rendererText.Font, token)
+                : UOFileManager.Current.Fonts.GetWidthASCII(_rendererText.Font, token);
         }
     }
 }

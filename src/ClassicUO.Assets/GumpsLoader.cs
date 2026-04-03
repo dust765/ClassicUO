@@ -171,7 +171,7 @@ namespace ClassicUO.Assets
         public Texture2D GetGumpTexture(ushort graphic, out Rectangle bounds)
         {
             // ## BEGIN - END ## // TAZUO
-            Texture2D png = PNGLoader.Instance.LoadGumpTexture2d(graphic);
+            Texture2D png = UOFileManager.Current.Png.LoadGumpTexture2d(graphic);
             if (png != null)
             {
                 bounds = png.Bounds;
@@ -287,7 +287,7 @@ namespace ClassicUO.Assets
 
                     if (color != 0 && val != 0)
                     {
-                        val = HuesLoader.Instance.ApplyHueRgba5551(gmul[i].Value, color);
+                        val = UOFileManager.Current.Hues.ApplyHueRgba5551(gmul[i].Value, color);
                     }
 
                     if (val != 0)

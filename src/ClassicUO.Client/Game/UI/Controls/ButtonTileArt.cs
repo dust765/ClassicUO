@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -66,7 +66,7 @@ namespace ClassicUO.Game.UI.Controls
                 return;
             }
 
-            _isPartial = TileDataLoader.Instance.StaticData[_graphic].IsPartialHue;
+            _isPartial = UOFileManager.Current.TileData.StaticData[_graphic].IsPartialHue;
 
             hueVector = ShaderHueTranslator.GetHueVector(_hue, _isPartial, 1f);
         }

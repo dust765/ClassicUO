@@ -3,14 +3,6 @@ using System;
 
 namespace ClassicUO
 {
-    static class Program
-    {
-        static void Main(string[] args)
-        {
-            Console.WriteLine("ClassicUO Bootstrap");
-        }
-    }
-
     static class Global
     {
         public static HostBridge Host { get; set; } = new HostBridge();

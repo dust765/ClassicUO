@@ -12,7 +12,7 @@ namespace ClassicUO.Renderer.Lights
         public Light(GraphicsDevice device)
         {
             _atlas = new TextureAtlas(device, 2048, 2048, SurfaceFormat.Color);
-            _spriteInfos = new SpriteInfo[LightsLoader.Instance.Entries.Length];
+            _spriteInfos = new SpriteInfo[UOFileManager.Current.Lights.Entries.Length];
         }
 
         public ref readonly SpriteInfo GetLight(uint idx)
@@ -24,7 +24,7 @@ namespace ClassicUO.Renderer.Lights
 
             if (spriteInfo.Texture == null)
             {
-                var lightInfo = LightsLoader.Instance.GetLight(idx);
+                var lightInfo = UOFileManager.Current.Lights.GetLight(idx);
                 if (!lightInfo.Pixels.IsEmpty)
                 {
                     spriteInfo.Texture = _atlas.AddSprite(

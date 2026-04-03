@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -384,7 +384,7 @@ namespace ClassicUO.Game.UI.Gumps
         {
             _textBox.Height = Math.Max
             (
-                FontsLoader.Instance.GetHeightUnicode
+                UOFileManager.Current.Fonts.GetHeightUnicode
                 (
                     1,
                     _textBox.Text,
@@ -423,7 +423,7 @@ namespace ClassicUO.Game.UI.Gumps
 
             //if (!_textBox.IsDisposed && _textBox.IsChanged)
             //{
-            //    _textBox.Height = System.Math.Max(FontsLoader.Instance.GetHeightUnicode(1, _textBox.TxEntry.Text, 220, TEXT_ALIGN_TYPE.TS_LEFT, 0x0) + 20, 40);
+            //    _textBox.Height = System.Math.Max(UOFileManager.Current.Fonts.GetHeightUnicode(1, _textBox.TxEntry.Text, 220, TEXT_ALIGN_TYPE.TS_LEFT, 0x0) + 20, 40);
 
             //    foreach (Control c in _scrollArea.Children)
             //    {
