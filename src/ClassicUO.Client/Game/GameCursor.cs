@@ -790,20 +790,30 @@ namespace ClassicUO.Game
                 }
                 else
                 {
-                    if (
-                        UIManager.IsMouseOverWorld
-                        && SelectedObject.Object is Entity item
-                        && World.OPL.Contains(item)
-                    )
+                    if (UIManager.IsMouseOverWorld && SelectedObject.Object is Entity item)
                     {
-                        if (_tooltip.IsEmpty || item != _tooltip.Serial)
+                        uint s = item;
+                        if (SerialHelper.IsValid(s))
                         {
-                            _tooltip.SetGameObject(item);
+                            World.OPL.Contains(s);
+                            if (
+                                World.OPL.TryGetNameAndData(s, out string on, out string od)
+                                && (
+                                    !string.IsNullOrEmpty(on)
+                                    || !string.IsNullOrEmpty(od)
+                                )
+                            )
+                            {
+                                if (_tooltip.IsEmpty || s != _tooltip.Serial)
+                                {
+                                    _tooltip.SetGameObject(s);
+                                }
+
+                                _tooltip.Draw(batcher, position.X, position.Y + 24);
+
+                                return;
+                            }
                         }
-
-                        _tooltip.Draw(batcher, position.X, position.Y + 24);
-
-                        return;
                     }
 
                     if (
@@ -811,16 +821,26 @@ namespace ClassicUO.Game
                         && UIManager.MouseOverControl.Tooltip is uint serial
                     )
                     {
-                        if (SerialHelper.IsValid(serial) && World.OPL.Contains(serial))
+                        if (SerialHelper.IsValid(serial))
                         {
-                            if (_tooltip.IsEmpty || serial != _tooltip.Serial)
+                            World.OPL.Contains(serial);
+                            if (
+                                World.OPL.TryGetNameAndData(serial, out string cn, out string cd)
+                                && (
+                                    !string.IsNullOrEmpty(cn)
+                                    || !string.IsNullOrEmpty(cd)
+                                )
+                            )
                             {
-                                _tooltip.SetGameObject(serial);
+                                if (_tooltip.IsEmpty || serial != _tooltip.Serial)
+                                {
+                                    _tooltip.SetGameObject(serial);
+                                }
+
+                                _tooltip.Draw(batcher, position.X, position.Y + 24);
+
+                                return;
                             }
-
-                            _tooltip.Draw(batcher, position.X, position.Y + 24);
-
-                            return;
                         }
                     }
                 }

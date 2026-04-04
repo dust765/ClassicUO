@@ -478,6 +478,16 @@ namespace ClassicUO.Game.Scenes
                 return;
             }
 
+            if (World.Player != null)
+            {
+                try
+                {
+                    PaperdollSelectCharManager.Instance.Save();
+                    PaperdollSelectCharManager.Instance.SaveJson();
+                }
+                catch { }
+            }
+
             ProfileManager.CurrentProfile.GameWindowPosition = new Point(
                 Camera.Bounds.X,
                 Camera.Bounds.Y
@@ -964,8 +974,7 @@ namespace ClassicUO.Game.Scenes
                 }
             }
 
-            if (GameController.FullGameTick)
-                PacketHandlers.SendMegaClilocRequests();
+            PacketHandlers.SendMegaClilocRequests();
 
             if (_forceStopScene)
             {

@@ -63,7 +63,6 @@ namespace ClassicUO.Game.UI.Controls
             Layer.Gloves,
             Layer.Skirt,
             Layer.Robe,
-            Layer.Waist,
             Layer.Necklace,
             Layer.Hair,
             Layer.Beard,
@@ -71,7 +70,8 @@ namespace ClassicUO.Game.UI.Controls
             Layer.Helmet,
             Layer.OneHanded,
             Layer.TwoHanded,
-            Layer.Talisman
+            Layer.Talisman,
+            Layer.Waist
         };
 
         private static readonly Layer[] _layerOrder_quiver_fix =
@@ -90,7 +90,6 @@ namespace ClassicUO.Game.UI.Controls
             Layer.Skirt,
             Layer.Robe,
             Layer.Cloak,
-            Layer.Waist,
             Layer.Necklace,
             Layer.Hair,
             Layer.Beard,
@@ -98,7 +97,8 @@ namespace ClassicUO.Game.UI.Controls
             Layer.Helmet,
             Layer.OneHanded,
             Layer.TwoHanded,
-            Layer.Talisman
+            Layer.Talisman,
+            Layer.Waist
         };
 
         private static readonly Layer[] _layerOrder_parrot_fix =
@@ -117,7 +117,6 @@ namespace ClassicUO.Game.UI.Controls
             Layer.Skirt,
             Layer.Robe,
             Layer.Cloak,
-            Layer.Waist,
             Layer.Necklace,
             Layer.Hair,
             Layer.Beard,
@@ -125,7 +124,8 @@ namespace ClassicUO.Game.UI.Controls
             Layer.Helmet,
             Layer.OneHanded,
             Layer.TwoHanded,
-            Layer.Talisman
+            Layer.Talisman,
+            Layer.Waist
         };
 
         private readonly PaperDollGump _paperDollGump;

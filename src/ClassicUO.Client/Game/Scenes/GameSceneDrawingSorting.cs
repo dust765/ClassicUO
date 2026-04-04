@@ -629,31 +629,25 @@ namespace ClassicUO.Game.Scenes
             return !(itemData.IsFoliage && !itemData.IsMultiMovable && season >= Season.Winter);
         }
 
-        private bool HasSurfaceOverhead(Entity obj)
+        private bool HasSurfaceOverhead(Mobile mob)
         {
-            if (
-                obj.Serial == World.Player.Serial /* || _maxZ == _maxGroundZ*/
-            )
+            if (mob.Serial == World.Player.Serial)
             {
                 return false;
             }
 
-            // ## BEGIN - END ## // MISC2
             if (ProfileManager.CurrentProfile != null && ProfileManager.CurrentProfile.DrawMobilesWithSurfaceOverhead)
             {
                 return false;
             }
-            // ## BEGIN - END ## // MISC2
 
-            // Per-position cache: skip the expensive 4x4 tile scan if mobile hasn't moved
-            if (obj is Mobile mob)
+            Profile profile = ProfileManager.CurrentProfile;
+            if (profile != null && !profile.InvisibleHousesEnabled
+                && mob._surfaceOverheadCacheX == mob.X
+                && mob._surfaceOverheadCacheY == mob.Y
+                && mob._surfaceOverheadCacheMaxZ == _maxZ)
             {
-                if (mob._surfaceOverheadCacheX == obj.X &&
-                    mob._surfaceOverheadCacheY == obj.Y &&
-                    mob._surfaceOverheadCacheZ == obj.Z)
-                {
-                    return mob._cachedHasSurfaceOverhead;
-                }
+                return mob._cachedHasSurfaceOverhead;
             }
 
             bool found = false;
@@ -662,9 +656,9 @@ namespace ClassicUO.Game.Scenes
             {
                 for (int x = -1; x <= 2; ++x)
                 {
-                    GameObject headTile = World.Map.GetTile(obj.X + x, obj.Y + y);
-                    int groundZ = headTile?.Z ?? 0;
-                    GameObject tile = headTile;
+                    GameObject groundTile = World.Map.GetTile(mob.X + x, mob.Y + y);
+                    int gt_z = groundTile?.Z ?? 0;
+                    GameObject tile = groundTile;
 
                     found = false;
 
@@ -672,27 +666,36 @@ namespace ClassicUO.Game.Scenes
                     {
                         var next = tile.TNext;
 
-                        if (tile.Z > obj.Z && (tile is Static || tile is Multi))
+                        if (tile.Z > mob.Z && (tile is Static || tile is Multi))
                         {
-                            ref var itemData = ref UOFileManager.Current.TileData.StaticData[tile.Graphic];
-
-                            if (itemData.IsNoShoot || itemData.IsWindow)
+                            if (tile is Multi multiTile)
                             {
-                                // ## BEGIN - END ## // MISC2
-                                // If invisible houses mode would hide this tile, don't count it as overhead
-                                if (ProfileManager.CurrentProfile?.InvisibleHousesEnabled == true &&
-                                    (tile.Z - World.Player.Z) > ProfileManager.CurrentProfile.InvisibleHousesZ &&
-                                    (tile.Z - groundZ) > ProfileManager.CurrentProfile.DontRemoveHouseBelowZ)
+                                if ((multiTile.State & CUSTOM_HOUSE_MULTI_OBJECT_FLAGS.CHMOF_IGNORE_IN_RENDER) != 0
+                                    || (multiTile.State & CUSTOM_HOUSE_MULTI_OBJECT_FLAGS.CHMOF_PREVIEW) != 0
+                                    || (multiTile.State & CUSTOM_HOUSE_MULTI_OBJECT_FLAGS.CHMOF_TRANSPARENT) != 0)
                                 {
                                     tile = next;
                                     continue;
                                 }
-                                // ## BEGIN - END ## // MISC2
+                            }
 
-                                if (_maxZ - tile.Z + 5 >= tile.Z - obj.Z)
+                            if (profile?.InvisibleHousesEnabled == true && World.Player != null)
+                            {
+                                if ((tile.Z - World.Player.Z) > profile.InvisibleHousesZ
+                                    && (tile.Z - gt_z) > profile.DontRemoveHouseBelowZ)
+                                {
+                                    tile = next;
+                                    continue;
+                                }
+                            }
+
+                            ref var itemData = ref UOFileManager.Current.TileData.StaticData[tile.Graphic];
+
+                            if (itemData.IsNoShoot || itemData.IsWindow)
+                            {
+                                if (_maxZ - tile.Z + 5 >= tile.Z - mob.Z)
                                 {
                                     found = true;
-
                                     break;
                                 }
                             }
@@ -703,27 +706,20 @@ namespace ClassicUO.Game.Scenes
 
                     if (!found)
                     {
-                        // Cache the negative result
-                        if (obj is Mobile mobEarly)
-                        {
-                            mobEarly._surfaceOverheadCacheX = obj.X;
-                            mobEarly._surfaceOverheadCacheY = obj.Y;
-                            mobEarly._surfaceOverheadCacheZ = obj.Z;
-                            mobEarly._cachedHasSurfaceOverhead = false;
-                        }
-                        return false;
+                        break;
                     }
+                }
+
+                if (!found)
+                {
+                    break;
                 }
             }
 
-            // Cache the result
-            if (obj is Mobile mobFinal)
-            {
-                mobFinal._surfaceOverheadCacheX = obj.X;
-                mobFinal._surfaceOverheadCacheY = obj.Y;
-                mobFinal._surfaceOverheadCacheZ = obj.Z;
-                mobFinal._cachedHasSurfaceOverhead = found;
-            }
+            mob._surfaceOverheadCacheX = mob.X;
+            mob._surfaceOverheadCacheY = mob.Y;
+            mob._surfaceOverheadCacheMaxZ = _maxZ;
+            mob._cachedHasSurfaceOverhead = found;
 
             return found;
         }
@@ -1049,7 +1045,8 @@ namespace ClassicUO.Game.Scenes
                         continue;
                     }
 
-                    obj.AllowedToDraw = !HasSurfaceOverhead(mobile);
+                    Profile p = ProfileManager.CurrentProfile;
+                    obj.AllowedToDraw = (p?.InvisibleHousesEnabled == true) || !HasSurfaceOverhead(mobile);
 
                     PushToRenderList(
                         obj,

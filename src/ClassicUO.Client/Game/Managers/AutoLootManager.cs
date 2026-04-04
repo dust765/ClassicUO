@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using ClassicUO.Utility.Logging;
 
 namespace ClassicUO.Game.Managers
 {
@@ -212,8 +213,11 @@ namespace ClassicUO.Game.Managers
                     try
                     {
                         string data = File.ReadAllText(savePath);
-                        AutoLootItem[] tItem = JsonSerializer.Deserialize<AutoLootItem[]>(data);
-                        autoLootItems = tItem.ToList<AutoLootItem>();
+                        var parsed = JsonSerializer.Deserialize(
+                            data,
+                            typeof(List<AutoLootItem>),
+                            GameManagersJsonContext.Default) as List<AutoLootItem>;
+                        autoLootItems = parsed ?? new List<AutoLootItem>();
                         loaded = true;
                     }
                     catch
@@ -232,12 +236,17 @@ namespace ClassicUO.Game.Managers
             {
                 try
                 {
-                    var options = new JsonSerializerOptions() { WriteIndented = true };
-                    string fileData = JsonSerializer.Serialize(autoLootItems, options);
+                    string fileData = JsonSerializer.Serialize(
+                        autoLootItems,
+                        typeof(List<AutoLootItem>),
+                        GameManagersJsonContext.Default);
 
                     File.WriteAllText(savePath, fileData);
                 }
-                catch (Exception e) { Console.WriteLine(e.ToString()); }
+                catch (Exception e)
+                {
+                    Log.Error($"AutoLootManager.Save: {e}");
+                }
             }
         }
 
