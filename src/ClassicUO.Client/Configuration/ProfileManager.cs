@@ -30,10 +30,12 @@
 
 #endregion
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using ClassicUO.Game;
+using ClassicUO.Game.Scenes;
 using ClassicUO.Utility;
 using Microsoft.Xna.Framework;
 
@@ -102,6 +104,252 @@ namespace ClassicUO.Configuration
             }
         }
 
+        public static string GetPaperdollSelectCharJsonPath(string username, string serverName, string characterName)
+        {
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                username = "default";
+            }
+            else
+            {
+                username = username.Trim();
+            }
+
+            if (string.IsNullOrWhiteSpace(serverName) || string.Equals(serverName.Trim(), "_", StringComparison.Ordinal))
+            {
+                serverName = "server";
+            }
+            else
+            {
+                serverName = serverName.Trim();
+            }
+
+            if (string.IsNullOrWhiteSpace(characterName))
+            {
+                characterName = "player";
+            }
+            else
+            {
+                characterName = characterName.Trim();
+            }
+
+            string dir = FileSystemHelper.CreateFolderIfNotExists(RootPath, username, serverName, characterName);
+            return Path.Combine(dir, "paperdollSelectCharManager.json");
+        }
+
+        private static string SanitizeProfileSegment(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            return FileSystemHelper.RemoveInvalidChars(value.Trim());
+        }
+
+        private static string TryPaperdollFileUnder(string accountDir, string serverDirName, string characterDirName)
+        {
+            if (string.IsNullOrEmpty(accountDir) || string.IsNullOrEmpty(serverDirName) || string.IsNullOrEmpty(characterDirName))
+            {
+                return null;
+            }
+
+            string p = Path.Combine(accountDir, serverDirName, characterDirName, "paperdollSelectCharManager.json");
+            return File.Exists(p) ? p : null;
+        }
+
+        private static string FindAccountDirectoryRoot(string sanitizedUsername)
+        {
+            if (string.IsNullOrEmpty(sanitizedUsername) || !Directory.Exists(RootPath))
+            {
+                return null;
+            }
+
+            string direct = Path.Combine(RootPath, sanitizedUsername);
+            if (Directory.Exists(direct))
+            {
+                return direct;
+            }
+
+            try
+            {
+                foreach (string candidate in Directory.GetDirectories(RootPath))
+                {
+                    if (string.Equals(Path.GetFileName(candidate), sanitizedUsername, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return candidate;
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            return null;
+        }
+
+        public static string GetPaperdollSelectCharJsonReadPath(string username, string serverName, string characterName)
+        {
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(serverName) || string.IsNullOrEmpty(characterName))
+            {
+                return null;
+            }
+
+            string u = SanitizeProfileSegment(username);
+            string s = SanitizeProfileSegment(serverName);
+            string c = SanitizeProfileSegment(characterName);
+            if (string.IsNullOrEmpty(u) || string.IsNullOrEmpty(s) || string.IsNullOrEmpty(c))
+            {
+                return null;
+            }
+
+            return Path.Combine(RootPath, u, s, c, "paperdollSelectCharManager.json");
+        }
+
+        public static string ResolveLoginServerNameForPaperdoll()
+        {
+            string server = World.ServerName?.Trim() ?? string.Empty;
+            if (string.IsNullOrEmpty(server) || server == "_")
+            {
+                server = (Settings.GlobalSettings.LastServerName ?? string.Empty).Trim();
+            }
+
+            if (string.IsNullOrEmpty(server) || server == "_")
+            {
+                server = "server";
+            }
+
+            return server;
+        }
+
+        public static IEnumerable<string> EnumerateLoginUsernamesForPaperdoll()
+        {
+            var seen = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+            if (!string.IsNullOrWhiteSpace(LoginScene.Account))
+            {
+                string u = LoginScene.Account.Trim();
+                if (seen.Add(u))
+                {
+                    yield return u;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(Settings.GlobalSettings.Username))
+            {
+                string u = Settings.GlobalSettings.Username.Trim();
+                if (seen.Add(u))
+                {
+                    yield return u;
+                }
+            }
+        }
+
+        public static string FindExistingPaperdollSelectCharJson(string characterName)
+        {
+            if (string.IsNullOrWhiteSpace(characterName))
+            {
+                return null;
+            }
+
+            string charSan = SanitizeProfileSegment(characterName);
+            if (string.IsNullOrEmpty(charSan))
+            {
+                return null;
+            }
+
+            string server = ResolveLoginServerNameForPaperdoll();
+            string serverSan = string.IsNullOrEmpty(server) ? string.Empty : SanitizeProfileSegment(server);
+
+            foreach (string username in EnumerateLoginUsernamesForPaperdoll())
+            {
+                string userSan = SanitizeProfileSegment(username);
+                if (string.IsNullOrEmpty(userSan))
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrEmpty(serverSan))
+                {
+                    string p = GetPaperdollSelectCharJsonReadPath(username, server, characterName);
+                    if (p != null && File.Exists(p))
+                    {
+                        return p;
+                    }
+
+                    string legacyUser = SanitizeProfileSegment(username);
+                    string legacy = Path.Combine(
+                        CUOEnviroment.ExecutablePath,
+                        "Data",
+                        "Profiles",
+                        legacyUser,
+                        serverSan,
+                        charSan,
+                        "paperdollSelectCharManager.json");
+                    if (File.Exists(legacy))
+                    {
+                        return legacy;
+                    }
+                }
+
+                string accRoot = FindAccountDirectoryRoot(userSan);
+                if (accRoot == null)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    foreach (string serverDir in Directory.GetDirectories(accRoot))
+                    {
+                        string serverLeaf = Path.GetFileName(serverDir);
+                        if (!string.IsNullOrEmpty(serverSan) && !string.Equals(SanitizeProfileSegment(serverLeaf), serverSan, StringComparison.OrdinalIgnoreCase))
+                        {
+                            continue;
+                        }
+
+                        string hit = TryPaperdollFileUnder(accRoot, serverLeaf, charSan);
+                        if (hit != null)
+                        {
+                            return hit;
+                        }
+                    }
+                }
+                catch
+                {
+                }
+            }
+
+            return null;
+        }
+
+        public static string ResolvePrimaryPaperdollSelectCharJsonReadPath(string characterName)
+        {
+            if (string.IsNullOrWhiteSpace(characterName))
+            {
+                return null;
+            }
+
+            string charSan = SanitizeProfileSegment(characterName);
+            string username = !string.IsNullOrWhiteSpace(LoginScene.Account)
+                ? LoginScene.Account.Trim()
+                : (Settings.GlobalSettings.Username ?? string.Empty).Trim();
+            string userSan = SanitizeProfileSegment(username);
+            string server = ResolveLoginServerNameForPaperdoll();
+            string serverSan = SanitizeProfileSegment(server);
+
+            if (string.IsNullOrEmpty(userSan) || string.IsNullOrEmpty(charSan))
+            {
+                return null;
+            }
+
+            if (string.IsNullOrEmpty(serverSan))
+            {
+                return null;
+            }
+
+            return Path.Combine(RootPath, userSan, serverSan, charSan, "paperdollSelectCharManager.json");
+        }
+
         public static void Load(string servername, string username, string charactername)
         {
             string path = FileSystemHelper.CreateFolderIfNotExists(RootPath, username, servername, charactername);
@@ -159,6 +407,7 @@ namespace ClassicUO.Configuration
         public static void UnLoadProfile()
         {
             CurrentProfile = null;
+            ProfilePath = null;
         }
     }
 }

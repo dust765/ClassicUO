@@ -1,7 +1,9 @@
 using ClassicUO.Configuration;
+using ClassicUO.Game;
 using ClassicUO.Game.Data;
 using ClassicUO.Game.GameObjects;
 using ClassicUO.Utility;
+using ClassicUO.Utility.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,6 +19,15 @@ namespace ClassicUO.Game.Managers
         public ushort Hue { get; set; }
         public ushort AnimID { get; set; }
         public bool IsPartialHue { get; set; }
+    }
+
+    internal sealed class PaperdollSaveData
+    {
+        public ushort BodyId { get; set; }
+        public bool IsFemale { get; set; }
+        public byte Race { get; set; }
+        public ushort NameHue { get; set; }
+        public Dictionary<string, PaperdollItem> Items { get; set; }
     }
 
     internal class PaperdollSelectCharManager
@@ -87,15 +98,21 @@ namespace ClassicUO.Game.Managers
         {
             try
             {
-                items.Clear();
-            Mobile mobile = World.Mobiles.Get(World.Player.Serial);
+                if (World.Player == null)
+                {
+                    return;
+                }
 
-            if (mobile != null) {
+                items.Clear();
+                Mobile mobile = World.Mobiles.Get(World.Player.Serial);
+
+                if (mobile != null)
+                {
                     BodyId = (ushort)mobile.Graphic;
                     IsFemale = mobile.IsFemale;
                     Race = (byte)mobile.Race;
 
-                    foreach (Layer layer in Enum.GetValues(typeof(Layer)))
+                    foreach (Layer layer in Enum.GetValues<Layer>())
                     {
                         Item item = mobile.FindItemByLayer(layer);
 
@@ -112,15 +129,12 @@ namespace ClassicUO.Game.Managers
                                 }
                             }
                         }
-                        
                     }
-
                 }
-
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to save marked tile data: {ex.Message}");
+                Log.Error($"PaperdollSelectCharManager.Save: {ex}");
             }
         }
 
@@ -129,12 +143,11 @@ namespace ClassicUO.Game.Managers
             try
             {
                 string directoryPath = Path.GetDirectoryName(savePath);
-                if (!Directory.Exists(directoryPath))
+                if (!string.IsNullOrEmpty(directoryPath) && !Directory.Exists(directoryPath))
                 {
                     Directory.CreateDirectory(directoryPath);
                 }
 
- 
                 if (File.Exists(savePath))
                 {
                     File.WriteAllText(savePath, string.Empty);
@@ -149,16 +162,16 @@ namespace ClassicUO.Game.Managers
                     Items = new Dictionary<string, PaperdollItem>(items)
                 };
 
-                string json = JsonSerializer.Serialize(saveData, new JsonSerializerOptions { WriteIndented = true });
+                string json = JsonSerializer.Serialize(saveData, typeof(PaperdollSaveData), GameManagersJsonContext.Default);
 
                 File.WriteAllText(savePath, json);
 
-
                 items.Clear();
+                Log.Info($"PaperdollSelectCharManager: wrote {savePath}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to save marked tile data: {ex.Message}");
+                Log.Error($"PaperdollSelectCharManager.SaveJson: {ex}");
             }
         }
 
@@ -170,7 +183,9 @@ namespace ClassicUO.Game.Managers
                 {
                     string json = File.ReadAllText(savePath);
 
-                    PaperdollSaveData saveData = JsonSerializer.Deserialize<PaperdollSaveData>(json);
+                    PaperdollSaveData saveData =
+                        JsonSerializer.Deserialize(json, typeof(PaperdollSaveData), GameManagersJsonContext.Default)
+                        as PaperdollSaveData;
                     if (saveData != null && saveData.Items != null)
                     {
                         BodyId = saveData.BodyId;
@@ -180,25 +195,18 @@ namespace ClassicUO.Game.Managers
                         return;
                     }
 
-                    items = JsonSerializer.Deserialize<Dictionary<string, PaperdollItem>>(json) ?? new Dictionary<string, PaperdollItem>();
+                    items =
+                        JsonSerializer.Deserialize(json, typeof(Dictionary<string, PaperdollItem>), GameManagersJsonContext.Default)
+                        as Dictionary<string, PaperdollItem> ?? new Dictionary<string, PaperdollItem>();
                     BodyId = 0;
                     IsFemale = false;
                     Race = (byte)RaceType.HUMAN;
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Failed to load marked tile data: {ex.Message}");
+                    Log.Error($"PaperdollSelectCharManager.Load: {ex}");
                 }
             }
-        }
-
-        private class PaperdollSaveData
-        {
-            public ushort BodyId { get; set; }
-            public bool IsFemale { get; set; }
-            public byte Race { get; set; }
-            public ushort NameHue { get; set; }
-            public Dictionary<string, PaperdollItem> Items { get; set; }
         }
     }
 }

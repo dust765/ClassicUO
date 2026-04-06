@@ -71,7 +71,6 @@ namespace ClassicUO.Game.Managers
                 Profile profile = ProfileManager.CurrentProfile;
 
                 return profile != null &&
-                    Client.Game.GameCursor.AllowDrawSDLCursor &&
                     DraggingControl == null &&
                     MouseOverControl == null &&
                     !IsModalOpen &&
@@ -740,8 +739,6 @@ namespace ClassicUO.Game.Managers
                 return DraggingControl;
             }
 
-            Control control = null;
-
             IsModalOpen = IsModalControlOpen();
 
             for (LinkedListNode<Gump> first = Gumps.First; first != null; first = first.Next)
@@ -753,11 +750,12 @@ namespace ClassicUO.Game.Managers
                     continue;
                 }
 
-                c.HitTest(position, ref control);
+                Control hit = null;
+                c.HitTest(position, ref hit);
 
-                if (control != null)
+                if (hit != null)
                 {
-                    return control;
+                    return hit;
                 }
             }
 

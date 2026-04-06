@@ -787,14 +787,6 @@ namespace ClassicUO
 
             if (_pluginsInitialized && Plugin.ProcessWndProc(sdlEvent) != 0)
             {
-                if (eventType == SDL_EventType.SDL_EVENT_MOUSE_MOTION)
-                {
-                    if (GameCursor != null)
-                    {
-                        GameCursor.AllowDrawSDLCursor = false;
-                    }
-                }
-
                 return true;
             }
 

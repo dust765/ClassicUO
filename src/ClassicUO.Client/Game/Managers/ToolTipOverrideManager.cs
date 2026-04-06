@@ -8,13 +8,11 @@ using System;
 using System.IO;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace ClassicUO.Game.Managers
 {
-    [JsonSerializable(typeof(ToolTipOverrideData))]
     internal class ToolTipOverrideData
     {
         public ToolTipOverrideData() { }
@@ -224,7 +222,7 @@ namespace ClassicUO.Game.Managers
                 itemPropertiesData = new ItemPropertiesData(World.Items.Get(serial));
             }
 
-            ToolTipOverrideData[] result = GetAllToolTipOverrides();
+            ToolTipOverrideData[] result = GetAllToolTipOverrides() ?? Array.Empty<ToolTipOverrideData>();
 
             if (itemPropertiesData.HasData)
             {
@@ -235,11 +233,9 @@ namespace ClassicUO.Game.Managers
 
                 tooltip += ProfileManager.CurrentProfile == null ? $"/c[yellow]{itemPropertiesData.Name}\n" : string.Format(ProfileManager.CurrentProfile.TooltipHeaderFormat + "\n", itemPropertiesData.Name);
 
-                //Loop through each property
                 foreach (ItemPropertiesData.SinglePropertyData property in itemPropertiesData.singlePropertyData)
                 {
                     bool handled = false;
-                    //Loop though each override setting player created
                     foreach (ToolTipOverrideData overrideData in result)
                     {
                         if (overrideData != null)
@@ -300,9 +296,9 @@ namespace ClassicUO.Game.Managers
 
             ItemPropertiesData itemPropertiesData = new ItemPropertiesData(text);
 
-            ToolTipOverrideData[] result = GetAllToolTipOverrides();
+            ToolTipOverrideData[] result = GetAllToolTipOverrides() ?? Array.Empty<ToolTipOverrideData>();
 
-            if (itemPropertiesData.HasData && result != null && result.Length > 0)
+            if (itemPropertiesData.HasData && result.Length > 0)
             {
                 tooltip += ProfileManager.CurrentProfile == null ? $"/c[yellow]{itemPropertiesData.Name}\n" : string.Format(ProfileManager.CurrentProfile.TooltipHeaderFormat + "\n", itemPropertiesData.Name);
 

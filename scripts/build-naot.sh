@@ -27,7 +27,7 @@ case $platform in
     ;;
   MINGW* | CYGWIN* | MSYS*)
     target="win-x64"
-    tfm="net10.0-windows"
+    tfm="net10.0"
     ;;
   *)
     echo "Unsupported platform: $platform"

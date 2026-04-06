@@ -60,7 +60,7 @@ case $OS in
         ;;
     CYGWIN*|MINGW*|MSYS*)
         PLATFORM="windows"
-        DOTNET_TFM="net10.0-windows"
+        DOTNET_TFM="net10.0"
         RUNTIME="win-x64"
         PLATFORM_SUFFIX="x64"
         ;;

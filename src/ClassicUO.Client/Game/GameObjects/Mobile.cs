@@ -107,7 +107,7 @@ namespace ClassicUO.Game.GameObjects
                 mobile.IsParalyzed = false;
                 mobile._surfaceOverheadCacheX = int.MinValue;
                 mobile._surfaceOverheadCacheY = int.MinValue;
-                mobile._surfaceOverheadCacheZ = int.MinValue;
+                mobile._surfaceOverheadCacheMaxZ = int.MinValue;
 
             }
         );
@@ -141,10 +141,9 @@ namespace ClassicUO.Game.GameObjects
         private ushort _animationRepeateMode = 1;
         private ushort _animationRepeatModeCount = 1;
 
-        // HasSurfaceOverhead per-position cache — invalidated on position change
         internal int _surfaceOverheadCacheX = int.MinValue;
         internal int _surfaceOverheadCacheY = int.MinValue;
-        internal int _surfaceOverheadCacheZ = int.MinValue;
+        internal int _surfaceOverheadCacheMaxZ = int.MinValue;
         internal bool _cachedHasSurfaceOverhead;
 
         public Mobile(uint serial) : base(serial)
