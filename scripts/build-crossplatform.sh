@@ -17,7 +17,7 @@ dotnet restore
 
 # Build for different platforms
 echo "Building for Windows x64..."
-dotnet publish src/ClassicUO.Client/ClassicUO.Client.csproj -c Release -f net10.0-windows -r win-x64 --self-contained true -o bin/Release/win-x64
+dotnet publish src/ClassicUO.Client/ClassicUO.Client.csproj -c Release -f net10.0 -r win-x64 --self-contained true -o bin/Release/win-x64
 
 echo "Building for Linux x64..."
 dotnet publish src/ClassicUO.Client/ClassicUO.Client.csproj -c Release -f net10.0 -r linux-x64 --self-contained true -o bin/Release/linux-x64
