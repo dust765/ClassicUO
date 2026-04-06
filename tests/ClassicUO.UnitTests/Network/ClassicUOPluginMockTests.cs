@@ -53,7 +53,7 @@ namespace ClassicUO.UnitTests.Network
                 IsLoaded = true;
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -83,7 +83,7 @@ namespace ClassicUO.UnitTests.Network
                     handler(args);
                     return true;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     return false;
                 }
