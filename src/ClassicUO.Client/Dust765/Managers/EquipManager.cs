@@ -135,13 +135,7 @@ namespace ClassicUO.Dust765.Managers
                 GameActions.PickUp(unequippedItem.Serial, 0, 0, 1);
                 if (Client.Game.GameCursor.ItemHold.Enabled && !Client.Game.GameCursor.ItemHold.Dropped)
                 {
-                    int x = 0;
-                    int y = 0;
-                    TimeSpan.FromMilliseconds(50);
-
                     GameActions.DropItem(Client.Game.GameCursor.ItemHold.Serial, 0xFFFF, 0xFFFF, 0, _backpack.Serial);
-
-                    TimeSpan.FromMilliseconds(50);
                 }
             }
         }

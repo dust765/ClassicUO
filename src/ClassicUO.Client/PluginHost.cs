@@ -1,6 +1,7 @@
 ﻿using ClassicUO.Configuration;
 using ClassicUO.Game;
 using ClassicUO.Network;
+using ClassicUO.Utility.Logging;
 using Microsoft.Xna.Framework.Graphics;
 using SDL3;
 using System;
@@ -314,9 +315,17 @@ namespace ClassicUO
             if (_packetIn == null || buffer.Array == null || buffer.Count <= 0)
                 return true;
 
-            var len = buffer.Count;
-            fixed (byte* ptr = buffer.Array)
-                return _packetIn((IntPtr)ptr, ref len);
+            try
+            {
+                var len = buffer.Count;
+                fixed (byte* ptr = buffer.Array)
+                    return _packetIn((IntPtr)ptr, ref len);
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Plugin PacketIn: {e.Message}");
+                return true;
+            }
         }
 
         public bool PacketOut(Span<byte> buffer)
@@ -324,9 +333,17 @@ namespace ClassicUO
             if (_packetOut == null || buffer.IsEmpty)
                 return true;
 
-            var len = buffer.Length;
-            fixed (byte* ptr = buffer)
-                return _packetOut((IntPtr)ptr, ref len);
+            try
+            {
+                var len = buffer.Length;
+                fixed (byte* ptr = buffer)
+                    return _packetOut((IntPtr)ptr, ref len);
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Plugin PacketOut: {e.Message}");
+                return true;
+            }
         }
 
         public unsafe int SdlEvent(SDL.SDL_Event* ev)

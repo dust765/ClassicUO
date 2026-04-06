@@ -185,6 +185,12 @@ namespace ClassicUO.Game
 
         public Texture2D Texture { get; set; }
 
+        public bool HasContent =>
+            !string.IsNullOrEmpty(Text)
+            && Texture != null
+            && !IsDestroyed
+            && !Texture.IsDisposed;
+
         public static RenderedText Create(
             string text,
             ushort hue = 0xFFFF,

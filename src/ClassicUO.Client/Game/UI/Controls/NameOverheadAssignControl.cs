@@ -98,7 +98,7 @@ namespace ClassicUO.Game.UI.Controls
             int scrollW = Math.Max(280, ow - 342);
             int scrollH = Math.Max(200, oh - scrollTop - 110);
             Add(checkBoxScroll = new ScrollArea(0, scrollTop, scrollW, scrollH, true));
-            checkBoxScroll.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            checkBoxScroll.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
             checkBoxScroll.UpdateScrollbarPosition();
 
             SetupOptionCheckboxes();

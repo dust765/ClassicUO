@@ -19,7 +19,6 @@ using ClassicUO.Input;
 using ClassicUO.Resources;
 using ClassicUO.Utility.Logging;
 using Microsoft.Xna.Framework;
-using System.Linq;
 
 namespace ClassicUO.Game.UI.Gumps
 {

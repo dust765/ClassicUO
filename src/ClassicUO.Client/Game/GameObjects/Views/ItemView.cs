@@ -437,7 +437,7 @@ namespace ClassicUO.Game.GameObjects
                 color = newHue;
             }
 
-            if (frames == null || frames.Length == 0)
+            if (frames.IsEmpty)
             {
                 return;
             }

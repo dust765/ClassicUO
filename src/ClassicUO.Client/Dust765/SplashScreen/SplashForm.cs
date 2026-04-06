@@ -14,6 +14,7 @@ namespace ClassicUO.Dust765
         private int _shimmerX;
         private float _progress;
         private string _status = "Loading client files...";
+        private string _updateNotice;
         private Image _logo;
 
         private static readonly string[] _dots = { "", ".", "..", "..." };
@@ -31,7 +32,7 @@ namespace ClassicUO.Dust765
         private static readonly Color _barBg   = Color.FromArgb( 44,  22,  22 );  // fundo barra
 
         private const int W = 420;
-        private const int H = 320;
+        private const int H = 348;
 
         public SplashForm()
         {
@@ -79,6 +80,13 @@ namespace ClassicUO.Dust765
             if (InvokeRequired)
                 Invoke(new Action(() => { _status = text; Invalidate(); }));
             else { _status = text; Invalidate(); }
+        }
+
+        public void SetUpdateNotice(string text)
+        {
+            if (InvokeRequired)
+                Invoke(new Action(() => { _updateNotice = text; Invalidate(); }));
+            else { _updateNotice = text; Invalidate(); }
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -142,7 +150,28 @@ namespace ClassicUO.Dust765
             using (var f = new Font("Segoe UI", 9, GraphicsUnit.Pixel))
             using (var b = new SolidBrush(_txtDim))
                 g.DrawString(ver, f, b, new RectangleF(0, curY, w, 14), sf);
-            curY += 20;
+            curY += 16;
+
+            if (!string.IsNullOrEmpty(_updateNotice))
+            {
+                using (var wrap = new StringFormat
+                       {
+                           Alignment = StringAlignment.Center,
+                           LineAlignment = StringAlignment.Near,
+                           Trimming = StringTrimming.Word
+                       })
+                using (var f = new Font("Segoe UI", 8.5f, System.Drawing.FontStyle.Bold, GraphicsUnit.Pixel))
+                using (var b = new SolidBrush(_goldHi))
+                {
+                    var noticeRect = new RectangleF(pad * 0.5f, curY, w - pad, 44);
+                    g.DrawString(_updateNotice, f, b, noticeRect, wrap);
+                }
+                curY += 48;
+            }
+            else
+            {
+                curY += 4;
+            }
 
             // ── Painel de status ─────────────────────────────────────────────
             var panelRect = new Rectangle(pad, curY, w - pad * 2, 46);

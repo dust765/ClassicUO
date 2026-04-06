@@ -71,10 +71,38 @@ namespace ClassicUO.Game.Managers
                 Profile profile = ProfileManager.CurrentProfile;
 
                 return profile != null &&
+                    Client.Game.GameCursor.AllowDrawSDLCursor &&
                     DraggingControl == null &&
                     MouseOverControl == null &&
                     !IsModalOpen &&
                     Client.Game.Scene.Camera.Bounds.Contains(mouse);
+            }
+        }
+
+        public static bool IsPointerOverWorldPlayfield
+        {
+            get
+            {
+                Point mouse = Mouse.Position;
+                Profile profile = ProfileManager.CurrentProfile;
+
+                if (
+                    profile == null
+                    || DraggingControl != null
+                    || IsModalOpen
+                    || !Client.Game.Scene.Camera.Bounds.Contains(mouse)
+                )
+                {
+                    return false;
+                }
+
+                if (MouseOverControl == null)
+                {
+                    return true;
+                }
+
+                return MouseOverControl.RootParent is WorldViewportGump
+                    || MouseOverControl is WorldViewportGump;
             }
         }
 

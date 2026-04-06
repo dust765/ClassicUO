@@ -614,6 +614,7 @@ namespace ClassicUO.Assets
                         {
                             FileIndex = i,
                             Graphic = (ushort)body,
+                            Hue = 0,
                             // TODO: fix for UOFileManager.Version < ClientVersion.CV_500A
                             AnimType = CalculateTypeByGraphic((ushort)body, i),
                             MountHeight = mountedHeightOffset

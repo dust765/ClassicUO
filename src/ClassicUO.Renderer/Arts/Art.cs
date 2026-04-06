@@ -38,7 +38,7 @@ namespace ClassicUO.Renderer.Arts
             {
                 ArtInfo artInfo = UOFileManager.Current.Png.LoadArtTexture(idx);
 
-                if (artInfo.Pixels == null || artInfo.Pixels.IsEmpty)
+                if (artInfo.Pixels.IsEmpty)
                 {
                     artInfo = UOFileManager.Current.Arts.GetArt(idx);
                 }

@@ -364,47 +364,59 @@ sealed class Plugin
     public bool ProcessRecvPacket(ref byte[] data, ref int length)
     {
         var result = true;
-        if (_onRecv_new != null)
+        try
         {
-            result = _onRecv_new(data, ref length);
-        }
-        else if (_onRecv != null)
-        {
-            var tmp = data;
-            result = _onRecv(ref data, ref length);
-
-            if (!ReferenceEquals(tmp, data))
+            if (_onRecv_new != null)
             {
-                Array.Copy(data, tmp, length);
-                data = tmp;
+                result = _onRecv_new(data, ref length);
+            }
+            else if (_onRecv != null)
+            {
+                var tmp = data;
+                result = _onRecv(ref data, ref length);
+
+                if (!ReferenceEquals(tmp, data))
+                {
+                    Array.Copy(data, tmp, length);
+                    data = tmp;
+                }
             }
         }
-        
-        // get from cuo
-        
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Plugin] ProcessRecvPacket: {ex}");
+            result = true;
+        }
+
         return result;
     }
 
     public bool ProcessSendPacket(ref byte[] data, ref int length)
     {
         var result = true;
-        if (_onSend_new != null)
+        try
         {
-            result = _onSend_new(data, ref length);
-        }
-        else if (_onSend != null)
-        {
-            var tmp = data;
-            result = _onSend(ref data, ref length);
-
-            if (!ReferenceEquals(tmp, data))
+            if (_onSend_new != null)
             {
-                Array.Copy(data, tmp, length);
-                data = tmp;
+                result = _onSend_new(data, ref length);
+            }
+            else if (_onSend != null)
+            {
+                var tmp = data;
+                result = _onSend(ref data, ref length);
+
+                if (!ReferenceEquals(tmp, data))
+                {
+                    Array.Copy(data, tmp, length);
+                    data = tmp;
+                }
             }
         }
-
-        // get from cuo
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Plugin] ProcessSendPacket: {ex}");
+            result = true;
+        }
 
         return result;
     }

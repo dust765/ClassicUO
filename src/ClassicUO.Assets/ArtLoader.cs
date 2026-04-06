@@ -115,7 +115,7 @@ namespace ClassicUO.Assets
                 width = 44;
                 height = 44;
 
-                if (data == null || data.Length < (width * height))
+                if (data.IsEmpty || data.Length < (width * height))
                 {
                     return false;
                 }

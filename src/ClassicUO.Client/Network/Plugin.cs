@@ -597,74 +597,89 @@ namespace ClassicUO.Network
 
         internal static bool ProcessRecvPacket(byte[] data, ref int length)
         {
-            bool result = Client.PluginHost?.PacketIn(new ArraySegment<byte>(data, 0, length)) ?? true;
+            bool result = true;
+            try
+            {
+                result = Client.PluginHost?.PacketIn(new ArraySegment<byte>(data, 0, length)) ?? true;
+            }
+            catch (Exception e)
+            {
+                Log.Error($"PluginHost recv: {e.Message}");
+            }
 
             foreach (Plugin plugin in Plugins)
             {
                 lock (plugin._invokeLock)
                 {
-                    if (plugin._onRecv_new != null)
+                    try
                     {
-                        byte[] rented = ArrayPool<byte>.Shared.Rent(length);
-                        try
+                        if (plugin._onRecv_new != null)
                         {
-                            Array.Copy(data, 0, rented, 0, length);
-
-                            if (!plugin._onRecv_new(rented, ref length))
+                            byte[] rented = ArrayPool<byte>.Shared.Rent(length);
+                            try
                             {
-                                result = false;
-                            }
+                                Array.Copy(data, 0, rented, 0, length);
 
-                            if (length < 0)
-                            {
-                                length = 0;
-                            }
+                                if (!plugin._onRecv_new(rented, ref length))
+                                {
+                                    result = false;
+                                }
 
-                            int copyLen = Math.Min(Math.Min(length, rented.Length), data.Length);
-                            Array.Copy(rented, 0, data, 0, copyLen);
-                            length = copyLen;
-                        }
-                        finally
-                        {
-                            ArrayPool<byte>.Shared.Return(rented);
-                        }
-                    }
-                    else if (plugin._onRecv != null)
-                    {
-                        byte[] rented = ArrayPool<byte>.Shared.Rent(length);
-                        byte[] tmp = rented;
-                        try
-                        {
-                            Array.Copy(data, 0, rented, 0, length);
+                                if (length < 0)
+                                {
+                                    length = 0;
+                                }
 
-                            if (!plugin._onRecv(ref tmp, ref length))
-                            {
-                                result = false;
-                            }
-
-                            if (length < 0)
-                            {
-                                length = 0;
-                            }
-
-                            if (tmp == null)
-                            {
-                                length = 0;
-                            }
-                            else
-                            {
-                                int copyLen = Math.Min(Math.Min(length, tmp.Length), data.Length);
-                                Array.Copy(tmp, 0, data, 0, copyLen);
+                                int copyLen = Math.Min(Math.Min(length, rented.Length), data.Length);
+                                Array.Copy(rented, 0, data, 0, copyLen);
                                 length = copyLen;
                             }
-                        }
-                        finally
-                        {
-                            if (ReferenceEquals(tmp, rented))
+                            finally
                             {
                                 ArrayPool<byte>.Shared.Return(rented);
                             }
                         }
+                        else if (plugin._onRecv != null)
+                        {
+                            byte[] rented = ArrayPool<byte>.Shared.Rent(length);
+                            byte[] tmp = rented;
+                            try
+                            {
+                                Array.Copy(data, 0, rented, 0, length);
+
+                                if (!plugin._onRecv(ref tmp, ref length))
+                                {
+                                    result = false;
+                                }
+
+                                if (length < 0)
+                                {
+                                    length = 0;
+                                }
+
+                                if (tmp == null)
+                                {
+                                    length = 0;
+                                }
+                                else
+                                {
+                                    int copyLen = Math.Min(Math.Min(length, tmp.Length), data.Length);
+                                    Array.Copy(tmp, 0, data, 0, copyLen);
+                                    length = copyLen;
+                                }
+                            }
+                            finally
+                            {
+                                if (ReferenceEquals(tmp, rented))
+                                {
+                                    ArrayPool<byte>.Shared.Return(rented);
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error($"Plugin recv ({plugin?.GetType().Name}): {e.Message}");
                     }
                 }
             }

@@ -325,6 +325,76 @@ namespace ClassicUO.Game.Managers
             return macros;
         }
 
+        public static bool TryGetSpellFullIdFromCastSpellSubCode(MacroSubType subCode, out int spellFullId)
+        {
+            spellFullId = 0;
+            ReadOnlySpan<int> spellsCountTable = stackalloc int[]
+            {
+                Constants.SPELLBOOK_1_SPELLS_COUNT,
+                Constants.SPELLBOOK_2_SPELLS_COUNT,
+                Constants.SPELLBOOK_3_SPELLS_COUNT,
+                Constants.SPELLBOOK_4_SPELLS_COUNT,
+                Constants.SPELLBOOK_5_SPELLS_COUNT,
+                Constants.SPELLBOOK_6_SPELLS_COUNT,
+                Constants.SPELLBOOK_7_SPELLS_COUNT
+            };
+            int spell = subCode - MacroSubType.Clumsy + 1;
+            if (spell <= 0 || spell > 151)
+            {
+                return false;
+            }
+            int totalCount = 0;
+            int spellType;
+            for (spellType = 0; spellType < 8; spellType++)
+            {
+                totalCount += spellsCountTable[spellType];
+                if (spell <= totalCount)
+                {
+                    break;
+                }
+            }
+            if (spellType >= 7)
+            {
+                return false;
+            }
+            spell -= totalCount - spellsCountTable[spellType];
+            spell += spellType * 100;
+            if (spellType > 2)
+            {
+                spell += 100;
+                if (spellType == 6)
+                {
+                    spell -= 23;
+                }
+            }
+            spellFullId = spell;
+            return true;
+        }
+
+        public static bool TryGetSkillServerIndexFromUseSkillSubCode(MacroSubType subCode, out int skillServerIndex)
+        {
+            skillServerIndex = -1;
+            ReadOnlySpan<byte> skillTable = stackalloc byte[]
+            {
+                1, 2, 35, 4, 6, 12,
+                14, 15, 16, 19, 21, 56,
+                23, 3, 46, 9, 30, 22,
+                48, 32, 33, 47, 36, 38
+            };
+            int skill = subCode - MacroSubType.Anatomy;
+            if (skill < 0 || skill >= 24)
+            {
+                return false;
+            }
+            byte v = skillTable[skill];
+            if (v == 0xFF)
+            {
+                return false;
+            }
+            skillServerIndex = v;
+            return true;
+        }
+
         public Macro FindMacro(SDL_GamepadButton button)
         {
             Macro obj = (Macro)Items;
@@ -2372,6 +2442,22 @@ namespace ClassicUO.Game.Managers
         public Macro(string name)
         {
             Name = name;
+        }
+
+        public static MacroObject FindFirstCastSpellOrUseSkillAction(Macro macro)
+        {
+            if (macro?.Items is not MacroObject cur)
+            {
+                return null;
+            }
+            for (; cur != null; cur = (MacroObject)cur.Next)
+            {
+                if (cur.Code == MacroType.CastSpell || cur.Code == MacroType.UseSkill)
+                {
+                    return cur;
+                }
+            }
+            return null;
         }
 
         public string Name { get; }

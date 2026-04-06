@@ -31,7 +31,7 @@ namespace ClassicUO.Renderer.Gumps
             {
                 var gumpInfo = UOFileManager.Current.Png.LoadGumpTexture(idx);
 
-                if (gumpInfo.Pixels == null || gumpInfo.Pixels.IsEmpty)
+                if (gumpInfo.Pixels.IsEmpty)
                 {
                     gumpInfo = UOFileManager.Current.Gumps.GetGump(idx);
                 }

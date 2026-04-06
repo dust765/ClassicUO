@@ -1059,7 +1059,7 @@ namespace ClassicUO.Game.Scenes
 
             _useItemQueue.Update();
 
-            if (!UIManager.IsMouseOverWorld)
+            if (!UIManager.IsPointerOverWorldPlayfield)
             {
                 SelectedObject.Object = null;
             }
@@ -1515,7 +1515,7 @@ namespace ClassicUO.Game.Scenes
             if (profile == null || !profile.PerformanceDisableHealthLinesOverlay)
                 _healthLinesManager.Draw(batcher);
 
-            if (!UIManager.IsMouseOverWorld)
+            if (!UIManager.IsPointerOverWorldPlayfield)
             {
                 SelectedObject.Object = null;
             }
