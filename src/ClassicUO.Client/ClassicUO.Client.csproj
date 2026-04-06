@@ -5,8 +5,8 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>cuo</AssemblyName>
     <RootNamespace>ClassicUO</RootNamespace>
-    <AssemblyVersion>3.0.8</AssemblyVersion>
-    <FileVersion>3.0.8</FileVersion>
+    <AssemblyVersion>3.0.9</AssemblyVersion>
+    <FileVersion>3.0.9</FileVersion>
     <Copyright>Dust765</Copyright>
     <StartupObject></StartupObject>
     <TargetFramework>net10.0</TargetFramework>
