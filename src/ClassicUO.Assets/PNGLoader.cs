@@ -264,10 +264,10 @@ namespace ClassicUO.Assets
                     {
                         var gumpInfo = LoadGumpTexture(i);
 
-                        if (gumpInfo.Pixels == null || gumpInfo.Pixels.IsEmpty)
+                        if (gumpInfo.Pixels.IsEmpty)
                         {
                             gumpInfo = UOFileManager.Current.Gumps.GetGump(i);
-                            if (gumpInfo.Pixels != null && !gumpInfo.Pixels.IsEmpty)
+                            if (!gumpInfo.Pixels.IsEmpty)
                                 continue;
                         }
                         else

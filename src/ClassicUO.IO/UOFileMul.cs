@@ -34,7 +34,6 @@ namespace ClassicUO.IO
 {
     public class UOFileMul : UOFile
     {
-        private readonly int _count, _patch;
         private readonly UOFileIdxMul _idxFile;
 
         public UOFileMul(string file, string idxfile) : this(file)

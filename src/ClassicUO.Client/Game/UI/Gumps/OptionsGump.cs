@@ -168,6 +168,7 @@ namespace ClassicUO.Game.UI.Gumps
 
         // macro
         private MacroControl _macroControl;
+        private ScrollArea _options765ScrollHost;
         private Checkbox _overrideAllFonts;
         private Combobox _overrideAllFontsIsUnicodeCheckbox;
         private Combobox _overrideContainerLocationSetting;
@@ -209,7 +210,7 @@ namespace ClassicUO.Game.UI.Gumps
         private Checkbox _use_smooth_boat_movement;
         private HSliderBar _terrainShadowLevel;
 
-        private Checkbox _use_tooltip, _enableTooltipOverride;
+        private Checkbox _use_tooltip;
         private Checkbox _useStandardSkillsGump, _showMobileNameIncoming, _showCorpseNameIncoming;
         private Checkbox _showStatsMessage, _showSkillsMessage;
         private HSliderBar _showSkillsMessageDelta;
@@ -322,11 +323,12 @@ namespace ClassicUO.Game.UI.Gumps
         // ## BEGIN - END ## // TABGRID // PKRION
         // ## BEGIN - END ## // BASICSETUP
 
-        private Checkbox _leftAlignToolTips, _namePlateHealthOnlyWarmode, _enableHealthIndicator, _spellIconDisplayHotkey, _enableAlphaScrollWheel, _useModernShop, _forceCenterAlignMobileTooltips, _openHealthBarForLastAttack;
+        private Checkbox _namePlateHealthOnlyWarmode, _namePlateCustomChrome, _namePlateHealthBarMatchStrip, _namePlateFullPlateWidthScalesWithHp, _showHpLineInNoh, _enableHealthIndicator, _spellIconDisplayHotkey, _enableAlphaScrollWheel, _useModernShop, _openHealthBarForLastAttack;
+        private ModernColorPicker.HueDisplay _namePlateCustomBgHue, _namePlateCustomBorderHuePicker;
         private Checkbox _hideJournalBorder, _hideJournalTimestamp, _gridHideBorder, _skillProgressBarOnChange, _uselastCooldownPosition, _closeHPBarWhenAnchored, _enableNearbyItemGump;
         private HotkeyBox _nearbyItemGumpHotkeyBox;
-        private InputField _healthIndicatorPercentage, _healthIndicatorWidth, _tooltipHeaderFormat, _skillProgressBarFormat;
-        private ModernColorPicker.HueDisplay _mainWindowHuePicker, _spellIconHotkeyHue, _tooltipBGHue;
+        private InputField _healthIndicatorPercentage, _healthIndicatorWidth, _skillProgressBarFormat;
+        private ModernColorPicker.HueDisplay _mainWindowHuePicker, _spellIconHotkeyHue;
         private HSliderBar _spellIconScale, _overheadTextWidth, _gridHightlightLineSize, _maxJournalEntries;
         private HSliderBar _healthLineSizeMultiplier, _regularPlayerAlpha, _nameplateBorderOpacity;
 
@@ -566,7 +568,6 @@ namespace ClassicUO.Game.UI.Gumps
 
             // ## BEGIN - END ## // BASICSETUP
             Add(new NiceButton(10, tabY + 30 * i++, 140, 25, ButtonAction.SwitchPage, "Dust") { ButtonParameter = 16 });
-            Add(new NiceButton(10, tabY + 30 * i++, 140, 25, ButtonAction.SwitchPage, "765") { ButtonParameter = 17 });
             Add(new NiceButton(10, tabY + 30 * i++, 140, 25, ButtonAction.SwitchPage, "Mods") { ButtonParameter = 18 });
             // ## BEGIN - END ## // BASICSETUP
 
@@ -635,53 +636,60 @@ namespace ClassicUO.Game.UI.Gumps
             );
 
             int offsetX = 60;
-            int offsetY = 60;
-
-            int bottomLineY = HEIGHT - 50;
+            int footerLineY = HEIGHT - 59;
+            int footerBtnY = HEIGHT - 35;
 
             Add
             (
                 new Line
                 (
                     160,
-                    bottomLineY,
+                    footerLineY,
                     WIDTH - 160,
                     1,
                     Color.Gray.PackedValue
                 )
             );
 
-            const int BTN_WIDTH = 90;
-            const int BTN_HEIGHT = 20;
-            int btnY = HEIGHT - BTN_HEIGHT - 15;
+            Add
+            (
+                new Button((int)Buttons.Cancel, 0x00F3, 0x00F1, 0x00F2)
+                {
+                    X = 154 + offsetX,
+                    Y = footerBtnY,
+                    ButtonAction = ButtonAction.Activate
+                }
+            );
 
-            var cancelBtn = new GothicStyleButton(154 + offsetX, btnY, BTN_WIDTH, BTN_HEIGHT, "Cancel");
-            cancelBtn.BaseColor = new Color(130, 55, 55);
-            cancelBtn.HighlightColor = new Color(165, 90, 90);
-            cancelBtn.ShadowColor = new Color(90, 35, 35);
-            cancelBtn.OnClick += () => OnButtonClick((int)Buttons.Cancel);
-            Add(cancelBtn);
+            Add
+            (
+                new Button((int)Buttons.Apply, 0x00EF, 0x00F0, 0x00EE)
+                {
+                    X = 248 + offsetX,
+                    Y = footerBtnY,
+                    ButtonAction = ButtonAction.Activate
+                }
+            );
 
-            var applyBtn = new GothicStyleButton(248 + offsetX, btnY, BTN_WIDTH, BTN_HEIGHT, "Apply");
-            applyBtn.BaseColor = new Color(40, 115, 40);
-            applyBtn.HighlightColor = new Color(70, 155, 70);
-            applyBtn.ShadowColor = new Color(25, 75, 25);
-            applyBtn.OnClick += () => OnButtonClick((int)Buttons.Apply);
-            Add(applyBtn);
+            Add
+            (
+                new Button((int)Buttons.Default, 0x00F6, 0x00F4, 0x00F5)
+                {
+                    X = 346 + offsetX,
+                    Y = footerBtnY,
+                    ButtonAction = ButtonAction.Activate
+                }
+            );
 
-            var defaultBtn = new GothicStyleButton(346 + offsetX, btnY, BTN_WIDTH, BTN_HEIGHT, "Default");
-            defaultBtn.BaseColor = new Color(100, 100, 100);
-            defaultBtn.HighlightColor = new Color(155, 155, 155);
-            defaultBtn.ShadowColor = new Color(60, 60, 60);
-            defaultBtn.OnClick += () => OnButtonClick((int)Buttons.Default);
-            Add(defaultBtn);
-
-            var okBtn = new GothicStyleButton(443 + offsetX, btnY, BTN_WIDTH, BTN_HEIGHT, "Okay");
-            okBtn.BaseColor = new Color(165, 130, 50);
-            okBtn.HighlightColor = new Color(210, 175, 90);
-            okBtn.ShadowColor = new Color(115, 90, 30);
-            okBtn.OnClick += () => OnButtonClick((int)Buttons.Ok);
-            Add(okBtn);
+            Add
+            (
+                new Button((int)Buttons.Ok, 0x00F9, 0x00F8, 0x00F7)
+                {
+                    X = 443 + offsetX,
+                    Y = footerBtnY,
+                    ButtonAction = ButtonAction.Activate
+                }
+            );
 
             Width = WIDTH;
             Height = HEIGHT;
@@ -1935,7 +1943,7 @@ namespace ClassicUO.Game.UI.Gumps
                 OptionsScrollHeight,
                 true
             );
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
 
             int startX = 5;
             int startY = 5;
@@ -2714,8 +2722,6 @@ namespace ClassicUO.Game.UI.Gumps
         private void BuildTooltip()
         {
             const int PAGE = 5;
-            const int ROW = 28;
-            const int INDENT = 45;
 
             ScrollArea rightArea = new ScrollArea
             (
@@ -2725,82 +2731,58 @@ namespace ClassicUO.Game.UI.Gumps
                 OptionsScrollHeight,
                 true
             );
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
 
             int startX = 5;
             int startY = 5;
 
             _use_tooltip = AddCheckBox(rightArea, ResGumps.UseTooltip, _currentProfile.UseTooltip, startX, startY);
-            startY += ROW;
 
-            startX = INDENT;
+            startY += _use_tooltip.Height + 2;
+
+            startX += 40;
+
             Label text = AddLabel(rightArea, ResGumps.DelayBeforeDisplay, startX, startY);
             startX += text.Width + 5;
+
             _delay_before_display_tooltip = AddHSlider(rightArea, 0, 1000, _currentProfile.TooltipDelayBeforeDisplay, startX, startY, 200);
-            startX = INDENT;
-            startY += ROW;
+
+            startX = 5 + 40;
+            startY += text.Height + 2;
 
             text = AddLabel(rightArea, ResGumps.TooltipZoom, startX, startY);
             startX += text.Width + 5;
+
             _tooltip_zoom = AddHSlider(rightArea, 100, 200, _currentProfile.TooltipDisplayZoom, startX, startY, 200);
-            startX = INDENT;
-            startY += ROW;
+
+            startX = 5 + 40;
+            startY += text.Height + 2;
 
             text = AddLabel(rightArea, ResGumps.TooltipBackgroundOpacity, startX, startY);
             startX += text.Width + 5;
+
             _tooltip_background_opacity = AddHSlider(rightArea, 0, 100, _currentProfile.TooltipBackgroundOpacity, startX, startY, 200);
-            startX = INDENT;
-            startY += ROW;
+
+            startX = 5 + 40;
+            startY += text.Height + 2;
 
             _tooltip_font_hue = AddHueDisplay(rightArea, startX, startY, _currentProfile.TooltipTextHue, ResGumps.TooltipFontHue);
-            startY += ROW;
-            startX = INDENT;
+
+            startY += _tooltip_font_hue.Height + 2;
+
+            startY += 15;
 
             text = AddLabel(rightArea, ResGumps.TooltipFont, startX, startY);
-            startY += text.Height + 4;
+            startY += text.Height + 2;
             startX += 40;
-            _tooltip_font_selector = new FontSelector(7, _currentProfile.TooltipFont, ResGumps.TooltipFontSelect) { X = startX, Y = startY };
-            rightArea.Add(_tooltip_font_selector);
-            startY += 180;
-            startX = INDENT;
 
-            _leftAlignToolTips = AddCheckBox(rightArea, "Align tooltips to the left side", _currentProfile.LeftAlignToolTips, startX, startY);
-            startY += ROW;
-
-            _forceCenterAlignMobileTooltips = AddCheckBox(rightArea, "Center align mobile name tooltips", _currentProfile.ForceCenterAlignTooltipMobiles, startX, startY);
-            startY += ROW;
-
-            text = AddLabel(rightArea, "Tooltip background hue", startX, startY);
-            startY += text.Height + 4;
-            rightArea.Add(_tooltipBGHue = new ModernColorPicker.HueDisplay(_currentProfile.ToolTipBGHue, null, true) { X = startX, Y = startY });
-            startY += ROW;
-
-            text = AddLabel(rightArea, "Tooltip header format (Item name)", startX, startY);
-            startY += text.Height + 4;
-            _tooltipHeaderFormat = AddInputField(null, startX, startY, 250, TEXTBOX_HEIGHT, null, 0, false, false, 50000);
-            _tooltipHeaderFormat.SetText(_currentProfile.TooltipHeaderFormat);
-            rightArea.Add(_tooltipHeaderFormat);
-            startY += ROW;
-
-            _enableTooltipOverride = AddCheckBox(rightArea, "Enable tooltip override (custom text per item)", _currentProfile.EnableTooltipOverride, startX, startY);
-            startY += ROW;
-
-            var ttipOverrideBtn = new NiceButton(startX, startY, 250, TEXTBOX_HEIGHT, ButtonAction.Activate, "Open tooltip override settings") { IsSelectable = false };
-            ttipOverrideBtn.SetTooltip("Warning: This is an advanced feature.");
-            ttipOverrideBtn.MouseUp += (s, e) => { UIManager.GetGump<ClassicUO.Dust765.UI.Gumps.ToolTipOverideMenu>()?.Dispose(); UIManager.Add(new ClassicUO.Dust765.UI.Gumps.ToolTipOverideMenu()); };
-            rightArea.Add(ttipOverrideBtn);
-
-            void SetTooltipOptionsEnabled(bool enabled)
+            _tooltip_font_selector = new FontSelector(7, _currentProfile.TooltipFont, ResGumps.TooltipFontSelect)
             {
-                for (int i = 2; i < rightArea.Children.Count; i++)
-                {
-                    var c = rightArea.Children[i];
-                    c.AcceptMouseInput = enabled;
-                    c.Alpha = enabled ? 1f : 0.5f;
-                }
-            }
-            SetTooltipOptionsEnabled(_use_tooltip.IsChecked);
-            _use_tooltip.ValueChanged += (s, e) => SetTooltipOptionsEnabled(_use_tooltip.IsChecked);
+                X = startX,
+                Y = startY
+            };
+
+            rightArea.Add(_tooltip_font_selector);
 
             Add(rightArea, PAGE);
         }
@@ -2817,7 +2799,7 @@ namespace ClassicUO.Game.UI.Gumps
                 OptionsScrollHeight,
                 true
             );
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
 
             int startX = 5;
             int startY = 5;
@@ -2887,7 +2869,7 @@ namespace ClassicUO.Game.UI.Gumps
                 OptionsScrollHeight,
                 true
             );
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
 
             int startX = 5;
             int startY = 5;
@@ -3143,7 +3125,7 @@ namespace ClassicUO.Game.UI.Gumps
                 OptionsScrollHeight,
                 true
             );
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
 
             int startX = 5;
             int startY = 5;
@@ -3507,7 +3489,7 @@ namespace ClassicUO.Game.UI.Gumps
                 OptionsScrollHeight,
                 true
             );
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
 
             int startX = 5;
             int startY = 5;
@@ -3902,106 +3884,99 @@ namespace ClassicUO.Game.UI.Gumps
         private void BuildNameOverhead()
         {
             const int PAGE = 13;
+            const int listLeft = 165;
+            const int listW = 150;
+            const int dividerX = listLeft + listW + 5;
+            const int panelX = dividerX + 10;
             int top = OptionsScrollY;
-            int nameListTop = top + 54;
-            int bottomSeparatorY = HEIGHT - 90;
-            const int nameOverheadDividerX = 322;
-            int nameListW = nameOverheadDividerX - 165;
+            int bottomSep = HEIGHT - 90;
 
-            ScrollArea rightArea = new ScrollArea
-            (
-                165,
-                nameListTop,
-                nameListW,
-                bottomSeparatorY - nameListTop,
-                true
-            );
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
-            rightArea.UpdateScrollbarPosition();
+            Add(new Line(listLeft, top + 52 + 25 + 2, listW, 1, Color.Gray.PackedValue), PAGE);
 
-            Add
-            (
-                new Line
-                (
-                    165,
-                    nameListTop - 2,
-                    WIDTH - 165,
-                    1,
-                    Color.Gray.PackedValue
-                ),
+            Add(
+                new Line(dividerX, top + 21, 1, bottomSep - top - 21, Color.Gray.PackedValue),
                 PAGE
             );
 
-            Add
-            (
-                new Line
-                (
-                    nameOverheadDividerX,
-                    top + 21,
-                    1,
-                    bottomSeparatorY - top - 21,
-                    Color.Gray.PackedValue
-                ),
-                PAGE
-            );
-
-            NiceButton addButton = new NiceButton
-            (
-                165,
-                OptionsScrollY,
+            NiceButton addButton = new NiceButton(
+                listLeft,
+                top,
                 130,
                 20,
                 ButtonAction.Activate,
-                "New entry"
+                "New"
             )
-            { IsSelectable = false, ButtonParameter = (int)Buttons.NewNameOverheadEntry };
+            {
+                IsSelectable = false,
+                ButtonParameter = (int)Buttons.NewNameOverheadEntry
+            };
 
             Add(addButton, PAGE);
 
-            NiceButton delButton = new NiceButton
-            (
-                165,
-                OptionsScrollY + 32,
+            NiceButton delButton = new NiceButton(
+                listLeft,
+                top + 32,
                 130,
                 20,
                 ButtonAction.Activate,
-                "Delete entry"
+                "Delete"
             )
-            { IsSelectable = false, ButtonParameter = (int)Buttons.DeleteOverheadEntry };
+            {
+                IsSelectable = false,
+                ButtonParameter = (int)Buttons.DeleteOverheadEntry
+            };
 
             Add(delButton, PAGE);
 
+            int bottomPanelMin = 8;
+            int listScrollH = Math.Clamp(bottomSep - (top + 52 + 25 + 4) - bottomPanelMin, 100, 520);
+            int listScrollTop = top + 52 + 25 + 4;
+
+            ScrollArea listScroll = new ScrollArea(listLeft, listScrollTop, listW, listScrollH, true)
+            {
+                ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView
+            };
+            listScroll.UpdateScrollbarPosition();
 
             int startX = 5;
             int startY = 5;
 
             DataBox databox = new DataBox(startX, startY, 1, 1);
             databox.WantUpdateSize = true;
-            rightArea.Add(databox);
+            listScroll.Add(databox);
 
+            void PlaceAssignControl(NameOverheadOption option)
+            {
+                _nameOverheadControl?.Dispose();
+                _nameOverheadControl = new NameOverheadAssignControl(option)
+                {
+                    X = panelX,
+                    Y = top + 10
+                };
+                Add(_nameOverheadControl, PAGE);
+            }
 
             addButton.MouseUp += (sender, e) =>
             {
-                EntryDialog dialog = new
-                (
+                EntryDialog dialog = new(
                     250,
                     150,
-                    "Name overhead entry name",
+                    "Preset name",
                     name =>
                     {
                         if (string.IsNullOrWhiteSpace(name))
                         {
                             return;
                         }
+
                         if (NameOverHeadManager.FindOption(name) != null)
                         {
                             return;
                         }
+
                         NiceButton nb;
-                        databox.Add
-                        (
-                            nb = new NiceButton
-                            (
+                        databox.Add(
+                            nb = new NiceButton(
                                 0,
                                 0,
                                 130,
@@ -4010,29 +3985,17 @@ namespace ClassicUO.Game.UI.Gumps
                                 name
                             )
                             {
-                                ButtonParameter = (int)Buttons.Last + 1 + rightArea.Children.Count
+                                ButtonParameter = (int)Buttons.Last + 1 + databox.Children.Count
                             }
                         );
                         databox.ReArrangeChildren();
                         nb.IsSelected = true;
-                        _nameOverheadControl?.Dispose();
                         var option = new NameOverheadOption(name);
                         NameOverHeadManager.AddOption(option);
-                        _nameOverheadControl = new NameOverheadAssignControl(option)
-                        {
-                            X = nameOverheadDividerX + 10,
-                            Y = OptionsScrollY + 10
-                        };
-                        Add(_nameOverheadControl, PAGE);
+                        PlaceAssignControl(option);
                         nb.MouseUp += (sss, eee) =>
                         {
-                            _nameOverheadControl?.Dispose();
-                            _nameOverheadControl = new NameOverheadAssignControl(option)
-                            {
-                                X = nameOverheadDividerX + 10,
-                                Y = OptionsScrollY + 10
-                            };
-                            Add(_nameOverheadControl, PAGE);
+                            PlaceAssignControl(option);
                         };
                     }
                 )
@@ -4057,8 +4020,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                 if (nb != null)
                 {
-                    QuestionGump dialog = new QuestionGump
-                    (
+                    QuestionGump dialog = new QuestionGump(
                         ResGumps.MacroDeleteConfirmation,
                         b =>
                         {
@@ -4066,11 +4028,13 @@ namespace ClassicUO.Game.UI.Gumps
                             {
                                 return;
                             }
+
                             if (_nameOverheadControl != null)
                             {
                                 NameOverHeadManager.RemoveOption(_nameOverheadControl.Option);
                                 _nameOverheadControl.Dispose();
                             }
+
                             nb.Dispose();
                             databox.ReArrangeChildren();
                         }
@@ -4079,15 +4043,14 @@ namespace ClassicUO.Game.UI.Gumps
                 }
             };
 
+            NiceButton firstNb = null;
 
             foreach (var option in NameOverHeadManager.GetAllOptions())
             {
                 NiceButton nb;
 
-                databox.Add
-                (
-                    nb = new NiceButton
-                    (
+                databox.Add(
+                    nb = new NiceButton(
                         0,
                         0,
                         130,
@@ -4096,34 +4059,36 @@ namespace ClassicUO.Game.UI.Gumps
                         option.Name
                     )
                     {
-                        ButtonParameter = (int)Buttons.Last + 1 + rightArea.Children.Count,
+                        ButtonParameter = (int)Buttons.Last + 1 + databox.Children.Count,
                         Tag = option
                     }
                 );
 
-                nb.IsSelected = true;
+                firstNb ??= nb;
 
                 nb.MouseUp += (sss, eee) =>
                 {
                     NiceButton mupNiceButton = (NiceButton)sss;
-                    var option = mupNiceButton.Tag as NameOverheadOption;
-                    if (option == null)
+                    var opt = mupNiceButton.Tag as NameOverheadOption;
+                    if (opt == null)
                     {
                         return;
                     }
-                    _nameOverheadControl?.Dispose();
-                    _nameOverheadControl = new NameOverheadAssignControl(option)
-                    {
-                        X = nameOverheadDividerX + 10,
-                        Y = OptionsScrollY + 10
-                    };
-                    Add(_nameOverheadControl, PAGE);
+
+                    PlaceAssignControl(opt);
                 };
             }
 
             databox.ReArrangeChildren();
 
-            Add(rightArea, PAGE);
+            var allOpts = NameOverHeadManager.GetAllOptions();
+            if (allOpts != null && allOpts.Count > 0 && firstNb != null)
+            {
+                firstNb.IsSelected = true;
+                PlaceAssignControl(allOpts[0]);
+            }
+
+            Add(listScroll, PAGE);
         }
 
         private void BuildMods()
@@ -4613,8 +4578,8 @@ namespace ClassicUO.Game.UI.Gumps
             rightArea.Add(_coolDowns);
 
             #region Cooldown conditions
-            SettingsSection conditions = new SettingsSection("Condition", rightArea.Width + 10);
-            conditions.Y = _coolDowns.Y + _coolDowns.Height + 5;
+            SettingsSection conditions = new SettingsSection("Condition", rightArea.Width);
+            conditions.Y = _coolDowns.Y + _coolDowns.Height + 16;
 
             {
                 NiceButton _button;
@@ -4647,7 +4612,7 @@ namespace ClassicUO.Game.UI.Gumps
         {
             const int PAGE = 8788;
             ScrollArea rightArea = new ScrollArea(165, OptionsScrollY, WIDTH - 185, OptionsScrollHeight, true);
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
 
             SettingsSection gridSection = new SettingsSection("Grid Containers", rightArea.Width);
 
@@ -4924,7 +4889,7 @@ namespace ClassicUO.Game.UI.Gumps
             const int PAGE = 8789;
 
             ScrollArea rightArea = new ScrollArea(165, OptionsScrollY, WIDTH - 185, OptionsScrollHeight, true);
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
 
             int startX = 5;
             int startY = 5;
@@ -5138,7 +5103,61 @@ namespace ClassicUO.Game.UI.Gumps
 
             section.Add(_scaleMonstersEnabled = AddCheckBox(null, "Scale monsters (Ctrl+Shift over monster: +/- to scale)", _currentProfile.ScaleMonstersEnabled, startX, startY));
             startY += _scaleMonstersEnabled.Height + 6;
+
+            section.Add(new Label("Overhead / Underfoot", true, HUE_FONT, font: FONT));
+            section.Add(
+                _overheadRange = AddCheckBox(
+                    null,
+                    _langDust.DisplayRangeInOverhead,
+                    _currentProfile.OverheadRange,
+                    0,
+                    0
+                )
+            );
+
+            section.Add(new Label(_langDust.Nameplates, true, HUE_FONT, font: FONT));
+            section.Add(_namePlateHealthBar = AddCheckBox(null, "", _currentProfile.NamePlateHealthBar, 0, 0));
+            section.AddRight(AddLabel(null, _langDust.NameplatesAlsoActAsHealthBars, 0, 0));
+            section.PushIndent();
+            section.Add(AddLabel(null, _langDust.HpOpacity, 0, 0));
+            section.AddRight(
+                _namePlateHealthBarOpacity = AddHSlider(null, 0, 100, _currentProfile.NamePlateHealthBarOpacity, 0, 0, 200)
+            );
+            section.PopIndent();
+
+            section.Add(new Label(_langDust.Mobiles, true, HUE_FONT, font: FONT));
+            section.Add(AddLabel(null, _langDust.OverheadTextWidth, 0, 0));
+            section.AddRight(
+                _overheadTextWidth = AddHSlider(null, 100, 600, _currentProfile.OverheadChatWidth, 0, 0, 200)
+            );
+
+            section.Add(new Label(_langDust.NameplatesExtendedSection, true, HUE_FONT, font: FONT));
+            section.Add(_namePlateShowAtFullHealth = AddCheckBox(null, "", _currentProfile.NamePlateHideAtFullHealth, 0, 0));
+            section.AddRight(new Label(_langDust.HideNameplatesIfFullHealth, true, HUE_FONT, font: FONT));
+            section.PushIndent();
+            section.Add(_namePlateHealthOnlyWarmode = AddCheckBox(null, "", _currentProfile.NamePlateHideAtFullHealthInWarmode, 0, 0));
+            section.AddRight(new Label(_langDust.OnlyInWarmode, true, HUE_FONT, font: FONT));
+            section.PopIndent();
+            section.Add(AddLabel(null, _langDust.BorderOpacity, 0, 0));
+            section.AddRight(_nameplateBorderOpacity = AddHSlider(null, 0, 100, _currentProfile.NamePlateBorderOpacity, 0, 0, 200));
+            section.Add(AddLabel(null, _langDust.BackgroundOpacity, 0, 0));
+            section.AddRight(_namePlateOpacity = AddHSlider(null, 0, 100, _currentProfile.NamePlateOpacity, 0, 0, 200));
+            section.Add(_namePlateCustomChrome = AddCheckBox(null, "", _currentProfile.NamePlateUseCustomChrome, 0, 0));
+            section.AddRight(new Label(_langDust.NamePlateCustomChrome, true, HUE_FONT, font: FONT));
+            section.PushIndent();
+            section.Add(_namePlateCustomBgHue = AddHueDisplay(null, 0, 0, _currentProfile.NamePlateCustomBackgroundHue, ""));
+            section.AddRight(new Label(_langDust.NamePlateCustomBackgroundHue, true, HUE_FONT, font: FONT), 2);
+            section.Add(_namePlateCustomBorderHuePicker = AddHueDisplay(null, 0, 0, _currentProfile.NamePlateCustomBorderHue, ""));
+            section.AddRight(new Label(_langDust.NamePlateCustomBorderHue, true, HUE_FONT, font: FONT), 2);
+            section.PopIndent();
+            section.Add(_namePlateHealthBarMatchStrip = AddCheckBox(null, "", _currentProfile.NamePlateHealthBarMatchStrip, 0, 0));
+            section.AddRight(new Label(_langDust.NamePlateHealthBarMatchStrip, true, HUE_FONT, font: FONT));
+            section.Add(_namePlateFullPlateWidthScalesWithHp = AddCheckBox(null, "", _currentProfile.NamePlateFullPlateWidthScalesWithHp, 0, 0));
+            section.AddRight(new Label(_langDust.NamePlateFullPlateWidthScalesWithHp, true, HUE_FONT, font: FONT));
+            section.Add(_showHpLineInNoh = AddCheckBox(null, "", _currentProfile.ShowHPLineInNOH, 0, 0));
+            section.AddRight(new Label(_langDust.ShowHPLineInNOH, true, HUE_FONT, font: FONT));
             // ## BEGIN - END ## // ART / HUE CHANGES
+
             // ## BEGIN - END ## // TITLE BAR
             SettingsSection sectionTitleBar = AddSettingsSection(box, "Title Bar");
             sectionTitleBar.Y = section.Bounds.Bottom + 80;
@@ -5353,19 +5372,11 @@ namespace ClassicUO.Game.UI.Gumps
             section4.AddRight(AddLabel(null, Language.Instance?.GetOptionsGumpLanguage?.GetGeneral?.CursorRange ?? "Show target range indicator (shows range circle when targeting)", 0, 0));
             startY += _showTargetRangeIndicator.Height + 6;
             // ## BEGIN - END ## // CURSOR
-            // ## BEGIN - END ## // OVERHEAD / UNDERCHAR
-            SettingsSection section5 = AddSettingsSection(box, "Overhead / Underfoot");
-            section5.Y = section4.Bounds.Bottom + 40;
-            startY = section4.Bounds.Bottom + 40;
-
-            section5.Add(_overheadRange = AddCheckBox(null, _langDust.DisplayRangeInOverhead, _currentProfile.OverheadRange, startX, startY));
-            startY += _overheadRange.Height + 6;
-            // ## BEGIN - END ## // OVERHEAD / UNDERCHAR
             // ## BEGIN - END ## // OLDHEALTHLINES
             SettingsSection section6 = AddSettingsSection(box, "Old Health Lines");
-            section6.Y = section5.Bounds.Bottom + 40;
+            section6.Y = section4.Bounds.Bottom + 40;
 
-            startY = section5.Bounds.Bottom + 40;
+            startY = section4.Bounds.Bottom + 40;
 
             section6.Add(_useOldHealthBars = AddCheckBox(null, _langDust.UseOldHealthlines, _currentProfile.UseOldHealthBars, startX, startY));
             startY += _useOldHealthBars.Height + 6;
@@ -5588,27 +5599,8 @@ namespace ClassicUO.Game.UI.Gumps
             sectionJournal.Add(AddLabel(null, _langDust.HideTimestamp, 0, 0));
             sectionJournal.Add(_hideJournalTimestamp = AddCheckBox(null, "", _currentProfile.HideJournalTimestamp, 0, 0));
 
-            SettingsSection sectionNameplates = AddSettingsSection(box, _langDust.Nameplates);
-            sectionNameplates.Y = sectionJournal.Bounds.Bottom + 40;
-            sectionNameplates.Add(_namePlateHealthBar = AddCheckBox(null, "", _currentProfile.NamePlateHealthBar, 0, 0));
-            sectionNameplates.AddRight(AddLabel(null, _langDust.NameplatesAlsoActAsHealthBars, 0, 0));
-            sectionNameplates.PushIndent();
-            sectionNameplates.Add(AddLabel(null, _langDust.HpOpacity, 0, 0));
-            sectionNameplates.AddRight(_namePlateHealthBarOpacity = AddHSlider(null, 0, 100, _currentProfile.NamePlateHealthBarOpacity, 0, 0, 200));
-            sectionNameplates.Add(_namePlateShowAtFullHealth = AddCheckBox(null, "", _currentProfile.NamePlateHideAtFullHealth, 0, 0));
-            sectionNameplates.AddRight(new Label(_langDust.HideNameplatesIfFullHealth, true, HUE_FONT, font: FONT));
-            sectionNameplates.PushIndent();
-            sectionNameplates.Add(_namePlateHealthOnlyWarmode = AddCheckBox(null, "", _currentProfile.NamePlateHideAtFullHealthInWarmode, 0, 0));
-            sectionNameplates.AddRight(new Label(_langDust.OnlyInWarmode, true, HUE_FONT, font: FONT));
-            sectionNameplates.PopIndent();
-            sectionNameplates.PopIndent();
-            sectionNameplates.Add(AddLabel(null, _langDust.BorderOpacity, 0, 0));
-            sectionNameplates.AddRight(_nameplateBorderOpacity = AddHSlider(null, 0, 100, _currentProfile.NamePlateBorderOpacity, 0, 0, 200));
-            sectionNameplates.Add(AddLabel(null, _langDust.BackgroundOpacity, 0, 0));
-            sectionNameplates.AddRight(_namePlateOpacity = AddHSlider(null, 0, 100, _currentProfile.NamePlateOpacity, 0, 0, 200));
-
             SettingsSection sectionMobiles = AddSettingsSection(box, _langDust.Mobiles);
-            sectionMobiles.Y = sectionNameplates.Bounds.Bottom + 40;
+            sectionMobiles.Y = sectionJournal.Bounds.Bottom + 40;
             sectionMobiles.Add(_damageHueSelf = AddHueDisplay(null, 0, 0, _currentProfile.DamageHueSelf, ""));
             sectionMobiles.AddRight(new Label(_langDust.DamageToSelf, true, HUE_FONT, font: FONT));
             sectionMobiles.AddRight(_damageHueOther = AddHueDisplay(null, 0, 0, _currentProfile.DamageHueOther, ""));
@@ -5619,8 +5611,6 @@ namespace ClassicUO.Game.UI.Gumps
             sectionMobiles.AddRight(new Label(_langDust.DamageToAllies, true, HUE_FONT, font: FONT));
             sectionMobiles.Add(_damageHueLastAttack = AddHueDisplay(null, 0, 0, _currentProfile.DamageHueLastAttck, ""));
             sectionMobiles.AddRight(new Label(_langDust.DamageToLastAttack, true, HUE_FONT, font: FONT));
-            sectionMobiles.Add(AddLabel(null, _langDust.OverheadTextWidth, 0, 0));
-            sectionMobiles.AddRight(_overheadTextWidth = AddHSlider(null, 100, 600, _currentProfile.OverheadChatWidth, 0, 0, 200));
             sectionMobiles.Add(AddLabel(null, _langDust.BelowMobileHealthBarScale, 0, 0));
             sectionMobiles.AddRight(_healthLineSizeMultiplier = AddHSlider(null, 1, 5, _currentProfile.HealthLineSizeMultiplier, 0, 0, 150));
             sectionMobiles.Add(_openHealthBarForLastAttack = AddCheckBox(null, "", _currentProfile.OpenHealthBarForLastAttack, 0, 0));
@@ -5705,6 +5695,28 @@ namespace ClassicUO.Game.UI.Gumps
             Label combatHint = new Label(_langDust.CombatTrackingSectionHint, true, HUE_FONT, rightArea.Width - 50, FONT, FontStyle.None);
             sectionPv.Add(combatHint);
 
+            SettingsSection section765 = AddSettingsSection(box, _langDust.Options765SectionTitle);
+            section765.Y = sectionPv.Bounds.Bottom + 28;
+            NiceButton openOptions765 = new NiceButton(startX, startY, Math.Min(380, rightArea.Width - 40), 28, ButtonAction.Activate, _langDust.Options765OpenButton) { IsSelectable = false, DisplayBorder = true };
+            openOptions765.MouseUp += (s, e) =>
+            {
+                if (e.Button != MouseButtonType.Left || _options765ScrollHost == null || _options765ScrollHost.IsDisposed)
+                {
+                    return;
+                }
+
+                UIManager.GetGump<Options765ModalGump>()?.Dispose();
+                if (_options765ScrollHost.Parent == this)
+                {
+                    Remove(_options765ScrollHost);
+                }
+
+                UIManager.Add(new Options765ModalGump(this, _options765ScrollHost));
+            };
+            section765.Add(openOptions765);
+            Label options765Hint = new Label(_langDust.Options765SectionHint, true, HUE_FONT, rightArea.Width - 50, FONT, FontStyle.None);
+            section765.Add(options765Hint);
+
             Add(rightArea, PAGE);
         }
         private void Build765()
@@ -5714,7 +5726,7 @@ namespace ClassicUO.Game.UI.Gumps
             //ScrollArea rightArea = new ScrollArea(190, 20, WIDTH - 210, 420, true);
             // ## BEGIN - END ## // TAZUO
             ScrollArea rightArea = new ScrollArea(165, OptionsScrollY, WIDTH - 185, OptionsScrollHeight, true);
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
             // ## BEGIN - END ## // TAZUO
 
             int startX = 5;
@@ -6186,10 +6198,33 @@ namespace ClassicUO.Game.UI.Gumps
             section6.Add(AddLabel(null, "Macro: LobbyDrop (everyone drops spell on target)", startX, startY));
             // ## BEGIN - END ## // LOBBY
 
+            _options765ScrollHost = rightArea;
             Add(rightArea, PAGE);
         }
         // ## BEGIN - END ## // TAZUO
         // ## BEGIN - END ## // BASICSETUP
+
+        internal void RestoreOptions765Scroll(ScrollArea scroll)
+        {
+            if (scroll == null || scroll.IsDisposed)
+            {
+                return;
+            }
+
+            scroll.X = 165;
+            scroll.Y = OptionsScrollY;
+            scroll.Width = WIDTH - 185;
+            scroll.Height = OptionsScrollHeight;
+            scroll.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
+            Add(scroll, 17);
+            _options765ScrollHost = scroll;
+        }
+
+        public override void Dispose()
+        {
+            UIManager.GetGump<Options765ModalGump>()?.Dispose();
+            base.Dispose();
+        }
 
         public override void OnButtonClick(int buttonID)
         {
@@ -6537,11 +6572,6 @@ namespace ClassicUO.Game.UI.Gumps
             _currentProfile.DisplaySkillBarOnChange = _skillProgressBarOnChange.IsChecked;
             _currentProfile.SkillBarFormat = _skillProgressBarFormat.Text;
 
-            if (_tooltipHeaderFormat.Text.Length > 0)
-                _currentProfile.TooltipHeaderFormat = _tooltipHeaderFormat.Text;
-
-            _currentProfile.ToolTipBGHue = _tooltipBGHue.Hue;
-
             _currentProfile.OpenHealthBarForLastAttack = _openHealthBarForLastAttack.IsChecked;
             _currentProfile.HealthLineSizeMultiplier = _healthLineSizeMultiplier.Value;
 
@@ -6553,8 +6583,6 @@ namespace ClassicUO.Game.UI.Gumps
                 UIManager.GetGump<ResizableJournal>()?.BuildBorder();
             }
             _currentProfile.HideJournalTimestamp = _hideJournalTimestamp.IsChecked;
-
-            _currentProfile.ForceCenterAlignTooltipMobiles = _forceCenterAlignMobileTooltips.IsChecked;
 
             _currentProfile.UseModernShopGump = _useModernShop.IsChecked;
 
@@ -6580,8 +6608,6 @@ namespace ClassicUO.Game.UI.Gumps
             _currentProfile.DragSelect_NameplateModifier = _dragSelectNameplateModifier.SelectedIndex;
 
             _currentProfile.NamePlateHideAtFullHealthInWarmode = _namePlateHealthOnlyWarmode.IsChecked;
-
-            _currentProfile.LeftAlignToolTips = _leftAlignToolTips.IsChecked;
 
             _currentProfile.NamePlateHideAtFullHealth = _namePlateShowAtFullHealth.IsChecked;
 
@@ -6655,6 +6681,12 @@ namespace ClassicUO.Game.UI.Gumps
             _currentProfile.NamePlateOpacity = (byte)_namePlateOpacity.Value;
             _currentProfile.NamePlateBorderOpacity = (byte)_nameplateBorderOpacity.Value;
             _currentProfile.NamePlateHealthBarOpacity = (byte)_namePlateHealthBarOpacity.Value;
+            _currentProfile.NamePlateUseCustomChrome = _namePlateCustomChrome.IsChecked;
+            _currentProfile.NamePlateCustomBackgroundHue = _namePlateCustomBgHue.Hue;
+            _currentProfile.NamePlateCustomBorderHue = _namePlateCustomBorderHuePicker.Hue;
+            _currentProfile.NamePlateHealthBarMatchStrip = _namePlateHealthBarMatchStrip.IsChecked;
+            _currentProfile.NamePlateFullPlateWidthScalesWithHp = _namePlateFullPlateWidthScalesWithHp.IsChecked;
+            _currentProfile.ShowHPLineInNOH = _showHpLineInNoh.IsChecked;
             _currentProfile.GridContainerSearchMode = _gridContainerSearchAlternative.SelectedIndex;
             _currentProfile.GridContainerScaleItems = _gridContainerItemScale.IsChecked;
             _currentProfile.GridEnableContPreview = _gridContainerPreview.IsChecked;
@@ -7275,12 +7307,13 @@ namespace ClassicUO.Game.UI.Gumps
 
             // tooltip
             _currentProfile.UseTooltip = _use_tooltip.IsChecked;
-            _currentProfile.EnableTooltipOverride = _enableTooltipOverride.IsChecked;
             _currentProfile.TooltipTextHue = _tooltip_font_hue.Hue;
             _currentProfile.TooltipDelayBeforeDisplay = _delay_before_display_tooltip.Value;
             _currentProfile.TooltipBackgroundOpacity = _tooltip_background_opacity.Value;
             _currentProfile.TooltipDisplayZoom = _tooltip_zoom.Value;
-            _currentProfile.TooltipFont = _tooltip_font_selector.GetSelectedFont();
+            byte tf = _tooltip_font_selector.GetSelectedFont();
+            _currentProfile.TooltipFont = tf;
+            _currentProfile.SelectedToolTipFont = tf;
 
             // ## BEGIN - END ## // BASICSETUP
             // ## BEGIN - END ## // TITLE BAR
@@ -8385,6 +8418,28 @@ namespace ClassicUO.Game.UI.Gumps
                         y += 30;
                     }
                 }
+
+                bool anyChecked = false;
+                for (byte i = 0; i < _buttons.Length; i++)
+                {
+                    if (_buttons[i] != null && _buttons[i].IsChecked)
+                    {
+                        anyChecked = true;
+                        break;
+                    }
+                }
+
+                if (!anyChecked)
+                {
+                    for (byte i = 0; i < _buttons.Length; i++)
+                    {
+                        if (_buttons[i] != null)
+                        {
+                            _buttons[i].IsChecked = true;
+                            break;
+                        }
+                    }
+                }
             }
 
             public byte GetSelectedFont()
@@ -8399,7 +8454,15 @@ namespace ClassicUO.Game.UI.Gumps
                     }
                 }
 
-                return 0xFF;
+                for (byte i = 0; i < _buttons.Length; i++)
+                {
+                    if (_buttons[i] != null)
+                    {
+                        return i;
+                    }
+                }
+
+                return 1;
             }
 
             public void SetSelectedFont(int index)

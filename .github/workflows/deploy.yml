@@ -32,7 +32,7 @@ jobs:
         include:
           - os: windows-latest
             target: win-x64
-            tfm: net10.0-windows
+            tfm: net10.0
             bootTfm: net472
             bootOutputType: WinExe
           - os: ubuntu-22.04

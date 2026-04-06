@@ -1,111 +1,389 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Windows.Forms;
+using System.Threading.Tasks;
+using ClassicUO;
+using SDL3;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace ClassicUO.Dust765
 {
-    /// <summary>
-    /// Gerencia a janela de loading (SplashForm) em uma thread STA separada.
-    /// O splash abre ANTES da janela SDL/FNA aparecer, durante Client.Load().
-    /// </summary>
     internal static class SplashScreenManager
     {
+#if WINDOWS
+        private const int WinW = 420;
+        private const int WinH = 348;
+
         private static Thread _thread;
-        private static SplashForm _form;
         private static volatile bool _ready;
+        private static volatile bool _closeRequested;
+        private static readonly object _textLock = new object();
+        private static string _status = string.Empty;
+        private static string _notice = string.Empty;
 
-        public static bool IsSupported =>
-            RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-
-        /// <summary>
-        /// Exibe o splash. Retorna imediatamente (non-blocking).
-        /// </summary>
         public static void Show()
         {
-            if (!IsSupported)
+            if (_thread != null)
+            {
                 return;
+            }
 
             _ready = false;
-
-            _thread = new Thread(() =>
+            _closeRequested = false;
+            lock (_textLock)
             {
-                try
-                {
-                    Application.EnableVisualStyles();
-                    _form = new SplashForm();
-                    _form.Shown += (s, e) => _ready = true;
-                    Application.Run(_form);
-                }
-                catch (Exception ex)
-                {
-                    _ready = true; // unblock main thread
-                    Console.WriteLine($"[SplashScreen] failed: {ex.GetType().Name}: {ex.Message}");
-                }
-            });
+                _status = string.Empty;
+                _notice = string.Empty;
+            }
 
-            _thread.Name = "CUO_SPLASH_THREAD";
-            _thread.SetApartmentState(ApartmentState.STA);
-            _thread.IsBackground = true;
+            _thread = new Thread(SplashThreadMain)
+            {
+                Name = "CUO_SPLASH_SDL",
+                IsBackground = true
+            };
             _thread.Start();
 
-            // Aguarda até o form aparecer (max 2s)
             int waited = 0;
             while (!_ready && waited < 2000)
             {
                 Thread.Sleep(20);
                 waited += 20;
             }
+
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    string n = SplashReleaseChecker.TryGetUpdateNotice();
+                    if (string.IsNullOrEmpty(n))
+                    {
+                        return;
+                    }
+
+                    lock (_textLock)
+                    {
+                        _notice = n;
+                    }
+                }
+                catch
+                {
+                }
+            });
         }
 
-        /// <summary>
-        /// Atualiza o texto de status exibido no splash.
-        /// </summary>
         public static void SetStatus(string text)
         {
-            try { _form?.SetStatus(text); }
-            catch { /* ignora */ }
+            lock (_textLock)
+            {
+                _status = text ?? string.Empty;
+            }
         }
 
-        /// <summary>
-        /// Fecha o splash com fade-out. Chamado quando o game está pronto.
-        /// </summary>
         public static void Close()
         {
-            if (_form == null || !IsSupported)
+            _closeRequested = true;
+            _thread?.Join(8000);
+            _thread = null;
+        }
+
+        private static void SplashThreadMain()
+        {
+            IntPtr window = IntPtr.Zero;
+            IntPtr renderer = IntPtr.Zero;
+            IntPtr logoTex = IntPtr.Zero;
+
+            SDL.SDL_SetMainReady();
+
+            if (!SDL.SDL_Init(SDL.SDL_InitFlags.SDL_INIT_VIDEO))
+            {
+                _ready = true;
                 return;
+            }
 
             try
             {
-                if (_form.InvokeRequired)
-                    _form.Invoke(new Action(FadeOutAndClose));
-                else
-                    FadeOutAndClose();
+                SDL.SDL_WindowFlags wflags =
+                    SDL.SDL_WindowFlags.SDL_WINDOW_HIDDEN
+                    | SDL.SDL_WindowFlags.SDL_WINDOW_BORDERLESS
+                    | SDL.SDL_WindowFlags.SDL_WINDOW_ALWAYS_ON_TOP;
+
+                if (!SDL.SDL_CreateWindowAndRenderer("ClassicUO", WinW, WinH, wflags, out window, out renderer))
+                {
+                    return;
+                }
+
+                uint disp = SDL.SDL_GetPrimaryDisplay();
+                if (SDL.SDL_GetDisplayBounds(disp, out SDL.SDL_Rect bounds))
+                {
+                    int x = bounds.x + Math.Max(0, (bounds.w - WinW) / 2);
+                    int y = bounds.y + Math.Max(0, (bounds.h - WinH) / 2);
+                    SDL.SDL_SetWindowPosition(window, x, y);
+                }
+
+                int tw = 0, th = 0;
+                logoTex = TryLoadLogoTexture(renderer, out tw, out th);
+
+                SDL.SDL_ShowWindow(window);
+
+                float opacity = 0f;
+
+                _ready = true;
+
+                while (true)
+                {
+                    SDL.SDL_Event evt;
+                    while (SDL.SDL_PollEvent(out evt))
+                    {
+                        if (evt.type == (uint)SDL.SDL_EventType.SDL_EVENT_QUIT
+                            || evt.type == (uint)SDL.SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED)
+                        {
+                            _closeRequested = true;
+                        }
+                    }
+
+                    if (_closeRequested)
+                    {
+                        opacity -= 0.11f;
+                        if (opacity < 0.02f)
+                        {
+                            break;
+                        }
+                    }
+                    else if (opacity < 1f)
+                    {
+                        opacity = Math.Min(1f, opacity + 0.09f);
+                    }
+
+                    SDL.SDL_SetWindowOpacity(window, Math.Clamp(opacity, 0f, 1f));
+
+                    SDL.SDL_SetRenderDrawColorFloat(renderer, 0.055f, 0.039f, 0.039f, 1f);
+                    SDL.SDL_RenderClear(renderer);
+
+                    string status;
+                    string notice;
+                    lock (_textLock)
+                    {
+                        status = _status;
+                        notice = _notice;
+                    }
+
+                    if (logoTex != IntPtr.Zero && tw > 0 && th > 0)
+                    {
+                        float maxW = WinW - 48f;
+                        float scale = Math.Min(1f, maxW / tw);
+                        float dw = tw * scale;
+                        float dh = th * scale;
+                        float dx = (WinW - dw) * 0.5f;
+                        float dy = 28f;
+                        var src = new SDL.SDL_FRect { x = 0, y = 0, w = tw, h = th };
+                        var dst = new SDL.SDL_FRect { x = dx, y = dy, w = dw, h = dh };
+                        SDL.SDL_RenderTexture(renderer, logoTex, ref src, ref dst);
+                    }
+
+                    DrawProgressBar(renderer);
+
+                    float textY = WinH - 78f;
+                    foreach (string line in WrapForDebugText(notice, 52))
+                    {
+                        SDL.SDL_RenderDebugText(renderer, 10f, textY, line);
+                        textY += 12f;
+                    }
+
+                    if (!string.IsNullOrEmpty(notice) && !string.IsNullOrEmpty(status))
+                    {
+                        textY += 4f;
+                    }
+
+                    if (!string.IsNullOrEmpty(status))
+                    {
+                        SDL.SDL_RenderDebugText(renderer, 10f, textY, Truncate(status, 64));
+                    }
+
+                    SDL.SDL_RenderPresent(renderer);
+                    Thread.Sleep(16);
+                }
             }
-            catch { /* ignora — form já pode ter sido fechado */ }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SplashScreen] {ex.GetType().Name}: {ex.Message}");
+            }
+            finally
+            {
+                if (logoTex != IntPtr.Zero)
+                {
+                    SDL.SDL_DestroyTexture(logoTex);
+                }
+
+                if (renderer != IntPtr.Zero)
+                {
+                    SDL.SDL_DestroyRenderer(renderer);
+                }
+
+                if (window != IntPtr.Zero)
+                {
+                    SDL.SDL_DestroyWindow(window);
+                }
+
+                _ready = true;
+            }
         }
 
-        private static void FadeOutAndClose()
+        private static IntPtr TryLoadLogoTexture(IntPtr renderer, out int tw, out int th)
         {
-            if (_form == null || _form.IsDisposed)
-                return;
+            tw = 0;
+            th = 0;
 
-            var fadeOut = new System.Windows.Forms.Timer { Interval = 16 };
-            fadeOut.Tick += (s, e) =>
+            try
             {
-                if (_form.Opacity <= 0.05)
+                string logoPath = Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Client", "logodust.png");
+                if (!File.Exists(logoPath))
                 {
-                    fadeOut.Stop();
-                    fadeOut.Dispose();
-                    _form.Close();
-                    _form = null;
+                    return IntPtr.Zero;
+                }
+
+                using Image<Rgba32> image = Image.Load<Rgba32>(logoPath);
+                tw = image.Width;
+                th = image.Height;
+                if (tw <= 0 || th <= 0)
+                {
+                    return IntPtr.Zero;
+                }
+
+                var pixels = new Rgba32[tw * th];
+                image.CopyPixelDataTo(pixels);
+
+                IntPtr tex = SDL.SDL_CreateTexture(
+                    renderer,
+                    SDL.SDL_PixelFormat.SDL_PIXELFORMAT_RGBA8888,
+                    SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_STATIC,
+                    tw,
+                    th);
+
+                if (tex == IntPtr.Zero)
+                {
+                    return IntPtr.Zero;
+                }
+
+                GCHandle h = GCHandle.Alloc(pixels, GCHandleType.Pinned);
+                try
+                {
+                    IntPtr ptr = h.AddrOfPinnedObject();
+                    var rect = new SDL.SDL_Rect { x = 0, y = 0, w = tw, h = th };
+                    int pitch = tw * 4;
+                    if (!SDL.SDL_UpdateTexture(tex, ref rect, ptr, pitch))
+                    {
+                        SDL.SDL_DestroyTexture(tex);
+                        return IntPtr.Zero;
+                    }
+                }
+                finally
+                {
+                    h.Free();
+                }
+
+                return tex;
+            }
+            catch
+            {
+                tw = 0;
+                th = 0;
+                return IntPtr.Zero;
+            }
+        }
+
+        private static void DrawProgressBar(IntPtr renderer)
+        {
+            float barX = 40f;
+            float barY = WinH - 40f;
+            float barW = WinW - 80f;
+            float barH = 8f;
+
+            SDL.SDL_SetRenderDrawColorFloat(renderer, 0.17f, 0.086f, 0.086f, 1f);
+            var bg = new SDL.SDL_FRect { x = barX, y = barY, w = barW, h = barH };
+            SDL.SDL_RenderFillRect(renderer, ref bg);
+
+            int span = Math.Max(1, (int)barW - 40);
+            int phase = (int)((SDL.SDL_GetTicks() / 18) % (ulong)span);
+            float segW = 56f;
+            float x = barX + phase;
+            SDL.SDL_SetRenderDrawColorFloat(renderer, 0.9f, 0.27f, 0.27f, 1f);
+            var hi = new SDL.SDL_FRect { x = x, y = barY + 1f, w = segW, h = barH - 2f };
+            if (hi.x + hi.w > barX + barW)
+            {
+                hi.w = barX + barW - hi.x;
+            }
+
+            if (hi.w > 1f)
+            {
+                SDL.SDL_RenderFillRect(renderer, ref hi);
+            }
+
+            SDL.SDL_SetRenderDrawColorFloat(renderer, 0.47f, 0.12f, 0.12f, 1f);
+            SDL.SDL_RenderRect(renderer, ref bg);
+        }
+
+        private static string Truncate(string s, int maxChars)
+        {
+            if (string.IsNullOrEmpty(s) || s.Length <= maxChars)
+            {
+                return s;
+            }
+
+            return s.Substring(0, maxChars - 1) + "…";
+        }
+
+        private static IEnumerable<string> WrapForDebugText(string text, int maxCharsPerLine)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                yield break;
+            }
+
+            string[] words = text.Split(' ');
+            var line = string.Empty;
+            foreach (string w in words)
+            {
+                if (string.IsNullOrEmpty(w))
+                {
+                    continue;
+                }
+
+                string next = string.IsNullOrEmpty(line) ? w : line + " " + w;
+                if (next.Length <= maxCharsPerLine)
+                {
+                    line = next;
                 }
                 else
                 {
-                    _form.Opacity -= 0.10;
+                    if (!string.IsNullOrEmpty(line))
+                    {
+                        yield return line;
+                    }
+
+                    line = w.Length > maxCharsPerLine ? Truncate(w, maxCharsPerLine) : w;
                 }
-            };
-            fadeOut.Start();
+            }
+
+            if (!string.IsNullOrEmpty(line))
+            {
+                yield return line;
+            }
         }
+#else
+        public static void Show()
+        {
+        }
+
+        public static void SetStatus(string text)
+        {
+        }
+
+        public static void Close()
+        {
+        }
+#endif
     }
 }

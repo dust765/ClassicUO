@@ -187,6 +187,22 @@ namespace ClassicUO.Game.UI.Gumps
                 _slotNumberBox.Text = (index + 1).ToString();
             }
 
+            private void SyncHotkeyBoxFromSlot()
+            {
+                if (_slotData.Key != 0 && (SDL.SDL_Keycode)_slotData.Key != SDL.SDL_Keycode.SDLK_UNKNOWN)
+                {
+                    SDL.SDL_Keymod mod = SDL.SDL_Keymod.SDL_KMOD_NONE;
+                    if (_slotData.Alt) mod |= SDL.SDL_Keymod.SDL_KMOD_ALT;
+                    if (_slotData.Ctrl) mod |= SDL.SDL_Keymod.SDL_KMOD_CTRL;
+                    if (_slotData.Shift) mod |= SDL.SDL_Keymod.SDL_KMOD_SHIFT;
+                    _hotkeyBox.SetKey((SDL.SDL_Keycode)_slotData.Key, mod);
+                }
+                else
+                {
+                    _hotkeyBox.SetKey(SDL.SDL_Keycode.SDLK_UNKNOWN, SDL.SDL_Keymod.SDL_KMOD_NONE);
+                }
+            }
+
             private void RefreshIcon()
             {
                 _icon?.Dispose();
@@ -200,7 +216,7 @@ namespace ClassicUO.Game.UI.Gumps
                         Add(_icon);
                     }
                 }
-                else if (_slotData.SlotType == (int)ActionBarSlotType.Skill && _slotData.SkillIndex >= 0 && World.InGame && World.Player != null && _slotData.SkillIndex < World.Player.Skills.Length)
+                else if (_slotData.SlotType == (int)ActionBarSlotType.Skill && _slotData.SkillIndex >= 0 && World.InGame && World.Player != null && ActionBarSkillResolver.FindPlayerSkill(_slotData.SkillIndex) != null)
                 {
                     _icon = new GumpPic(0, 0, 0x24B8, 0) { X = 52, Y = 4, Width = 40, Height = 40, AcceptMouseInput = false };
                     Add(_icon);
@@ -211,25 +227,26 @@ namespace ClassicUO.Game.UI.Gumps
                     _icon = new GumpPic(0, 0, def.Icon, 0) { X = 52, Y = 4, Width = 40, Height = 40, AcceptMouseInput = false };
                     Add(_icon);
                 }
+                else if (_slotData.SlotType == (int)ActionBarSlotType.Macro && !string.IsNullOrEmpty(_slotData.MacroName))
+                {
+                    _icon = new GumpPic(0, 0, 0x24B8, 0) { X = 52, Y = 4, Width = 40, Height = 40, AcceptMouseInput = false };
+                    Add(_icon);
+                }
             }
 
             public void AcceptSpell(int spellId)
             {
-                _slotData.SlotType = (int)ActionBarSlotType.Spell;
-                _slotData.SpellID = spellId;
-                _slotData.SkillIndex = -1;
-                _slotData.AbilityIndex = 0;
+                ActionBarSkillResolver.ApplySpellToSlot(SlotIndex, spellId);
                 RefreshIcon();
+                SyncHotkeyBoxFromSlot();
                 _onChanged?.Invoke();
             }
 
             public void AcceptSkill(int skillIndex)
             {
-                _slotData.SlotType = (int)ActionBarSlotType.Skill;
-                _slotData.SpellID = 0;
-                _slotData.SkillIndex = skillIndex;
-                _slotData.AbilityIndex = 0;
+                ActionBarSkillResolver.ApplySkillToSlot(SlotIndex, skillIndex);
                 RefreshIcon();
+                SyncHotkeyBoxFromSlot();
                 _onChanged?.Invoke();
             }
 
@@ -239,6 +256,7 @@ namespace ClassicUO.Game.UI.Gumps
                 _slotData.SpellID = 0;
                 _slotData.SkillIndex = -1;
                 _slotData.AbilityIndex = abilityIndex;
+                _slotData.MacroName = null;
                 RefreshIcon();
                 _onChanged?.Invoke();
             }

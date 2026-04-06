@@ -478,6 +478,14 @@ namespace ClassicUO.Configuration
             public string Hotkey { get; set; } = "Hotkey";
             public string ResetSlot { get; set; } = "Reset slot";
             public string SetHotkey { get; set; } = "Set Hotkey";
+            public string BrowseSkills { get; set; } = "Browse skills…";
+            public string BrowseSpellsBySchool { get; set; } = "Browse spells by school…";
+            public string BrowseMacros { get; set; } = "Browse macros…";
+            public string PickSkillTitle { get; set; } = "Choose skill for this slot";
+            public string PickMacroTitle { get; set; } = "Choose macro for this slot";
+            public string PickSpellTitle { get; set; } = "Choose spell (school + name)";
+            public string PickerClose { get; set; } = "Close";
+            public string NoSpellsInSchool { get; set; } = "(no spells in this school)";
         }
 
         public class InfoBars
@@ -633,6 +641,13 @@ namespace ClassicUO.Configuration
         public string OnlyInWarmode { get; set; } = "Only in warmode";
         public string BorderOpacity { get; set; } = "Border opacity";
         public string BackgroundOpacity { get; set; } = "Background opacity";
+        public string NamePlateCustomChrome { get; set; } = "Custom nameplate background and border hues";
+        public string NamePlateCustomBackgroundHue { get; set; } = "Custom background hue";
+        public string NamePlateCustomBorderHue { get; set; } = "Custom border hue";
+        public string NamePlateHealthBarMatchStrip { get; set; } = "Health bars fill the nameplate strip height";
+        public string NamePlateFullPlateWidthScalesWithHp { get; set; } = "Full-plate HP overlay width follows current HP";
+        public string ShowHPLineInNOH { get; set; } = "Full nameplate as HP bar behind name (replaces bottom health strip)";
+        public string NameplatesExtendedSection { get; set; } = "Nameplates (visibility, border, HP style)";
         #endregion
 
         #region Mobile
@@ -850,6 +865,11 @@ namespace ClassicUO.Configuration
         public string CombatTrackingModalTitle { get; set; } = "Combat tracking & damage counters";
         public string CombatTrackingModalIntro { get; set; } = "Toggle helpers tied to last attack / last target. Changes apply immediately and are saved to your profile.";
         public string CombatTrackingOpenButton { get; set; } = "Open combat tracking panel…";
+        public string Options765OpenButton { get; set; } = "765 — macros, lobby & scripts…";
+        public string Options765ModalTitle { get; set; } = "765 — macros, automations, lobby";
+        public string Options765SectionTitle { get; set; } = "765 — macros & lobby";
+        public string Options765SectionHint { get; set; } = "Opens the former 765 tab in a separate window.";
+        public string Options765ModalIntro { get; set; } = "Same options as the old 765 tab. Close to return to Options.";
         public string PvM_DamageCounterOnLastTarget { get; set; } = "Damage counter (total/DPS) on last target";
         public string PvM_DamageCounterAsOverhead { get; set; } = "Damage counter (total/DPS) as overhead above target";
         public string PvM_LowHpAlertOnLastTarget { get; set; } = "Low HP alert on last target";

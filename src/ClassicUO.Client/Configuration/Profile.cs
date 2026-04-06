@@ -762,6 +762,12 @@ namespace ClassicUO.Configuration
         public bool NamePlateHideAtFullHealth { get; set; } = true;
         public bool NamePlateHideAtFullHealthInWarmode { get; set; } = true;
         public byte NamePlateBorderOpacity { get; set; } = 50;
+        public bool NamePlateUseCustomChrome { get; set; }
+        public ushort NamePlateCustomBackgroundHue { get; set; } = 0x0481;
+        public ushort NamePlateCustomBorderHue { get; set; }
+        public bool NamePlateHealthBarMatchStrip { get; set; }
+        public bool NamePlateFullPlateWidthScalesWithHp { get; set; }
+        public bool ShowHPLineInNOH { get; set; }
 
         public bool LeftAlignToolTips { get; set; } = false;
         public bool ForceCenterAlignTooltipMobiles { get; set; } = false;
