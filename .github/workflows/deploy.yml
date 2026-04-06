@@ -9,7 +9,6 @@ permissions:
   contents: write
 
 env:
-  CUO_ASSEMBLY_VERSION: "3.0.0.${{ github.run_number }}"
   CUO_OUTPUT_PATH: "dist"
   CUO_PROJECT_PATH: "src/ClassicUO.Client/ClassicUO.Client.csproj"
   BOOT_PROJECT_PATH: "src/ClassicUO.Bootstrap/src/ClassicUO.Bootstrap.csproj"
@@ -65,6 +64,23 @@ jobs:
         with:
           dotnet-version: "10.0.x"
           include-prerelease: false
+
+      - name: Resolve assembly version
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=$(dotnet msbuild "${{ env.CUO_PROJECT_PATH }}" -getProperty:AssemblyVersion -nologo | tail -1 | tr -d '\r')
+          if [[ -z "${BASE}" ]]; then
+            echo "Could not read AssemblyVersion from ${{ env.CUO_PROJECT_PATH }}"
+            exit 1
+          fi
+          VER=$(echo "${BASE}" | awk -F. -v r="${GITHUB_RUN_NUMBER}" '{
+            if (NF >= 3) { printf "%s.%s.%s.%s", $1, $2, $3, r }
+            else if (NF == 2) { printf "%s.%s.0.%s", $1, $2, r }
+            else { printf "%s.0.0.%s", $1, r }
+          }')
+          echo "CUO_ASSEMBLY_VERSION=${VER}" >> "${GITHUB_ENV}"
+          echo "AssemblyVersion base=${BASE} -> CI ${VER}"
 
       - name: Set release metadata
         shell: bash
