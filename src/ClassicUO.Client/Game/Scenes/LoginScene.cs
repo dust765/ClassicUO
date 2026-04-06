@@ -103,12 +103,10 @@ namespace ClassicUO.Game.Scenes
 
             try
             {
-                string path = Path.Combine(
-                    CUOEnviroment.ExecutablePath, "Data", "Profiles",
-                    Settings.GlobalSettings.Username, World.ServerName, character,
-                    "paperdollSelectCharManager.json");
+                string path = ProfileManager.FindExistingPaperdollSelectCharJson(character)
+                    ?? ProfileManager.ResolvePrimaryPaperdollSelectCharJsonReadPath(character);
 
-                if (File.Exists(path))
+                if (!string.IsNullOrEmpty(path) && File.Exists(path))
                 {
                     string json = File.ReadAllText(path);
                     using var doc = System.Text.Json.JsonDocument.Parse(json);

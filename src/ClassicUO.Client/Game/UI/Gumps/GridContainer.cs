@@ -793,7 +793,7 @@ namespace ClassicUO.Game.UI.Gumps
 
         public static void ClearInstance()
         {
-            GridSaveSystem.Instance.Clear();
+            GridSaveSystem.ReleaseInstance();
         }
 
         public class GridItem : Control
@@ -1901,7 +1901,7 @@ namespace ClassicUO.Game.UI.Gumps
             ///          * 60 = ~2 month
             /// </summary>
             private const long TIME_CUTOFF = ((60 * 60) * 24) * 60;
-            private string gridSavePath = Path.Combine(ProfileManager.ProfilePath, "GridContainers.xml");
+            private string gridSavePath;
             private XDocument saveDocument;
             private XElement rootElement;
             private bool enabled = false;
@@ -1917,10 +1917,31 @@ namespace ClassicUO.Game.UI.Gumps
                 }
             }
 
+            public static void ReleaseInstance()
+            {
+                instance = null;
+            }
+
             private GridSaveSystem()
             {
+                void EnsureEmptyRoot()
+                {
+                    saveDocument = new XDocument(new XElement("grid_gumps"));
+                    rootElement = saveDocument.Root;
+                }
+
+                if (string.IsNullOrEmpty(ProfileManager.ProfilePath))
+                {
+                    EnsureEmptyRoot();
+                    enabled = false;
+                    return;
+                }
+
+                gridSavePath = Path.Combine(ProfileManager.ProfilePath, "GridContainers.xml");
+
                 if (!SaveFileCheck())
                 {
+                    EnsureEmptyRoot();
                     enabled = false;
                     return;
                 }
@@ -2126,6 +2147,11 @@ namespace ClassicUO.Game.UI.Gumps
 
             private bool SaveFileCheck()
             {
+                if (string.IsNullOrEmpty(gridSavePath))
+                {
+                    return false;
+                }
+
                 try
                 {
                     if (!File.Exists(gridSavePath))
@@ -2169,11 +2195,6 @@ namespace ClassicUO.Game.UI.Gumps
                     return false;
                 }
                 return true;
-            }
-
-            public void Clear()
-            {
-                instance = null;
             }
         }
     }

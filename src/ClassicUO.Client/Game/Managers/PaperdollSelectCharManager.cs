@@ -2,6 +2,7 @@ using ClassicUO.Configuration;
 using ClassicUO.Game;
 using ClassicUO.Game.Data;
 using ClassicUO.Game.GameObjects;
+using ClassicUO.Game.Scenes;
 using ClassicUO.Utility;
 using ClassicUO.Utility.Logging;
 using System;
@@ -40,15 +41,28 @@ namespace ClassicUO.Game.Managers
         public bool IsFemale { get; private set; }
         public byte Race { get; private set; }
 
-        //private string savePath = Path.Combine(ProfileManager.ProfilePath, "paperdollSelectCharManager.json");
+        private string savePath
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(ProfileManager.ProfilePath))
+                {
+                    return Path.Combine(ProfileManager.ProfilePath, "paperdollSelectCharManager.json");
+                }
 
-        private string savePath => ProfileManager.ProfilePath != null
-            ? Path.Combine(ProfileManager.ProfilePath, "paperdollSelectCharManager.json")
-            : Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Profiles",
-                Settings.GlobalSettings.Username ?? "default",
-                World.ServerName ?? "server",
-                World.Player?.Name ?? "player",
-                "paperdollSelectCharManager.json");
+                string username = !string.IsNullOrWhiteSpace(LoginScene.Account)
+                    ? LoginScene.Account.Trim()
+                    : (Settings.GlobalSettings.Username ?? string.Empty).Trim();
+                string server = ProfileManager.ResolveLoginServerNameForPaperdoll();
+                string character = World.Player?.Name;
+                if (string.IsNullOrWhiteSpace(character))
+                {
+                    character = "player";
+                }
+
+                return ProfileManager.GetPaperdollSelectCharJsonPath(username, server, character);
+            }
+        }
 
         private static PaperdollSelectCharManager instance;
 
