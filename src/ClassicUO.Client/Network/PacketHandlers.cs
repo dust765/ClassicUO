@@ -86,6 +86,8 @@ namespace ClassicUO.Network
         private List<uint> _customHouseRequests = new List<uint>();
         private readonly OnPacketBufferReader[] _handlers = new OnPacketBufferReader[0x100];
 
+        private static long _recvWallMsForCurrentNetworkChunk;
+
         public static PacketHandlers Handler { get; } = new PacketHandlers();
 
         public void Add(byte id, OnPacketBufferReader handler) => _handlers[id] = handler;
@@ -101,6 +103,16 @@ namespace ClassicUO.Network
 
         public int ParsePackets(Span<byte> data, int maxPackets = int.MaxValue)
         {
+            return ParsePackets(data, maxPackets, -1);
+        }
+
+        public int ParsePackets(Span<byte> data, int maxPackets, long recvWallMsForChunk)
+        {
+            if (!data.IsEmpty)
+            {
+                _recvWallMsForCurrentNetworkChunk = recvWallMsForChunk >= 0 ? recvWallMsForChunk : Environment.TickCount64;
+            }
+
             Append(data, false);
 
             int budget = maxPackets <= 0 ? int.MaxValue : maxPackets;
@@ -2836,7 +2848,7 @@ namespace ClassicUO.Network
 
         private static void Ping(ref StackDataReader p)
         {
-            NetClient.Socket.Statistics.PingReceived(p.ReadUInt8());
+            NetClient.Socket.Statistics.PingReceived(p.ReadUInt8(), _recvWallMsForCurrentNetworkChunk);
         }
 
         private static void BuyList(ref StackDataReader p)

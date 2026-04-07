@@ -611,11 +611,11 @@ namespace ClassicUO
                 packetBudget = MAX_PACKETS_PER_FRAME * 2;
             }
 
-            while (packetBudget > 0 && NetClient.Socket.TryDequeuePacket(out byte[] message, out int messageLength))
+            while (packetBudget > 0 && NetClient.Socket.TryDequeuePacket(out byte[] message, out int messageLength, out long recvWallMs))
             {
                 try
                 {
-                    int parsed = PacketHandlers.Handler.ParsePackets(message.AsSpan(0, messageLength), packetBudget);
+                    int parsed = PacketHandlers.Handler.ParsePackets(message.AsSpan(0, messageLength), packetBudget, recvWallMs);
                     NetClient.Socket.Statistics.TotalPacketsReceived += (uint)parsed;
 
                     if (parsed > 0)
