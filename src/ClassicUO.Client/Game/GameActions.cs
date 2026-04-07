@@ -58,6 +58,7 @@ namespace ClassicUO.Game
         // ## BEGIN - END ## // ONCASTINGGUMP
         public static bool iscasting { get; set; } = false;
         // ## BEGIN - END ## // ONCASTINGGUMP
+        public static ClassicUO.Dust765.Managers.SpellAction spellCircle { get; set; } = 0;
 
 
         public static void ToggleWarMode()

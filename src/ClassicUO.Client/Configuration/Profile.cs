@@ -253,6 +253,10 @@ namespace ClassicUO.Configuration
         public int QuickHealSpell { get; set; }
         public int QuickCureSpell { get; set; }
         public ushort TurnDelay { get; set; } = 100;
+        public int MovementTurnDelay { get; set; } = 100;
+        public int MovementTurnDelayFast { get; set; } = 45;
+        public int MovementWalkingDelay { get; set; } = 150;
+        public int MovementPlayerWalkingDelay { get; set; } = 150;
         public bool DisableDefaultHotkeys { get; set; }
         public bool DisableArrowBtn { get; set; }
         public bool DisableTabBtn { get; set; }
@@ -691,6 +695,7 @@ namespace ClassicUO.Configuration
         public bool OnCastingGump { get; set; }
         public bool OnCastingGump_hidden { get; set; } = false;
         public bool OnCastingUnderPlayerBar { get; set; } = true;
+        public bool OnCastingHarmfulHueOnPlayer { get; set; } = true;
         // ## BEGIN - END ## // ONCASTINGGUMP
         // ## BEGIN - END ## // MISC3 SHOWALLLAYERS
         public bool ShowAllLayers { get; set; }
@@ -759,15 +764,15 @@ namespace ClassicUO.Configuration
         public bool NamePlateHealthBar { get; set; } = true;
         public byte NamePlateOpacity { get; set; } = 75;
         public byte NamePlateHealthBarOpacity { get; set; } = 50;
-        public bool NamePlateHideAtFullHealth { get; set; } = true;
-        public bool NamePlateHideAtFullHealthInWarmode { get; set; } = true;
+        public bool NamePlateHideAtFullHealth { get; set; } = false;
+        public bool NamePlateHideAtFullHealthInWarmode { get; set; } = false;
         public byte NamePlateBorderOpacity { get; set; } = 50;
         public bool NamePlateUseCustomChrome { get; set; }
         public ushort NamePlateCustomBackgroundHue { get; set; } = 0x0481;
         public ushort NamePlateCustomBorderHue { get; set; }
         public bool NamePlateHealthBarMatchStrip { get; set; }
         public bool NamePlateFullPlateWidthScalesWithHp { get; set; }
-        public bool ShowHPLineInNOH { get; set; }
+        public bool ShowHPLineInNOH { get; set; } = true;
 
         public bool LeftAlignToolTips { get; set; } = false;
         public bool ForceCenterAlignTooltipMobiles { get; set; } = false;
@@ -778,7 +783,7 @@ namespace ClassicUO.Configuration
         public bool JournalMessagesOnlyInJournalBox { get; set; } = false;
 
         #region GRID CONTAINER
-        public bool UseGridLayoutContainerGumps { get; set; } = true;
+        public bool UseGridLayoutContainerGumps { get; set; } = false;
         public int GridContainerSearchMode { get; set; } = 1;
         public bool EnableGridContainerAnchor { get; set; } = false;
         public byte GridBorderAlpha { get; set; } = 75;
@@ -887,7 +892,6 @@ namespace ClassicUO.Configuration
         public byte NamePlateFont { get; set; } = 1;
         public int NamePlateFontSize { get; set; } = 20;
 
-        public string DefaultTTFFont { get; set; } = "Roboto-Regular";
         public int TextBorderSize { get; set; } = 1;
 
         public bool UseModernShopGump { get; set; } = false;

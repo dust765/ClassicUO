@@ -23,6 +23,8 @@ namespace ClassicUO.Dust765
         private static readonly object _textLock = new object();
         private static string _status = string.Empty;
         private static string _notice = string.Empty;
+        private static float _progressCurrent;
+        private static float _progressTarget;
 
         public static void Show()
         {
@@ -37,6 +39,8 @@ namespace ClassicUO.Dust765
             {
                 _status = string.Empty;
                 _notice = string.Empty;
+                _progressCurrent = 0f;
+                _progressTarget = 0f;
             }
 
             _thread = new Thread(SplashThreadMain)
@@ -79,6 +83,7 @@ namespace ClassicUO.Dust765
             lock (_textLock)
             {
                 _status = text ?? string.Empty;
+                _progressTarget = Math.Max(_progressTarget, ResolveProgressTarget(_status));
             }
         }
 
@@ -146,6 +151,10 @@ namespace ClassicUO.Dust765
 
                     if (_closeRequested)
                     {
+                        lock (_textLock)
+                        {
+                            _progressTarget = 100f;
+                        }
                         opacity -= 0.11f;
                         if (opacity < 0.02f)
                         {
@@ -159,15 +168,18 @@ namespace ClassicUO.Dust765
 
                     SDL.SDL_SetWindowOpacity(window, Math.Clamp(opacity, 0f, 1f));
 
-                    SDL.SDL_SetRenderDrawColorFloat(renderer, 0.055f, 0.039f, 0.039f, 1f);
+                    SDL.SDL_SetRenderDrawColorFloat(renderer, 0f, 0f, 0f, 1f);
                     SDL.SDL_RenderClear(renderer);
 
                     string status;
                     string notice;
+                    float progress;
                     lock (_textLock)
                     {
                         status = _status;
                         notice = _notice;
+                        _progressCurrent = MathF.Min(_progressTarget, _progressCurrent + 0.9f);
+                        progress = _progressCurrent;
                     }
 
                     if (logoTex != IntPtr.Zero && tw > 0 && th > 0)
@@ -183,23 +195,28 @@ namespace ClassicUO.Dust765
                         SDL.SDL_RenderTexture(renderer, logoTex, ref src, ref dst);
                     }
 
-                    DrawProgressBar(renderer);
-
-                    float textY = WinH - 78f;
-                    foreach (string line in WrapForDebugText(notice, 52))
-                    {
-                        SDL.SDL_RenderDebugText(renderer, 10f, textY, line);
-                        textY += 12f;
-                    }
-
-                    if (!string.IsNullOrEmpty(notice) && !string.IsNullOrEmpty(status))
-                    {
-                        textY += 4f;
-                    }
+                    float barX = 20f;
+                    float barY = WinH - 44f;
+                    float barW = WinW - 40f;
+                    float barH = 14f;
 
                     if (!string.IsNullOrEmpty(status))
                     {
-                        SDL.SDL_RenderDebugText(renderer, 10f, textY, Truncate(status, 64));
+                        SDL.SDL_SetRenderDrawColorFloat(renderer, 1f, 1f, 1f, 1f);
+                        DrawCenteredDebugText(renderer, Truncate(status, 56), barY - 18f);
+                    }
+
+                    DrawProgressBar(renderer, progress, barX, barY, barW, barH);
+
+                    SDL.SDL_SetRenderDrawColorFloat(renderer, 0.72f, 0.72f, 0.72f, 1f);
+                    string versionText = $"Dust {CUOEnviroment.Version}";
+                    DrawBottomRightDebugText(renderer, versionText, 8f, 8f);
+
+                    float textY = WinH - 100f;
+                    foreach (string line in WrapForDebugText(notice, 52))
+                    {
+                        DrawCenteredDebugText(renderer, line, textY);
+                        textY += 12f;
                     }
 
                     SDL.SDL_RenderPresent(renderer);
@@ -267,6 +284,8 @@ namespace ClassicUO.Dust765
                     return IntPtr.Zero;
                 }
 
+                SDL.SDL_SetTextureBlendMode(tex, 1u);
+
                 GCHandle h = GCHandle.Alloc(pixels, GCHandleType.Pinned);
                 try
                 {
@@ -294,35 +313,70 @@ namespace ClassicUO.Dust765
             }
         }
 
-        private static void DrawProgressBar(IntPtr renderer)
+        private static void DrawProgressBar(IntPtr renderer, float progress, float barX, float barY, float barW, float barH)
         {
-            float barX = 40f;
-            float barY = WinH - 40f;
-            float barW = WinW - 80f;
-            float barH = 8f;
+            int pct = (int)Math.Clamp(progress, 0f, 100f);
+            float fillW = (barW * pct) / 100f;
 
-            SDL.SDL_SetRenderDrawColorFloat(renderer, 0.17f, 0.086f, 0.086f, 1f);
+            SDL.SDL_SetRenderDrawColorFloat(renderer, 0.09f, 0.09f, 0.09f, 1f);
             var bg = new SDL.SDL_FRect { x = barX, y = barY, w = barW, h = barH };
             SDL.SDL_RenderFillRect(renderer, ref bg);
 
-            int span = Math.Max(1, (int)barW - 40);
-            int phase = (int)((SDL.SDL_GetTicks() / 18) % (ulong)span);
-            float segW = 56f;
-            float x = barX + phase;
-            SDL.SDL_SetRenderDrawColorFloat(renderer, 0.9f, 0.27f, 0.27f, 1f);
-            var hi = new SDL.SDL_FRect { x = x, y = barY + 1f, w = segW, h = barH - 2f };
-            if (hi.x + hi.w > barX + barW)
+            if (fillW > 0f)
             {
-                hi.w = barX + barW - hi.x;
+                SDL.SDL_SetRenderDrawColorFloat(renderer, 0.85f, 0.15f, 0.15f, 1f);
+                var fill = new SDL.SDL_FRect { x = barX + 1f, y = barY + 1f, w = Math.Max(1f, fillW - 2f), h = barH - 2f };
+                SDL.SDL_RenderFillRect(renderer, ref fill);
             }
 
-            if (hi.w > 1f)
-            {
-                SDL.SDL_RenderFillRect(renderer, ref hi);
-            }
-
-            SDL.SDL_SetRenderDrawColorFloat(renderer, 0.47f, 0.12f, 0.12f, 1f);
+            SDL.SDL_SetRenderDrawColorFloat(renderer, 0.22f, 0.22f, 0.22f, 1f);
             SDL.SDL_RenderRect(renderer, ref bg);
+
+            SDL.SDL_SetRenderDrawColorFloat(renderer, 1f, 1f, 1f, 1f);
+            DrawCenteredDebugText(renderer, $"{pct}%", barY + 3f);
+        }
+
+        private static float ResolveProgressTarget(string status)
+        {
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                return _progressTarget;
+            }
+
+            if (status.StartsWith("Loading client files", StringComparison.OrdinalIgnoreCase))
+            {
+                return 35f;
+            }
+
+            if (status.StartsWith("Starting up", StringComparison.OrdinalIgnoreCase))
+            {
+                return 80f;
+            }
+
+            return Math.Min(95f, _progressTarget + 12f);
+        }
+
+        private static void DrawCenteredDebugText(IntPtr renderer, string text, float y)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return;
+            }
+
+            float x = Math.Max(8f, (WinW - (text.Length * 8f)) * 0.5f);
+            SDL.SDL_RenderDebugText(renderer, x, y, text);
+        }
+
+        private static void DrawBottomRightDebugText(IntPtr renderer, string text, float rightPadding, float bottomPadding)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return;
+            }
+
+            float x = Math.Max(4f, WinW - (text.Length * 8f) - rightPadding);
+            float y = Math.Max(4f, WinH - 8f - bottomPadding);
+            SDL.SDL_RenderDebugText(renderer, x, y, text);
         }
 
         private static string Truncate(string s, int maxChars)

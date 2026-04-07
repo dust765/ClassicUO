@@ -7,8 +7,7 @@ using ClassicUO.Renderer;
 using ClassicUO.Dust765.Managers;
 using System;
 using ClassicUO.Game.Data;
-using ClassicUO.Game.GameObjects;
-using ClassicUO.Game.Managers;
+using Microsoft.Xna.Framework;
 
 namespace ClassicUO.Dust765.External
 {
@@ -20,7 +19,6 @@ namespace ClassicUO.Dust765.External
         private uint _endTime;
         private AlphaBlendControl _background;
         private Label _text;
-        public SpellAction _spell;
 
         public OnCastingGump() : base(0, 0)
         {
@@ -51,24 +49,32 @@ namespace ClassicUO.Dust765.External
             _startTime = Time.Ticks;
             uint circle;
 
-            if (ProfileManager.CurrentProfile?.OnCastingGump_hidden != true)
+            if (!ProfileManager.CurrentProfile.OnCastingGump_hidden)
             {
                 IsVisible = true;
             }
 
             try
             {
-                _spell = (SpellAction)_spell_id;
-                circle = (uint)SpellManager.GetCircle(_spell);
+                SpellAction spell = (SpellAction)_spell_id;
+                circle = (uint)SpellManager.GetCircle(spell);
                 uint protection_delay = 0;
-                bool ignore_proctetion_delay = (_spell == SpellAction.Protection || _spell == SpellAction.ArchProtection);
-                if (World.Player.IsBuffIconExists(BuffIconType.Protection) && !ignore_proctetion_delay
-                    || World.Player.IsBuffIconExists(BuffIconType.EssenceOfWind))
+                if (World.Player.IsBuffIconExists(BuffIconType.Protection))
                 {
-                    protection_delay = 2;
+                    protection_delay = 1;
+                    if (circle != 9)
+                    {
+                        protection_delay = protection_delay + 2;
+                    }
+                    else
+                    {
+                        protection_delay = protection_delay + 5;
+                        circle = circle + 2;
+                    }
                 }
                 _endTime = _startTime + 400 + (circle + protection_delay) * 250 + _re;
                 GameActions.iscasting = true;
+                GameActions.spellCircle = spell;
             }
             catch
             {
@@ -80,6 +86,29 @@ namespace ClassicUO.Dust765.External
         {
             GameActions.iscasting = false;
             IsVisible = false;
+            GameActions.spellCircle = 0;
+        }
+
+        public float GetCastProgress()
+        {
+            if (!GameActions.iscasting || _endTime <= _startTime)
+            {
+                return 0f;
+            }
+
+            float progress = (Time.Ticks - _startTime) / (float)(_endTime - _startTime);
+
+            if (progress < 0f)
+            {
+                return 0f;
+            }
+
+            if (progress > 1f)
+            {
+                return 1f;
+            }
+
+            return progress;
         }
 
         public void OnCliloc(uint cliloc)
@@ -115,13 +144,41 @@ namespace ClassicUO.Dust765.External
 
         public override bool Draw(UltimaBatcher2D batcher, int x, int y)
         {
-            if (!IsVisible ||
-                ProfileManager.CurrentProfile == null ||
+            if (ProfileManager.CurrentProfile == null ||
                 !ProfileManager.CurrentProfile.OnCastingGump ||
                 World.Player == null ||
                 World.Player.IsDestroyed)
             {
                 return false;
+            }
+
+            if (ProfileManager.CurrentProfile.OnCastingUnderPlayerBar && GameActions.iscasting)
+            {
+                float progress = GetCastProgress();
+                if (progress > 0f)
+                {
+                    int gx = ProfileManager.CurrentProfile.GameWindowPosition.X;
+                    int gy = ProfileManager.CurrentProfile.GameWindowPosition.Y;
+
+                    int px = gx + World.Player.RealScreenPosition.X + (int)World.Player.Offset.X;
+                    int py = gy + World.Player.RealScreenPosition.Y + (int)(World.Player.Offset.Y - World.Player.Offset.Z);
+
+                    int barWidth = 28;
+                    int barHeight = 3;
+                    int barX = px - (barWidth >> 1) + 10;
+                    int barY = py + 16;
+                    int fillWidth = Math.Max(1, (int)(barWidth * progress));
+                    Vector3 hue = ShaderHueTranslator.GetHueVector(0, false, 1f);
+
+                    batcher.Draw(SolidColorTextureCache.GetTexture(new Color(14, 14, 14, 220)), new Rectangle(barX, barY, barWidth, barHeight), hue);
+                    batcher.Draw(SolidColorTextureCache.GetTexture(Color.Red), new Rectangle(barX, barY, fillWidth, barHeight), hue);
+                    batcher.DrawRectangle(SolidColorTextureCache.GetTexture(Color.Black), barX, barY, barWidth, barHeight, hue);
+                }
+            }
+
+            if (!IsVisible)
+            {
+                return true;
             }
 
             Width = _borderSize * 2 + _iconSize + _spaceSize + _text.Width;

@@ -261,6 +261,7 @@ namespace ClassicUO.Game.UI.Gumps
         // ## BEGIN - END ## // UI/GUMPS
         private Checkbox _bandageGump, _bandageUpDownToggle, _uccEnableLTBar;
         private InputField _bandageGumpOffsetX, _bandageGumpOffsetY;
+        private InputField _movementTurnDelay, _movementTurnDelayFast, _movementWalkingDelay, _movementPlayerWalkingDelay;
         // ## BEGIN - END ## // UI/GUMPS
         // ## BEGIN - END ## // LINES
         private Checkbox _uccEnableLines;
@@ -305,7 +306,7 @@ namespace ClassicUO.Game.UI.Gumps
         private Checkbox _useRazorEnhStatusGump;
         // ## BEGIN - END ## // STATUSGUMP
         // ## BEGIN - END ## // ONCASTINGGUMP
-        private Checkbox _onCastingGump, _onCastingGump_hidden, _onCastingUnderPlayerBar;
+        private Checkbox _onCastingGump, _onCastingGump_hidden, _onCastingUnderPlayerBar, _onCastingHarmfulHueOnPlayer;
         // ## BEGIN - END ## // ONCASTINGGUMP
         // ## BEGIN - END ## // MISC3 SHOWALLLAYERS
         private Checkbox _showAllLayers, _showAllLayersPaperdoll, _colorPaperdollByDurability;
@@ -567,7 +568,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
 
             // ## BEGIN - END ## // BASICSETUP
-            Add(new NiceButton(10, tabY + 30 * i++, 140, 25, ButtonAction.SwitchPage, "Dust") { ButtonParameter = 16 });
+            Add(new NiceButton(10, tabY + 30 * i++, 140, 25, ButtonAction.SwitchPage, "Dust765") { ButtonParameter = 16 });
             Add(new NiceButton(10, tabY + 30 * i++, 140, 25, ButtonAction.SwitchPage, "Mods") { ButtonParameter = 18 });
             // ## BEGIN - END ## // BASICSETUP
 
@@ -4169,6 +4170,79 @@ namespace ClassicUO.Game.UI.Gumps
             startY += _highlightContainersWhenMouseIsOver.Height + 6;
             section.Add(_onCastingUnderPlayerBar = AddCheckBox(null, "show cast bar under player (4px)", _currentProfile.OnCastingUnderPlayerBar, startX, startY));
             startY += _highlightContainersWhenMouseIsOver.Height + 6;
+            section.Add(_onCastingHarmfulHueOnPlayer = AddCheckBox(null, "paint player harmful (red) while casting", _currentProfile.OnCastingHarmfulHueOnPlayer, startX, startY));
+            startY += _highlightContainersWhenMouseIsOver.Height + 6;
+            section.Add(AddLabel(null, "Movement turn delay (ms)", startX, startY));
+            section.Add
+            (
+                _movementTurnDelay = AddInputField
+                (
+                    null,
+                    startX, startY,
+                    60,
+                    TEXTBOX_HEIGHT,
+                    null,
+                    80,
+                    false,
+                    true,
+                    1000
+                )
+            );
+            _movementTurnDelay.SetText(_currentProfile.MovementTurnDelay.ToString());
+
+            section.Add(AddLabel(null, "Movement fast turn delay (ms)", startX, startY));
+            section.Add
+            (
+                _movementTurnDelayFast = AddInputField
+                (
+                    null,
+                    startX, startY,
+                    60,
+                    TEXTBOX_HEIGHT,
+                    null,
+                    80,
+                    false,
+                    true,
+                    1000
+                )
+            );
+            _movementTurnDelayFast.SetText(_currentProfile.MovementTurnDelayFast.ToString());
+
+            section.Add(AddLabel(null, "Movement walking delay (ms)", startX, startY));
+            section.Add
+            (
+                _movementWalkingDelay = AddInputField
+                (
+                    null,
+                    startX, startY,
+                    60,
+                    TEXTBOX_HEIGHT,
+                    null,
+                    80,
+                    false,
+                    true,
+                    1000
+                )
+            );
+            _movementWalkingDelay.SetText(_currentProfile.MovementWalkingDelay.ToString());
+
+            section.Add(AddLabel(null, "Movement player walking delay (ms)", startX, startY));
+            section.Add
+            (
+                _movementPlayerWalkingDelay = AddInputField
+                (
+                    null,
+                    startX, startY,
+                    60,
+                    TEXTBOX_HEIGHT,
+                    null,
+                    80,
+                    false,
+                    true,
+                    1000
+                )
+            );
+            _movementPlayerWalkingDelay.SetText(_currentProfile.MovementPlayerWalkingDelay.ToString());
             // ## BEGIN - END ## // ONCASTINGGUMP
             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
             section.Add(_visualResponseManager = AddCheckBox(null, "Visual response manager ON / OFF", _currentProfile.VisualResponseManager, startX, startY));
@@ -7740,6 +7814,23 @@ namespace ClassicUO.Game.UI.Gumps
             _currentProfile.OnCastingGump = _onCastingGump.IsChecked;
             _currentProfile.OnCastingGump_hidden = _onCastingGump_hidden.IsChecked;
             _currentProfile.OnCastingUnderPlayerBar = _onCastingUnderPlayerBar.IsChecked;
+            _currentProfile.OnCastingHarmfulHueOnPlayer = _onCastingHarmfulHueOnPlayer.IsChecked;
+            if (int.TryParse(_movementTurnDelay.Text, out int movementTurnDelay))
+            {
+                _currentProfile.MovementTurnDelay = Math.Clamp(movementTurnDelay, 20, 1000);
+            }
+            if (int.TryParse(_movementTurnDelayFast.Text, out int movementTurnDelayFast))
+            {
+                _currentProfile.MovementTurnDelayFast = Math.Clamp(movementTurnDelayFast, 20, 1000);
+            }
+            if (int.TryParse(_movementWalkingDelay.Text, out int movementWalkingDelay))
+            {
+                _currentProfile.MovementWalkingDelay = Math.Clamp(movementWalkingDelay, 20, 1000);
+            }
+            if (int.TryParse(_movementPlayerWalkingDelay.Text, out int movementPlayerWalkingDelay))
+            {
+                _currentProfile.MovementPlayerWalkingDelay = Math.Clamp(movementPlayerWalkingDelay, 20, 1000);
+            }
             _currentProfile.AutoAvoidObstacules = _autoAvoidMobiles.IsChecked;
             // ## BEGIN - END ## // ONCASTINGGUMP
 

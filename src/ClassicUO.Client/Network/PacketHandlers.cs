@@ -4989,8 +4989,9 @@ namespace ClassicUO.Network
             // ## BEGIN - END ## // ONCASTINGGUMP
             if (ProfileManager.CurrentProfile.OnCastingGump)
             {
-                World.Player?.OnCasting?.OnCliloc(cliloc);
+                World.Player?.OnCasting.OnCliloc(cliloc);
             }
+            // ## BEGIN - END ## // ONCASTINGGUMP
 
             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
             if (
@@ -5003,7 +5004,7 @@ namespace ClassicUO.Network
             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
 
             // ## BEGIN - END ## // UI/GUMPS
-            World.Player?.BandageTimer?.OnCliloc(cliloc);
+            World.Player?.BandageTimer.OnCliloc(cliloc);
             // ## BEGIN - END ## // UI/GUMPS
             // ## BEGIN - END ## // AUTOLOOT
             Item item = World.Items.Get(serial);
@@ -6813,13 +6814,6 @@ namespace ClassicUO.Network
                     World.Map.PreloadChunksAround(x, y, 4, int.MaxValue);
                 }
                 World.Player.UpdateAbilities();
-                // ## BEGIN - END ## // ONCASTINGGUMP
-                if (ProfileManager.CurrentProfile.OnCastingGump) {
-                    GameActions.iscasting = false;
-                    World.Player.OnCasting?.Stop();
-                }
-                // ## BEGIN - END ## // ONCASTINGGUMP
-
             }
         }
 
