@@ -257,6 +257,8 @@ namespace ClassicUO.Configuration
         public int MovementTurnDelayFast { get; set; } = 45;
         public int MovementWalkingDelay { get; set; } = 150;
         public int MovementPlayerWalkingDelay { get; set; } = 150;
+        public bool AdaptiveMovementTiming { get; set; } = true;
+        public int AdaptiveMovementMaxExtraDelay { get; set; } = 120;
         public bool DisableDefaultHotkeys { get; set; }
         public bool DisableArrowBtn { get; set; }
         public bool DisableTabBtn { get; set; }

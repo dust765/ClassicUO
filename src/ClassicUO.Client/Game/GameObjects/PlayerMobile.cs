@@ -1927,10 +1927,42 @@ namespace ClassicUO.Game.GameObjects
             //_lastDir = (int) direction;
 
 
-            Walker.LastStepRequestTime = Time.Ticks + walkTime - nowDelta;
+            Walker.LastStepRequestTime = Time.Ticks + GetAdaptiveWalkTime(walkTime) - nowDelta;
             GetGroupForAnimation(this, 0, true);
 
             return true;
+        }
+
+        private int GetAdaptiveWalkTime(ushort baseWalkTime)
+        {
+            Profile profile = ProfileManager.CurrentProfile;
+
+            if (profile == null || !profile.AdaptiveMovementTiming)
+            {
+                return baseWalkTime;
+            }
+
+            int ping = (int) NetClient.Socket.Statistics.Ping;
+            int pingExtra = ping > 140 ? (ping - 140) / 4 : 0;
+            long queueBytes = NetClient.Socket.QueuedReceiveBytes;
+            int queueExtra = queueBytes > 262144 ? (int) ((queueBytes - 262144) / 8192) : 0;
+            int unacceptedExtra = Walker.UnacceptedPacketsCount > 1 ? (Walker.UnacceptedPacketsCount - 1) * 15 : 0;
+            int extra = pingExtra + queueExtra + unacceptedExtra;
+            int maxExtra = profile.AdaptiveMovementMaxExtraDelay;
+
+            if (extra > maxExtra)
+            {
+                extra = maxExtra;
+            }
+
+            int adaptiveWalkTime = baseWalkTime + extra;
+
+            if (adaptiveWalkTime > 1000)
+            {
+                adaptiveWalkTime = 1000;
+            }
+
+            return adaptiveWalkTime;
         }
     }
 }
