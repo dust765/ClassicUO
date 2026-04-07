@@ -61,7 +61,7 @@ namespace ClassicUO.Network
         private SocketWrapperType? _socketType;
         private uint? _localIP;
         private readonly CircularBuffer _sendStream;
-        private readonly ConcurrentQueue<(byte[] data, int length)> _receiveQueue = new ConcurrentQueue<(byte[] data, int length)>();
+        private readonly ConcurrentQueue<(byte[] data, int length, long recvWallMs)> _receiveQueue = new ConcurrentQueue<(byte[] data, int length, long recvWallMs)>();
         private long _queuedReceiveBytes;
         private int _queuedReceiveMessages;
         private volatile bool _receiveBackpressure;
@@ -166,7 +166,7 @@ namespace ClassicUO.Network
                             int msgLen = decompressed.Length;
                             byte[] pooled = ArrayPool<byte>.Shared.Rent(msgLen);
                             decompressed.CopyTo(pooled.AsSpan());
-                            _receiveQueue.Enqueue((pooled, msgLen));
+                            _receiveQueue.Enqueue((pooled, msgLen, Environment.TickCount64));
                             Interlocked.Add(ref _queuedReceiveBytes, msgLen);
                             Interlocked.Increment(ref _queuedReceiveMessages);
                         }
@@ -371,12 +371,13 @@ namespace ClassicUO.Network
             }
 
             int totalLen = 0;
-            var overflow = default(System.Collections.Generic.List<(byte[], int)>);
+            var overflow = default(System.Collections.Generic.List<(byte[] data, int length, long recvWallMs)>);
 
             while (_receiveQueue.TryDequeue(out var item))
             {
                 byte[] chunk = item.data;
                 int chunkLen = item.length;
+                long wall = item.recvWallMs;
                 Interlocked.Add(ref _queuedReceiveBytes, -chunkLen);
                 Interlocked.Decrement(ref _queuedReceiveMessages);
 
@@ -388,7 +389,7 @@ namespace ClassicUO.Network
                 }
                 else
                 {
-                    (overflow ??= new System.Collections.Generic.List<(byte[], int)>()).Add((chunk, chunkLen));
+                    (overflow ??= new System.Collections.Generic.List<(byte[], int, long)>()).Add((chunk, chunkLen, wall));
                 }
             }
 
@@ -397,7 +398,7 @@ namespace ClassicUO.Network
                 foreach (var c in overflow)
                 {
                     _receiveQueue.Enqueue(c);
-                    Interlocked.Add(ref _queuedReceiveBytes, c.Item2);
+                    Interlocked.Add(ref _queuedReceiveBytes, c.length);
                     Interlocked.Increment(ref _queuedReceiveMessages);
                 }
             }
@@ -408,10 +409,11 @@ namespace ClassicUO.Network
             return _receiveDrainBuffer.AsSpan(0, totalLen);
         }
 
-        public bool TryDequeuePacket(out byte[] data, out int length)
+        public bool TryDequeuePacket(out byte[] data, out int length, out long recvWallMs)
         {
             data = null;
             length = 0;
+            recvWallMs = 0;
 
             if (_pendingDisconnect)
             {
@@ -426,6 +428,7 @@ namespace ClassicUO.Network
 
             data = item.data;
             length = item.length;
+            recvWallMs = item.recvWallMs;
             Interlocked.Add(ref _queuedReceiveBytes, -length);
             Interlocked.Decrement(ref _queuedReceiveMessages);
             return true;

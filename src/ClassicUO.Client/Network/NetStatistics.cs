@@ -41,7 +41,8 @@ namespace ClassicUO.Network
         private byte _pingIdx;
 
         private readonly uint[] _pings = new uint[5];
-        private uint _startTickValue, _statisticsTimer;
+        private readonly long[] _pingSendWallMs = new long[5];
+        private uint _statisticsTimer;
 
 
         public NetStatistics(NetClient socket)
@@ -95,9 +96,21 @@ namespace ClassicUO.Network
             }
         }
 
-        public void PingReceived(byte idx)
+        public void PingReceived(byte idx, long recvWallMs)
         {
-            _pings[idx % _pings.Length] = Time.Ticks - _startTickValue;
+            byte i = (byte)(idx % _pings.Length);
+            long sendWall = _pingSendWallMs[i];
+            long rtt = recvWallMs - sendWall;
+            if (rtt < 0)
+            {
+                rtt = 0;
+            }
+            else if (rtt > uint.MaxValue)
+            {
+                rtt = uint.MaxValue;
+            }
+
+            _pings[i] = (uint)rtt;
             LastPingReceived = Time.Ticks;
         }
 
@@ -108,14 +121,16 @@ namespace ClassicUO.Network
                 return;
             }
 
-            _startTickValue = Time.Ticks;
-            _socket.Send_Ping(_pingIdx);
-            _pingIdx = (byte)((_pingIdx + 1) % _pings.Length);
+            byte idx = _pingIdx;
+            _pingSendWallMs[idx] = Environment.TickCount64;
+            _socket.Send_Ping(idx);
+            _pingIdx = (byte)((idx + 1) % _pings.Length);
         }
 
         public void Reset()
         {
-            _startTickValue = 0;
+            Array.Clear(_pingSendWallMs);
+            Array.Clear(_pings);
             ConnectedFrom = DateTime.MinValue;
             _lastTotalBytesReceived = _lastTotalBytesSent = _lastTotalPacketsReceived = _lastTotalPacketsSent = 0;
             TotalBytesReceived = TotalBytesSent = TotalPacketsReceived = TotalPacketsSent = 0;
