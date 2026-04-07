@@ -246,7 +246,7 @@ namespace ClassicUO.Game.GameObjects
             }
         }
 
-        protected virtual bool IsWalking => LastStepTime > Time.Ticks - Constants.WALKING_DELAY;
+        protected virtual bool IsWalking => LastStepTime > Time.Ticks - MovementTimingManager.WalkingDelay;
 
         public byte AnimationFrameCount;
         public bool AnimationFromServer;
@@ -573,7 +573,7 @@ namespace ClassicUO.Game.GameObjects
         private bool NoIterateAnimIndex()
         {
             return !ExecuteAnimation
-                || (LastStepTime > Time.Ticks - Constants.WALKING_DELAY && Steps.Count == 0);
+                || (LastStepTime > Time.Ticks - MovementTimingManager.WalkingDelay && Steps.Count == 0);
         }
 
         private void ProcessFootstepsSound()
