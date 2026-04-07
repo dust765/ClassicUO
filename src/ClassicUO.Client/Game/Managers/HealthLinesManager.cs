@@ -30,6 +30,7 @@
 
 #endregion
 
+using System;
 using System.Collections.Generic;
 using ClassicUO.Configuration;
 using ClassicUO.Game.Data;
@@ -39,6 +40,7 @@ using ClassicUO.Dust765.Dust765;
 using Microsoft.Xna.Framework.Graphics;
 // ## BEGIN - END ## // OLDHEALTHLINES
 // ## BEGIN - END ## // OVERHEAD / UNDERCHAR
+using ClassicUO.Game;
 using ClassicUO.Game.GameObjects;
 using ClassicUO.Renderer;
 using Microsoft.Xna.Framework;
@@ -84,6 +86,75 @@ namespace ClassicUO.Game.Managers
 
         public bool IsEnabled =>
             ProfileManager.CurrentProfile != null && ProfileManager.CurrentProfile.ShowMobilesHP;
+
+        public static void DrawPlayerUnderCastBar(UltimaBatcher2D batcher)
+        {
+            Profile prof = ProfileManager.CurrentProfile;
+            if (
+                prof == null
+                || !prof.OnCastingUnderPlayerBar
+                || World.Player == null
+                || World.Player.IsDestroyed
+                || !GameActions.iscasting
+                || World.Player.OnCasting == null
+            )
+            {
+                return;
+            }
+
+            float progress = World.Player.OnCasting.GetCastProgress();
+            if (progress < 0f)
+            {
+                progress = 0f;
+            }
+            else if (progress > 1f)
+            {
+                progress = 1f;
+            }
+
+            if (progress <= 0f)
+            {
+                progress = 0.02f;
+            }
+
+            var camera = Client.Game.Scene.Camera;
+            Mobile pl = World.Player;
+            Point pw = pl.RealScreenPosition;
+            pw.X += (int)pl.Offset.X + 22 + 5;
+            pw.Y += (int)(pl.Offset.Y - pl.Offset.Z) + 22 + 5;
+            pw.X -= 5;
+            pw = camera.WorldToScreen(pw);
+
+            int barW = pl.FrameInfo.Width > 8 ? Math.Min(120, pl.FrameInfo.Width) : BAR_WIDTH;
+            barW = Math.Max(28, barW);
+            const int barH = 4;
+            int barX = pw.X - (barW >> 1);
+            int barY = pw.Y + 20;
+            int fillW = Math.Max(1, (int)(barW * progress));
+
+            if (
+                barX < -barW
+                || barX > camera.Bounds.Width + barW
+                || barY < -barH
+                || barY > camera.Bounds.Height + barH
+            )
+            {
+                return;
+            }
+
+            Vector3 hue = ShaderHueTranslator.GetHueVector(0, false, 1f);
+            batcher.Draw(
+                SolidColorTextureCache.GetTexture(new Color(24, 24, 24, 220)),
+                new Rectangle(barX, barY, barW, barH),
+                hue
+            );
+            batcher.Draw(
+                SolidColorTextureCache.GetTexture(Color.Red),
+                new Rectangle(barX, barY, fillW, barH),
+                ShaderHueTranslator.GetHueVector(0, false, 0.95f)
+            );
+            batcher.DrawRectangle(SolidColorTextureCache.GetTexture(Color.Black), barX, barY, barW, barH, hue);
+        }
 
         public void Draw(UltimaBatcher2D batcher)
         {

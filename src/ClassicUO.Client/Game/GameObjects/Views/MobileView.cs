@@ -639,7 +639,7 @@ namespace ClassicUO.Game.GameObjects
                     int barWidth = Math.Max(24, FrameInfo.Width);
                     int barHeight = 4;
                     int barX = drawX - (barWidth >> 1);
-                    int barY = drawY + 18;
+                    int barY = drawY + 12;
                     int fillWidth = Math.Max(1, (int)(barWidth * progress));
 
                     batcher.Draw(SolidColorTextureCache.GetTexture(new Color(24, 24, 24, 220)), new Rectangle(barX, barY, barWidth, barHeight), ShaderHueTranslator.GetHueVector(0, false, 1f));

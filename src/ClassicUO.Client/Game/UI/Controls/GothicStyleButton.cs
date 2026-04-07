@@ -19,23 +19,24 @@ namespace ClassicUO.Game.UI.Controls
         private Color _shadowColor;
         private Color _textColor;
         private Color _textShadowColor;
-        private static readonly Vector3 _hueVector = ShaderHueTranslator.GetHueVector(0, false, 1f);
 
         public GothicStyleButton(int x, int y, int width, int height, string text, string fontPath = null, int fontSize = 16)
+            : this(x, y, width, height, text, Color.DarkRed, new Color(180, 50, 50), new Color(80, 15, 15))
+        {
+        }
+
+        public GothicStyleButton(int x, int y, int width, int height, string text, Color baseColor, Color highlightColor, Color shadowColor)
         {
             X = x;
             Y = y;
             Width = width;
             Height = height;
             _text = text;
-
-            // Cores do tema gótico/medieval - Background vermelho escuro com texto branco
-            _baseColor = Color.DarkRed;
-            _highlightColor = new Color(180, 50, 50);
-            _shadowColor = new Color(80, 15, 15);
-            _textColor = Color.White;                      // Texto branco para contraste
-            _textShadowColor = Color.Black;                // Sombra preta do texto
-
+            _baseColor = baseColor;
+            _highlightColor = highlightColor;
+            _shadowColor = shadowColor;
+            _textColor = Color.White;
+            _textShadowColor = Color.Black;
             _renderedText = RenderedText.Create(_text, 0x0481, 1, true, FontStyle.BlackBorder);
             AcceptMouseInput = true;
         }
@@ -76,6 +77,8 @@ namespace ClassicUO.Game.UI.Controls
 
         public override bool Draw(UltimaBatcher2D batcher, int x, int y)
         {
+            Vector3 hueVector = ShaderHueTranslator.GetHueVector(0, false, Alpha);
+
             Color currentBaseColor = _baseColor;
             Color currentHighlightColor = _highlightColor;
             Color currentShadowColor = _shadowColor;
@@ -111,10 +114,10 @@ namespace ClassicUO.Game.UI.Controls
                     (_baseColor.B + _highlightColor.B) / 2);
             }
 
-            batcher.Draw(SolidColorTextureCache.GetTexture(_shadowColor), new Rectangle(x + 3, y + 3, Width, Height), _hueVector);
-            DrawGradientButton(batcher, x, y, Width, Height, currentBaseColor, currentShadowColor);
-            DrawBorder(batcher, x, y, Width, Height, currentHighlightColor, currentShadowColor);
-            DrawTextureEffect(batcher, x, y, Width, Height, currentBaseColor);
+            batcher.Draw(SolidColorTextureCache.GetTexture(_shadowColor), new Rectangle(x + 3, y + 3, Width, Height), hueVector);
+            DrawGradientButton(batcher, x, y, Width, Height, currentBaseColor, currentShadowColor, hueVector);
+            DrawBorder(batcher, x, y, Width, Height, currentHighlightColor, currentShadowColor, hueVector);
+            DrawTextureEffect(batcher, x, y, Width, Height, currentBaseColor, hueVector);
 
             if (!string.IsNullOrEmpty(_text))
             {
@@ -131,22 +134,22 @@ namespace ClassicUO.Game.UI.Controls
             return base.Draw(batcher, x, y);
         }
 
-        private void DrawGradientButton(UltimaBatcher2D batcher, int x, int y, int width, int height, Color baseColor, Color shadowColor)
+        private void DrawGradientButton(UltimaBatcher2D batcher, int x, int y, int width, int height, Color baseColor, Color shadowColor, Vector3 hueVector)
         {
             for (int i = 0; i < height; i++)
             {
-                float ratio = (float)i / height;
+                float ratio = height > 1 ? (float)i / (height - 1) : 0f;
                 int cr = (int)(baseColor.R + (shadowColor.R - baseColor.R) * ratio);
                 int cg = (int)(baseColor.G + (shadowColor.G - baseColor.G) * ratio);
                 int cb = (int)(baseColor.B + (shadowColor.B - baseColor.B) * ratio);
                 var gradColor = new Color(cr, cg, cb, 255);
-                batcher.Draw(SolidColorTextureCache.GetTexture(gradColor), new Rectangle(x, y + i, width, 1), _hueVector);
+                batcher.Draw(SolidColorTextureCache.GetTexture(gradColor), new Rectangle(x, y + i, width, 1), hueVector);
             }
         }
 
         private const int BORDER_RADIUS = 6;
 
-        private void DrawBorder(UltimaBatcher2D batcher, int x, int y, int width, int height, Color highlightColor, Color shadowColor)
+        private void DrawBorder(UltimaBatcher2D batcher, int x, int y, int width, int height, Color highlightColor, Color shadowColor, Vector3 hueVector)
         {
             int r = BORDER_RADIUS;
             if (width < r * 2 || height < r * 2)
@@ -155,25 +158,25 @@ namespace ClassicUO.Game.UI.Controls
             var shadowTex = SolidColorTextureCache.GetTexture(shadowColor);
             if (r > 0)
             {
-                batcher.Draw(highlightTex, new Rectangle(x + r, y, width - r * 2, 2), _hueVector);
-                batcher.Draw(shadowTex, new Rectangle(x + r, y + height - 2, width - r * 2, 2), _hueVector);
-                batcher.Draw(highlightTex, new Rectangle(x, y + r, 2, height - r * 2), _hueVector);
-                batcher.Draw(shadowTex, new Rectangle(x + width - 2, y + r, 2, height - r * 2), _hueVector);
-                batcher.Draw(highlightTex, new Rectangle(x, y, r, r), _hueVector);
-                batcher.Draw(highlightTex, new Rectangle(x + width - r, y, r, r), _hueVector);
-                batcher.Draw(shadowTex, new Rectangle(x, y + height - r, r, r), _hueVector);
-                batcher.Draw(shadowTex, new Rectangle(x + width - r, y + height - r, r, r), _hueVector);
+                batcher.Draw(highlightTex, new Rectangle(x + r, y, width - r * 2, 2), hueVector);
+                batcher.Draw(shadowTex, new Rectangle(x + r, y + height - 2, width - r * 2, 2), hueVector);
+                batcher.Draw(highlightTex, new Rectangle(x, y + r, 2, height - r * 2), hueVector);
+                batcher.Draw(shadowTex, new Rectangle(x + width - 2, y + r, 2, height - r * 2), hueVector);
+                batcher.Draw(highlightTex, new Rectangle(x, y, r, r), hueVector);
+                batcher.Draw(highlightTex, new Rectangle(x + width - r, y, r, r), hueVector);
+                batcher.Draw(shadowTex, new Rectangle(x, y + height - r, r, r), hueVector);
+                batcher.Draw(shadowTex, new Rectangle(x + width - r, y + height - r, r, r), hueVector);
             }
             else
             {
-                batcher.Draw(highlightTex, new Rectangle(x, y, width, 2), _hueVector);
-                batcher.Draw(shadowTex, new Rectangle(x, y + height - 2, width, 2), _hueVector);
-                batcher.Draw(highlightTex, new Rectangle(x, y, 2, height), _hueVector);
-                batcher.Draw(shadowTex, new Rectangle(x + width - 2, y, 2, height), _hueVector);
+                batcher.Draw(highlightTex, new Rectangle(x, y, width, 2), hueVector);
+                batcher.Draw(shadowTex, new Rectangle(x, y + height - 2, width, 2), hueVector);
+                batcher.Draw(highlightTex, new Rectangle(x, y, 2, height), hueVector);
+                batcher.Draw(shadowTex, new Rectangle(x + width - 2, y, 2, height), hueVector);
             }
         }
 
-        private void DrawTextureEffect(UltimaBatcher2D batcher, int x, int y, int width, int height, Color baseColor)
+        private void DrawTextureEffect(UltimaBatcher2D batcher, int x, int y, int width, int height, Color baseColor, Vector3 hueVector)
         {
             var textureColor = new Color(
                 Math.Max(0, baseColor.R - 20),
@@ -190,7 +193,7 @@ namespace ClassicUO.Game.UI.Controls
                 {
                     int lineHeight = height - 6 + random.Next(-2, 3);
                     int lineY = y + 3 + random.Next(-1, 2);
-                    batcher.Draw(textureTex, new Rectangle(lineX, lineY, 1, lineHeight), _hueVector);
+                    batcher.Draw(textureTex, new Rectangle(lineX, lineY, 1, lineHeight), hueVector);
                 }
             }
         }

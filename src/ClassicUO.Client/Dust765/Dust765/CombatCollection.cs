@@ -1433,7 +1433,7 @@ namespace ClassicUO.Dust765.Dust765
                 }
             }
             // ## BEGIN - END ## // ONCASTINGGUMP
-            if (ProfileManager.CurrentProfile.OnCastingGump)
+            if (ProfileManager.CurrentProfile.UsesOnCastingTimer && World.Player.OnCasting != null)
             {
                 GameActions.LastSpellIndex = spell.ID;
                 // ## BEGIN - END ## // VISUAL HELPERS

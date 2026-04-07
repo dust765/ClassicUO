@@ -4999,9 +4999,9 @@ namespace ClassicUO.Network
             string arguments = null;
 
             // ## BEGIN - END ## // ONCASTINGGUMP
-            if (ProfileManager.CurrentProfile.OnCastingGump)
+            if (ProfileManager.CurrentProfile.UsesOnCastingTimer)
             {
-                World.Player?.OnCasting.OnCliloc(cliloc);
+                World.Player?.OnCasting?.OnCliloc(cliloc);
             }
             // ## BEGIN - END ## // ONCASTINGGUMP
 

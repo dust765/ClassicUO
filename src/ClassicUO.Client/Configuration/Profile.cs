@@ -698,6 +698,9 @@ namespace ClassicUO.Configuration
         public bool OnCastingGump_hidden { get; set; } = false;
         public bool OnCastingUnderPlayerBar { get; set; } = true;
         public bool OnCastingHarmfulHueOnPlayer { get; set; } = true;
+
+        [JsonIgnore]
+        public bool UsesOnCastingTimer => OnCastingGump || OnCastingUnderPlayerBar;
         // ## BEGIN - END ## // ONCASTINGGUMP
         // ## BEGIN - END ## // MISC3 SHOWALLLAYERS
         public bool ShowAllLayers { get; set; }

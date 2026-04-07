@@ -75,7 +75,7 @@ namespace ClassicUO.Game.UI.Gumps
         private const int OptionsSearchToContentGap = 12;
         private static int OptionsScrollY =>
             OptionsTabStartY + OptionsSearchRowHeight + OptionsSearchToContentGap;
-        private static int OptionsScrollHeight => HEIGHT - 85 - OptionsScrollY;
+        private static int OptionsScrollHeight => HEIGHT - 47 - OptionsScrollY;
         private static readonly string[] WINDOW_TITLE_STYLE_LABELS =
         {
             "Like CUO (native)",
@@ -636,62 +636,6 @@ namespace ClassicUO.Game.UI.Gumps
                 }
             );
 
-            int offsetX = 60;
-            int footerLineY = HEIGHT - 59;
-            int footerBtnY = HEIGHT - 35;
-
-            Add
-            (
-                new Line
-                (
-                    160,
-                    footerLineY,
-                    WIDTH - 160,
-                    1,
-                    Color.Gray.PackedValue
-                )
-            );
-
-            Add
-            (
-                new Button((int)Buttons.Cancel, 0x00F3, 0x00F1, 0x00F2)
-                {
-                    X = 154 + offsetX,
-                    Y = footerBtnY,
-                    ButtonAction = ButtonAction.Activate
-                }
-            );
-
-            Add
-            (
-                new Button((int)Buttons.Apply, 0x00EF, 0x00F0, 0x00EE)
-                {
-                    X = 248 + offsetX,
-                    Y = footerBtnY,
-                    ButtonAction = ButtonAction.Activate
-                }
-            );
-
-            Add
-            (
-                new Button((int)Buttons.Default, 0x00F6, 0x00F4, 0x00F5)
-                {
-                    X = 346 + offsetX,
-                    Y = footerBtnY,
-                    ButtonAction = ButtonAction.Activate
-                }
-            );
-
-            Add
-            (
-                new Button((int)Buttons.Ok, 0x00F9, 0x00F8, 0x00F7)
-                {
-                    X = 443 + offsetX,
-                    Y = footerBtnY,
-                    ButtonAction = ButtonAction.Activate
-                }
-            );
-
             Width = WIDTH;
             Height = HEIGHT;
             AcceptMouseInput = true;
@@ -765,6 +709,98 @@ namespace ClassicUO.Game.UI.Gumps
             _optionsSearchSubmitBtn.ShadowColor = new Color(60, 60, 60);
             _optionsSearchSubmitBtn.OnClick += RunOptionsSearch;
             Add(_optionsSearchSubmitBtn, 0);
+
+            AddOptionsFooterChrome();
+        }
+
+        private void AddOptionsFooterChrome()
+        {
+            const int tabDividerX = 160;
+            const int offsetX = 60;
+            const int footerBtnH = TEXTBOX_HEIGHT + 2;
+            const int footerBottomPadding = 20;
+            const int footerLineToButtonGap = 3;
+            int footerBtnY = HEIGHT - footerBottomPadding - footerBtnH;
+            int footerLineY = footerBtnY - footerLineToButtonGap - 1;
+            int verticalLineHeight = Math.Max(0, footerLineY - 5);
+
+            Add(
+                new Line(
+                    tabDividerX,
+                    5,
+                    1,
+                    verticalLineHeight,
+                    Color.Gray.PackedValue
+                )
+            );
+
+            Add(
+                new Line(
+                    tabDividerX,
+                    footerLineY,
+                    WIDTH - tabDividerX,
+                    1,
+                    Color.Gray.PackedValue
+                )
+            );
+
+            AddOptionsFooterGothicButton(
+                154 + offsetX,
+                footerBtnY,
+                80,
+                footerBtnH,
+                ResGumps.Cancel,
+                Buttons.Cancel,
+                new Color(108, 38, 42),
+                new Color(195, 95, 102),
+                new Color(48, 14, 18));
+            AddOptionsFooterGothicButton(
+                248 + offsetX,
+                footerBtnY,
+                80,
+                footerBtnH,
+                "Apply",
+                Buttons.Apply,
+                new Color(168, 78, 128),
+                new Color(228, 155, 195),
+                new Color(88, 32, 68));
+            AddOptionsFooterGothicButton(
+                346 + offsetX,
+                footerBtnY,
+                80,
+                footerBtnH,
+                "Default",
+                Buttons.Default,
+                new Color(158, 162, 168),
+                new Color(218, 220, 224),
+                new Color(88, 92, 98));
+            AddOptionsFooterGothicButton(
+                443 + offsetX,
+                footerBtnY,
+                80,
+                footerBtnH,
+                "OK",
+                Buttons.Ok,
+                new Color(42, 118, 62),
+                new Color(105, 198, 128),
+                new Color(22, 72, 38));
+        }
+
+        private void AddOptionsFooterGothicButton(
+            int x,
+            int y,
+            int w,
+            int h,
+            string label,
+            Buttons id,
+            Color baseColor,
+            Color highlightColor,
+            Color shadowColor)
+        {
+            var btn = new GothicStyleButton(x, y, w, h, label, baseColor, highlightColor, shadowColor);
+            int bid = (int)id;
+            btn.OnClick += () => OnButtonClick(bid);
+            Add(btn, 0);
         }
 
         private void ClearOptionsSearch()
@@ -2544,7 +2580,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                         _macroControl?.Dispose();
 
-                        _macroControl = new MacroControl(name, availableHeight: HEIGHT - 85 - (OptionsScrollY + 15))
+                        _macroControl = new MacroControl(name, availableHeight: HEIGHT - 47 - (OptionsScrollY + 15))
                         {
                             X = 350,
                             Y = OptionsScrollY + 15
@@ -2705,7 +2741,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                     _macroControl?.Dispose();
 
-                    _macroControl = new MacroControl(m.Name, availableHeight: HEIGHT - 85 - (OptionsScrollY + 15))
+                    _macroControl = new MacroControl(m.Name, availableHeight: HEIGHT - 47 - (OptionsScrollY + 15))
                     {
                         X = 350,
                         Y = OptionsScrollY + 15
@@ -7935,7 +7971,7 @@ namespace ClassicUO.Game.UI.Gumps
                 World.Player.BandageTimer?.Stop();
             }
 
-            if (_currentProfile.OnCastingGump)
+            if (_currentProfile.UsesOnCastingTimer)
             {
                 if (World.Player.OnCasting == null || World.Player.OnCasting.IsDisposed)
                 {
@@ -7944,7 +7980,10 @@ namespace ClassicUO.Game.UI.Gumps
 
                 if (World.Player.OnCasting != null)
                 {
-                    World.Player.OnCasting.IsVisible = GameActions.iscasting && !_currentProfile.OnCastingGump_hidden;
+                    World.Player.OnCasting.IsVisible =
+                        _currentProfile.OnCastingGump
+                        && GameActions.iscasting
+                        && !_currentProfile.OnCastingGump_hidden;
                 }
             }
             else
