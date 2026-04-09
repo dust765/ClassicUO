@@ -896,7 +896,7 @@ namespace ClassicUO.Game.UI
 
             if (SavePosition)
             {
-                saveFileAfter = Time.Ticks + 10000;
+                saveFileAfter = Time.Ticks + 2000;
             }
         }
 
@@ -905,6 +905,8 @@ namespace ClassicUO.Game.UI
             if (!savingFile)
             {
                 savingFile = true;
+                int snapshotX = X;
+                int snapshotY = Y;
 
                 if (!string.IsNullOrEmpty(FilePath) && File.Exists(FilePath))
                 {
@@ -916,18 +918,28 @@ namespace ClassicUO.Game.UI
                         if (xmlDoc.DocumentElement != null)
                         {
                             XmlElement root = xmlDoc.DocumentElement;
-                            root.SetAttribute("x", X.ToString());
-                            root.SetAttribute("y", Y.ToString());
+                            root.SetAttribute("x", snapshotX.ToString());
+                            root.SetAttribute("y", snapshotY.ToString());
 
                             xmlDoc.Save(FilePath);
                         }
                     }
                     catch (Exception e) { GameActions.Print(e.Message); }
-
                 }
 
                 savingFile = false;
             }
+        }
+
+        public override void Dispose()
+        {
+            // Save position synchronously before base.Dispose() clears state.
+            // Only save if there are pending unsaved changes (saveFileAfter was set).
+            if (SavePosition && saveFileAfter != uint.MaxValue)
+            {
+                SaveFile();
+            }
+            base.Dispose();
         }
     }
 
