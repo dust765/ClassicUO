@@ -173,16 +173,7 @@ namespace ClassicUO.Game.UI.Controls
 
         public override bool Contains(int x, int y)
         {
-            ref readonly var gumpInfoFlag = ref Client.Game.Gumps.GetGump(BUTTON_FLAG);
-
-            if (gumpInfoFlag.Texture == null)
-            {
-                return false;
-            }
-
-            y -= _sliderPosition;
-
-            return Client.Game.Gumps.PixelCheck(BUTTON_FLAG, x, y);
+            return x >= 0 && x <= Width && y >= 0 && y <= Height;
         }
     }
 }
