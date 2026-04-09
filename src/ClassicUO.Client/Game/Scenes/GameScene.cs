@@ -300,7 +300,7 @@ namespace ClassicUO.Game.Scenes
             ModulesManager.Load();
             // ## BEGIN - END ## // AUTOMATIONS
             // ## BEGIN - END ## // ONCASTINGGUMP
-            if (ProfileManager.CurrentProfile.UsesOnCastingTimer)
+            if (ProfileManager.CurrentProfile.OnCastingGump)
             {
                 if (World.Player.OnCasting == null)
                 {
@@ -1511,8 +1511,6 @@ namespace ClassicUO.Game.Scenes
             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
             World.VisualResponseManager.Draw(batcher);
             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
-
-            HealthLinesManager.DrawPlayerUnderCastBar(batcher);
 
             if (profile == null || !profile.PerformanceDisableHealthLinesOverlay)
                 _healthLinesManager.Draw(batcher);

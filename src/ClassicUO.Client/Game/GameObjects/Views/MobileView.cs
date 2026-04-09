@@ -625,29 +625,6 @@ namespace ClassicUO.Game.GameObjects
             FrameInfo.Width = FrameInfo.X + FrameInfo.Width;
             FrameInfo.Height = FrameInfo.Y + FrameInfo.Height;
 
-            if (
-                this == World.Player
-                && ProfileManager.CurrentProfile.OnCastingUnderPlayerBar
-                && World.Player.OnCasting != null
-                && GameActions.iscasting
-            )
-            {
-                float progress = World.Player.OnCasting.GetCastProgress();
-
-                if (progress > 0f)
-                {
-                    int barWidth = Math.Max(24, FrameInfo.Width);
-                    int barHeight = 4;
-                    int barX = drawX - (barWidth >> 1);
-                    int barY = drawY + 12;
-                    int fillWidth = Math.Max(1, (int)(barWidth * progress));
-
-                    batcher.Draw(SolidColorTextureCache.GetTexture(new Color(24, 24, 24, 220)), new Rectangle(barX, barY, barWidth, barHeight), ShaderHueTranslator.GetHueVector(0, false, 1f));
-                    batcher.Draw(SolidColorTextureCache.GetTexture(Color.Red), new Rectangle(barX, barY, fillWidth, barHeight), ShaderHueTranslator.GetHueVector(0, false, 0.95f));
-                    batcher.DrawRectangle(SolidColorTextureCache.GetTexture(Color.Black), barX, barY, barWidth, barHeight, ShaderHueTranslator.GetHueVector(0, false, 1f));
-                }
-            }
-
             return true;
         }
 
