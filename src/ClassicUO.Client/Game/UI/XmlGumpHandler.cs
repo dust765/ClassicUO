@@ -817,7 +817,7 @@ namespace ClassicUO.Game.UI
 
         private uint nextUpdate = 0;
 
-        private bool savingFile = false;
+        private volatile bool savingFile = false;
         private uint saveFileAfter = uint.MaxValue;
 
         public XmlGump() : base(0, 0)
