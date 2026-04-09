@@ -596,5 +596,14 @@ namespace ClassicUO.Game.UI.Gumps
 
             return base.Draw(batcher, x, y);
         }
+
+        public override bool Contains(int x, int y)
+        {
+            if (x < 0 || x > Width || y < 0 || y > Height)
+                return false;
+            const int hitMargin = 8;
+            return y < hitMargin || y > Height - hitMargin
+                || x < hitMargin || x > Width - hitMargin;
+        }
     }
 }
