@@ -1041,7 +1041,7 @@ namespace ClassicUO.Game
                 GameCursor._spellTime = 0;
                 // ## BEGIN - END ## // VISUAL HELPERS
                 // ## BEGIN - END ## // ONCASTINGGUMP
-                if (ProfileManager.CurrentProfile.OnCastingGump)
+                if (ProfileManager.CurrentProfile.OnCastingGump && World.Player.OnCasting != null)
                 {
                     if (!iscasting)
                         World.Player.OnCasting.Start((uint) index);
@@ -1062,7 +1062,7 @@ namespace ClassicUO.Game
                 GameCursor._spellTime = 0;
                 // ## BEGIN - END ## // VISUAL HELPERS
                  // ## BEGIN - END ## // ONCASTINGGUMP
-                if (ProfileManager.CurrentProfile.OnCastingGump)
+                if (ProfileManager.CurrentProfile.OnCastingGump && World.Player.OnCasting != null)
                 {
                     if (!iscasting)
                         World.Player.OnCasting.Start((uint) index);

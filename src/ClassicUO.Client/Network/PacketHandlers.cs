@@ -5001,7 +5001,7 @@ namespace ClassicUO.Network
             // ## BEGIN - END ## // ONCASTINGGUMP
             if (ProfileManager.CurrentProfile.OnCastingGump)
             {
-                World.Player?.OnCasting.OnCliloc(cliloc);
+                World.Player?.OnCasting?.OnCliloc(cliloc);
             }
             // ## BEGIN - END ## // ONCASTINGGUMP
 

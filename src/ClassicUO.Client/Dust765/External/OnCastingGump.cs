@@ -49,7 +49,10 @@ namespace ClassicUO.Dust765.External
             _startTime = Time.Ticks;
             uint circle;
 
-            if (!ProfileManager.CurrentProfile.OnCastingGump_hidden)
+            if (
+                ProfileManager.CurrentProfile.OnCastingGump
+                && !ProfileManager.CurrentProfile.OnCastingGump_hidden
+            )
             {
                 IsVisible = true;
             }
@@ -150,30 +153,6 @@ namespace ClassicUO.Dust765.External
                 World.Player.IsDestroyed)
             {
                 return false;
-            }
-
-            if (ProfileManager.CurrentProfile.OnCastingUnderPlayerBar && GameActions.iscasting)
-            {
-                float progress = GetCastProgress();
-                if (progress > 0f)
-                {
-                    int gx = ProfileManager.CurrentProfile.GameWindowPosition.X;
-                    int gy = ProfileManager.CurrentProfile.GameWindowPosition.Y;
-
-                    int px = gx + World.Player.RealScreenPosition.X + (int)World.Player.Offset.X;
-                    int py = gy + World.Player.RealScreenPosition.Y + (int)(World.Player.Offset.Y - World.Player.Offset.Z);
-
-                    int barWidth = 28;
-                    int barHeight = 3;
-                    int barX = px - (barWidth >> 1) + 10;
-                    int barY = py + 16;
-                    int fillWidth = Math.Max(1, (int)(barWidth * progress));
-                    Vector3 hue = ShaderHueTranslator.GetHueVector(0, false, 1f);
-
-                    batcher.Draw(SolidColorTextureCache.GetTexture(new Color(14, 14, 14, 220)), new Rectangle(barX, barY, barWidth, barHeight), hue);
-                    batcher.Draw(SolidColorTextureCache.GetTexture(Color.Red), new Rectangle(barX, barY, fillWidth, barHeight), hue);
-                    batcher.DrawRectangle(SolidColorTextureCache.GetTexture(Color.Black), barX, barY, barWidth, barHeight, hue);
-                }
             }
 
             if (!IsVisible)

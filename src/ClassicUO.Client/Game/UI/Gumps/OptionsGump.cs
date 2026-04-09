@@ -75,7 +75,7 @@ namespace ClassicUO.Game.UI.Gumps
         private const int OptionsSearchToContentGap = 12;
         private static int OptionsScrollY =>
             OptionsTabStartY + OptionsSearchRowHeight + OptionsSearchToContentGap;
-        private static int OptionsScrollHeight => HEIGHT - 85 - OptionsScrollY;
+        private static int OptionsScrollHeight => HEIGHT - 47 - OptionsScrollY;
         private static readonly string[] WINDOW_TITLE_STYLE_LABELS =
         {
             "Like CUO (native)",
@@ -306,7 +306,7 @@ namespace ClassicUO.Game.UI.Gumps
         private Checkbox _useRazorEnhStatusGump;
         // ## BEGIN - END ## // STATUSGUMP
         // ## BEGIN - END ## // ONCASTINGGUMP
-        private Checkbox _onCastingGump, _onCastingGump_hidden, _onCastingUnderPlayerBar, _onCastingHarmfulHueOnPlayer;
+        private Checkbox _onCastingGump, _onCastingGump_hidden, _onCastingHarmfulHueOnPlayer;
         // ## BEGIN - END ## // ONCASTINGGUMP
         // ## BEGIN - END ## // MISC3 SHOWALLLAYERS
         private Checkbox _showAllLayers, _showAllLayersPaperdoll, _colorPaperdollByDurability;
@@ -636,62 +636,6 @@ namespace ClassicUO.Game.UI.Gumps
                 }
             );
 
-            int offsetX = 60;
-            int footerLineY = HEIGHT - 59;
-            int footerBtnY = HEIGHT - 35;
-
-            Add
-            (
-                new Line
-                (
-                    160,
-                    footerLineY,
-                    WIDTH - 160,
-                    1,
-                    Color.Gray.PackedValue
-                )
-            );
-
-            Add
-            (
-                new Button((int)Buttons.Cancel, 0x00F3, 0x00F1, 0x00F2)
-                {
-                    X = 154 + offsetX,
-                    Y = footerBtnY,
-                    ButtonAction = ButtonAction.Activate
-                }
-            );
-
-            Add
-            (
-                new Button((int)Buttons.Apply, 0x00EF, 0x00F0, 0x00EE)
-                {
-                    X = 248 + offsetX,
-                    Y = footerBtnY,
-                    ButtonAction = ButtonAction.Activate
-                }
-            );
-
-            Add
-            (
-                new Button((int)Buttons.Default, 0x00F6, 0x00F4, 0x00F5)
-                {
-                    X = 346 + offsetX,
-                    Y = footerBtnY,
-                    ButtonAction = ButtonAction.Activate
-                }
-            );
-
-            Add
-            (
-                new Button((int)Buttons.Ok, 0x00F9, 0x00F8, 0x00F7)
-                {
-                    X = 443 + offsetX,
-                    Y = footerBtnY,
-                    ButtonAction = ButtonAction.Activate
-                }
-            );
-
             Width = WIDTH;
             Height = HEIGHT;
             AcceptMouseInput = true;
@@ -765,6 +709,57 @@ namespace ClassicUO.Game.UI.Gumps
             _optionsSearchSubmitBtn.ShadowColor = new Color(60, 60, 60);
             _optionsSearchSubmitBtn.OnClick += RunOptionsSearch;
             Add(_optionsSearchSubmitBtn, 0);
+
+            AddOptionsFooterChrome();
+        }
+
+        private void AddOptionsFooterChrome()
+        {
+            const int offsetX = 60;
+            int offsetY = 60;
+            int bottomLineY = HEIGHT - 50;
+
+            Add(
+                new Line(
+                    160,
+                    bottomLineY,
+                    WIDTH - 160,
+                    1,
+                    Color.Gray.PackedValue
+                )
+            );
+
+            const int BTN_WIDTH = 90;
+            const int BTN_HEIGHT = 20;
+            int btnY = HEIGHT - BTN_HEIGHT - 15;
+
+            var cancelBtn = new GothicStyleButton(154 + offsetX, btnY, BTN_WIDTH, BTN_HEIGHT, "Cancel");
+            cancelBtn.BaseColor = new Color(130, 55, 55);
+            cancelBtn.HighlightColor = new Color(165, 90, 90);
+            cancelBtn.ShadowColor = new Color(90, 35, 35);
+            cancelBtn.OnClick += () => OnButtonClick((int)Buttons.Cancel);
+            Add(cancelBtn);
+
+            var applyBtn = new GothicStyleButton(248 + offsetX, btnY, BTN_WIDTH, BTN_HEIGHT, "Apply");
+            applyBtn.BaseColor = new Color(40, 115, 40);
+            applyBtn.HighlightColor = new Color(70, 155, 70);
+            applyBtn.ShadowColor = new Color(25, 75, 25);
+            applyBtn.OnClick += () => OnButtonClick((int)Buttons.Apply);
+            Add(applyBtn);
+
+            var defaultBtn = new GothicStyleButton(346 + offsetX, btnY, BTN_WIDTH, BTN_HEIGHT, "Default");
+            defaultBtn.BaseColor = new Color(100, 100, 100);
+            defaultBtn.HighlightColor = new Color(155, 155, 155);
+            defaultBtn.ShadowColor = new Color(60, 60, 60);
+            defaultBtn.OnClick += () => OnButtonClick((int)Buttons.Default);
+            Add(defaultBtn);
+
+            var okBtn = new GothicStyleButton(443 + offsetX, btnY, BTN_WIDTH, BTN_HEIGHT, "Okay");
+            okBtn.BaseColor = new Color(165, 130, 50);
+            okBtn.HighlightColor = new Color(210, 175, 90);
+            okBtn.ShadowColor = new Color(115, 90, 30);
+            okBtn.OnClick += () => OnButtonClick((int)Buttons.Ok);
+            Add(okBtn);
         }
 
         private void ClearOptionsSearch()
@@ -2544,7 +2539,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                         _macroControl?.Dispose();
 
-                        _macroControl = new MacroControl(name, availableHeight: HEIGHT - 85 - (OptionsScrollY + 15))
+                        _macroControl = new MacroControl(name, availableHeight: HEIGHT - 47 - (OptionsScrollY + 15))
                         {
                             X = 350,
                             Y = OptionsScrollY + 15
@@ -2705,7 +2700,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                     _macroControl?.Dispose();
 
-                    _macroControl = new MacroControl(m.Name, availableHeight: HEIGHT - 85 - (OptionsScrollY + 15))
+                    _macroControl = new MacroControl(m.Name, availableHeight: HEIGHT - 47 - (OptionsScrollY + 15))
                     {
                         X = 350,
                         Y = OptionsScrollY + 15
@@ -4167,8 +4162,6 @@ namespace ClassicUO.Game.UI.Gumps
             section.Add(_onCastingGump = AddCheckBox(null, "OnCasting gump (anti-rubberbanding) on mouse", _currentProfile.OnCastingGump, startX, startY));
             startY += _highlightContainersWhenMouseIsOver.Height + 6;
             section.Add(_onCastingGump_hidden = AddCheckBox(null, "hide the gump", _currentProfile.OnCastingGump_hidden, startX, startY));
-            startY += _highlightContainersWhenMouseIsOver.Height + 6;
-            section.Add(_onCastingUnderPlayerBar = AddCheckBox(null, "show cast bar under player (4px)", _currentProfile.OnCastingUnderPlayerBar, startX, startY));
             startY += _highlightContainersWhenMouseIsOver.Height + 6;
             section.Add(_onCastingHarmfulHueOnPlayer = AddCheckBox(null, "paint player harmful (red) while casting", _currentProfile.OnCastingHarmfulHueOnPlayer, startX, startY));
             startY += _highlightContainersWhenMouseIsOver.Height + 6;
@@ -7813,7 +7806,6 @@ namespace ClassicUO.Game.UI.Gumps
             // ## BEGIN - END ## // ONCASTINGGUMP
             _currentProfile.OnCastingGump = _onCastingGump.IsChecked;
             _currentProfile.OnCastingGump_hidden = _onCastingGump_hidden.IsChecked;
-            _currentProfile.OnCastingUnderPlayerBar = _onCastingUnderPlayerBar.IsChecked;
             _currentProfile.OnCastingHarmfulHueOnPlayer = _onCastingHarmfulHueOnPlayer.IsChecked;
             if (int.TryParse(_movementTurnDelay.Text, out int movementTurnDelay))
             {
@@ -7944,7 +7936,10 @@ namespace ClassicUO.Game.UI.Gumps
 
                 if (World.Player.OnCasting != null)
                 {
-                    World.Player.OnCasting.IsVisible = GameActions.iscasting && !_currentProfile.OnCastingGump_hidden;
+                    World.Player.OnCasting.IsVisible =
+                        _currentProfile.OnCastingGump
+                        && GameActions.iscasting
+                        && !_currentProfile.OnCastingGump_hidden;
                 }
             }
             else

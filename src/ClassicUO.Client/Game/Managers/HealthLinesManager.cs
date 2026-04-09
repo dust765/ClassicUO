@@ -30,6 +30,7 @@
 
 #endregion
 
+using System;
 using System.Collections.Generic;
 using ClassicUO.Configuration;
 using ClassicUO.Game.Data;
@@ -39,6 +40,7 @@ using ClassicUO.Dust765.Dust765;
 using Microsoft.Xna.Framework.Graphics;
 // ## BEGIN - END ## // OLDHEALTHLINES
 // ## BEGIN - END ## // OVERHEAD / UNDERCHAR
+using ClassicUO.Game;
 using ClassicUO.Game.GameObjects;
 using ClassicUO.Renderer;
 using Microsoft.Xna.Framework;

@@ -696,7 +696,6 @@ namespace ClassicUO.Configuration
         // ## BEGIN - END ## // ONCASTINGGUMP
         public bool OnCastingGump { get; set; }
         public bool OnCastingGump_hidden { get; set; } = false;
-        public bool OnCastingUnderPlayerBar { get; set; } = true;
         public bool OnCastingHarmfulHueOnPlayer { get; set; } = true;
         // ## BEGIN - END ## // ONCASTINGGUMP
         // ## BEGIN - END ## // MISC3 SHOWALLLAYERS
