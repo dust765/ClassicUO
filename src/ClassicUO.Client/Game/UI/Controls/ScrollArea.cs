@@ -186,6 +186,17 @@ namespace ClassicUO.Game.UI.Controls
             }
         }
 
+        protected override void OnMouseDown(int x, int y, MouseButtonType button)
+        {
+            if (button == MouseButtonType.Left && _scrollBar.IsVisible && x >= _scrollBar.X - 4)
+            {
+                // Pass raw ScrollArea-local coords; InvokeMouseDown subtracts _scrollBar.X/Y internally
+                _scrollBar.InvokeMouseDown(new Point(x, y), button);
+                return;
+            }
+            base.OnMouseDown(x, y, button);
+        }
+
         public override void Clear()
         {
             for (int i = 1; i < Children.Count; i++)
