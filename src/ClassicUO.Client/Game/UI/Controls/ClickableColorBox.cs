@@ -92,23 +92,17 @@ namespace ClassicUO.Game.UI.Controls
             if (button == MouseButtonType.Left)
             {
                 UIManager.GetGump<ColorPickerGump>()?.Dispose();
-                if (useModernSelector)
-                {
-                    UIManager.Add(new ModernColorPicker(s => Hue = s) { X = 100, Y = 100 });
-                }
-                else
-                {
-                    ColorPickerGump pickerGump = new ColorPickerGump
-                    (
-                        0,
-                        0,
-                        100,
-                        100,
-                        s => Hue = s
-                    );
 
-                    UIManager.Add(pickerGump);
-                }
+                ColorPickerGump pickerGump = new ColorPickerGump
+                (
+                    0,
+                    0,
+                    100,
+                    100,
+                    s => Hue = s
+                );
+
+                UIManager.Add(pickerGump);
             }
         }
     }

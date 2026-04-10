@@ -605,5 +605,6 @@ namespace ClassicUO.Game.UI.Gumps
             return y < hitMargin || y > Height - hitMargin
                 || x < hitMargin || x > Width - hitMargin;
         }
+
     }
 }

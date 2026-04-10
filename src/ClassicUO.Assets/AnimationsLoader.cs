@@ -150,7 +150,11 @@ namespace ClassicUO.Assets
                                 continue;
                             }
 
-                            int id = int.Parse(parts[0]);
+                            if (!int.TryParse(parts[0].Trim(), out int id))
+                            {
+                                continue;
+                            }
+
                             string testType = parts[1].ToLower();
                             int commentIdx = parts[2].IndexOf('#');
 
@@ -163,7 +167,10 @@ namespace ClassicUO.Assets
                                 continue;
                             }
 
-                            uint number = uint.Parse(parts[2], NumberStyles.HexNumber);
+                            if (!uint.TryParse(parts[2].Trim(), NumberStyles.HexNumber, null, out uint number))
+                            {
+                                continue;
+                            }
 
                             for (int i = 0; i < 5; i++)
                             {

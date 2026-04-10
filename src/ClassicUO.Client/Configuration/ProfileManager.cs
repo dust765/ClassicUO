@@ -35,6 +35,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using ClassicUO.Game;
+using ClassicUO.Game.Managers;
 using ClassicUO.Game.Scenes;
 using ClassicUO.Utility;
 using Microsoft.Xna.Framework;
@@ -399,6 +400,17 @@ namespace ClassicUO.Configuration
             if (profile.WindowClientBounds.Y < ClassicUO.Game.Constants.MIN_GAME_WINDOW_HEIGHT)
             {
                 profile.WindowClientBounds = new Point(profile.WindowClientBounds.X, ClassicUO.Game.Constants.MIN_GAME_WINDOW_HEIGHT);
+            }
+
+            if (!Enum.IsDefined(typeof(TitleBarStatsMode), profile.TitleBarStatsMode))
+            {
+                profile.TitleBarStatsMode = TitleBarStatsMode.Text;
+            }
+
+            if (!profile.EnableTitleBarStats)
+            {
+                // Keep mode deterministic when stats are disabled so old profile values do not leak behavior.
+                profile.TitleBarStatsMode = TitleBarStatsMode.Text;
             }
 
             profile.EnsurePerformanceFeaturesEnabled();
