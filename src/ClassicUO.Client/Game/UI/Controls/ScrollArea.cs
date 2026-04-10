@@ -190,8 +190,15 @@ namespace ClassicUO.Game.UI.Controls
         {
             if (button == MouseButtonType.Left && _scrollBar.IsVisible && x >= _scrollBar.X - 4)
             {
-                // Pass raw ScrollArea-local coords; InvokeMouseDown subtracts _scrollBar.X/Y internally
-                _scrollBar.InvokeMouseDown(new Point(x, y), button);
+                // Compute scroll position from Y relative to scrollbar track, avoiding
+                // InvokeMouseDown coordinate math (it expects screen-space, not local coords).
+                int trackHeight = _scrollBar.Height;
+                if (trackHeight > 0)
+                {
+                    int relY = y - _scrollBar.Y;
+                    float fraction = Math.Clamp((float)relY / trackHeight, 0f, 1f);
+                    _scrollBar.Value = (int)(fraction * (_scrollBar.MaxValue - _scrollBar.MinValue)) + _scrollBar.MinValue;
+                }
                 return;
             }
             base.OnMouseDown(x, y, button);
