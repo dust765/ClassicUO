@@ -188,7 +188,7 @@ namespace ClassicUO.Game.UI.Controls
 
         protected override void OnMouseDown(int x, int y, MouseButtonType button)
         {
-            if (button == MouseButtonType.Left && _scrollBar.IsVisible && x >= _scrollBar.X - 4)
+            if (button == MouseButtonType.Left && _scrollBar.IsVisible && x >= _scrollBar.X - 4 && x <= _scrollBar.X + _scrollBar.Width + 4)
             {
                 // Compute scroll position from Y relative to scrollbar track, avoiding
                 // InvokeMouseDown coordinate math (it expects screen-space, not local coords).
