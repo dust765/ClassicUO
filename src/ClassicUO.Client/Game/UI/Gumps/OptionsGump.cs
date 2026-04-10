@@ -97,7 +97,7 @@ namespace ClassicUO.Game.UI.Gumps
 
         // containers
         private HSliderBar _containersScale;
-        private ModernColorPicker.HueDisplay _altGridContainerBackgroundHue, _gridBorderHue;
+        private HueDisplay _altGridContainerBackgroundHue, _gridBorderHue;
         private Combobox _cotType;
         private DataBox _databox;
         private HSliderBar _delay_before_display_tooltip, _tooltip_zoom, _tooltip_background_opacity;
@@ -161,7 +161,7 @@ namespace ClassicUO.Game.UI.Gumps
         private Combobox _infoBarHighlightType;
 
         // combat & spells
-        private ModernColorPicker.HueDisplay _innocentColorPickerBox, _friendColorPickerBox, _crimialColorPickerBox, _canAttackColorPickerBox, _enemyColorPickerBox, _murdererColorPickerBox, _neutralColorPickerBox, _beneficColorPickerBox, _harmfulColorPickerBox, _improvedBuffBarHue,
+        private HueDisplay _innocentColorPickerBox, _friendColorPickerBox, _crimialColorPickerBox, _canAttackColorPickerBox, _enemyColorPickerBox, _murdererColorPickerBox, _neutralColorPickerBox, _beneficColorPickerBox, _harmfulColorPickerBox, _improvedBuffBarHue,
             _damageHueSelf, _damageHuePet, _damageHueAlly, _damageHueLastAttack, _damageHueOther;
         private HSliderBar _lightBar;
         private Checkbox _buffBarTime, _uiButtonsSingleClick, _queryBeforAttackCheckbox, _queryBeforeBeneficialCheckbox, _spellColoringCheckbox, _spellFormatCheckbox, _enableFastSpellsAssign, _enableImprovedBuffGump;
@@ -172,7 +172,7 @@ namespace ClassicUO.Game.UI.Gumps
         private Checkbox _overrideAllFonts;
         private Combobox _overrideAllFontsIsUnicodeCheckbox;
         private Combobox _overrideContainerLocationSetting;
-        private ModernColorPicker.HueDisplay _poisonColorPickerBox, _paralyzedColorPickerBox, _invulnerableColorPickerBox;
+        private HueDisplay _poisonColorPickerBox, _paralyzedColorPickerBox, _invulnerableColorPickerBox;
         private NiceButton _randomizeColorsButton;
         private Checkbox _restorezoomCheckbox, _zoomCheckbox;
         private InputField _highlightAmount, _abbreviatedAmount;
@@ -192,15 +192,15 @@ namespace ClassicUO.Game.UI.Gumps
         private HSliderBar _sliderZoom;
         private HSliderBar _soundsVolume, _musicVolume, _loginMusicVolume;
         private HSliderBar _hiddenBodyAlpha;
-        private ModernColorPicker.HueDisplay _hiddenBodyHue;
-        private ModernColorPicker.HueDisplay _speechColorPickerBox, _emoteColorPickerBox, _yellColorPickerBox, _whisperColorPickerBox, _partyMessageColorPickerBox, _guildMessageColorPickerBox, _allyMessageColorPickerBox, _chatMessageColorPickerBox, _partyAuraColorPickerBox;
+        private HueDisplay _hiddenBodyHue;
+        private HueDisplay _speechColorPickerBox, _emoteColorPickerBox, _yellColorPickerBox, _whisperColorPickerBox, _partyMessageColorPickerBox, _guildMessageColorPickerBox, _allyMessageColorPickerBox, _chatMessageColorPickerBox, _partyAuraColorPickerBox;
         private InputField _spellFormatBox;
-        private ModernColorPicker.HueDisplay _tooltip_font_hue;
+        private HueDisplay _tooltip_font_hue;
         private FontSelector _tooltip_font_selector;
         private HSliderBar _dragSelectStartX, _dragSelectStartY;
         private Checkbox _dragSelectAsAnchor, _namePlateHealthBar, _disableSystemChat, _journalMessagesOnlyInJournalBox, _namePlateShowAtFullHealth;
         private HSliderBar _journalOpacity, _namePlateOpacity, _namePlateHealthBarOpacity;
-        private ModernColorPicker.HueDisplay _journalBackgroundColor;
+        private HueDisplay _journalBackgroundColor;
         private Combobox _journalStyle;
         private NameOverheadAssignControl _nameOverheadControl;
 
@@ -222,15 +222,15 @@ namespace ClassicUO.Game.UI.Gumps
         private Checkbox _titleBarStatsModeProgressBar;
         // ## BEGIN - END ## // ART / HUE CHANGES
         private Checkbox _colorStealth, _colorEnergyBolt, _colorGold, _colorTreeTile, _colorBlockerTile, _enlargeJewelryPaperdoll;
-        private ModernColorPicker.HueDisplay _stealthColorPickerBox, _energyBoltColorPickerBox, _goldColorPickerBox, _treeTileColorPickerBox, _blockerTileColorPickerBox;
+        private HueDisplay _stealthColorPickerBox, _energyBoltColorPickerBox, _goldColorPickerBox, _treeTileColorPickerBox, _blockerTileColorPickerBox;
         private Combobox _goldType, _treeType, _blockerType, _stealthNeonType, _energyBoltNeonType, _energyBoltArtType, _moongateHueStyle;
         private Checkbox _moongateRecolor, _scaleMonstersEnabled;
-        private ModernColorPicker.HueDisplay _moongateCustomHuePicker;
+        private HueDisplay _moongateCustomHuePicker;
         // ## BEGIN - END ## // ART / HUE CHANGES
         // ## BEGIN - END ## // VISUAL HELPERS
         private Checkbox _highlightTileRange, _highlightTileRangeSpell, _ownAuraByHP, _previewFields;
         private HSliderBar _highlightTileRangeRange, _highlightTileRangeRangeSpell;
-        private ModernColorPicker.HueDisplay _highlightTileRangeColorPickerBox, _highlightTileRangeColorPickerBoxSpell, _highlightLastTargetTypeColorPickerBox, _highlighFriendsGuildTypeHueColorPickerBox, _highlightLastTargetTypeColorPickerBoxPoison, _highlightLastTargetTypeColorPickerBoxPara, _highlightLastTargetTypeColorPickerBoxStunned, _highlightLastTargetTypeColorPickerBoxMortalled, _highlightGlowingWeaponsTypeColorPickerBoxHue, _hueImpassableViewColorPickerBox;
+        private HueDisplay _highlightTileRangeColorPickerBox, _highlightTileRangeColorPickerBoxSpell, _highlightLastTargetTypeColorPickerBox, _highlighFriendsGuildTypeHueColorPickerBox, _highlightLastTargetTypeColorPickerBoxPoison, _highlightLastTargetTypeColorPickerBoxPara, _highlightLastTargetTypeColorPickerBoxStunned, _highlightLastTargetTypeColorPickerBoxMortalled, _highlightGlowingWeaponsTypeColorPickerBoxHue, _hueImpassableViewColorPickerBox;
         private Combobox _glowingWeaponsType, _highlightLastTargetType, _highlighFriendsGuildType, _highlightLastTargetTypePoison, _highlightLastTargetTypePara, _highlightLastTargetTypeStunned, _highlightLastTargetTypeMortalled;
         // ## BEGIN - END ## // VISUAL HELPERS
         // ## BEGIN - END ## // HEALTHBAR
@@ -288,7 +288,7 @@ namespace ClassicUO.Game.UI.Gumps
         // ## BEGIN - END ## // AUTOMATIONS
         private Checkbox _autoWorldmapMarker;
         private Checkbox _autoRangeDisplayAlways;
-        private ModernColorPicker.HueDisplay _autoRangeDisplayHue;
+        private HueDisplay _autoRangeDisplayHue;
         // ## BEGIN - END ## // AUTOMATIONS
         // ## BEGIN - END ## // OUTLANDS
         /*
@@ -324,12 +324,12 @@ namespace ClassicUO.Game.UI.Gumps
         // ## BEGIN - END ## // TABGRID // PKRION
         // ## BEGIN - END ## // BASICSETUP
 
-        private Checkbox _namePlateHealthOnlyWarmode, _namePlateCustomChrome, _namePlateHealthBarMatchStrip, _namePlateFullPlateWidthScalesWithHp, _showHpLineInNoh, _enableHealthIndicator, _spellIconDisplayHotkey, _enableAlphaScrollWheel, _useModernShop, _openHealthBarForLastAttack;
-        private ModernColorPicker.HueDisplay _namePlateCustomBgHue, _namePlateCustomBorderHuePicker;
+        private Checkbox _namePlateHealthOnlyWarmode, _namePlateCustomChrome, _namePlateHealthBarMatchStrip, _namePlateFullPlateWidthScalesWithHp, _showHpLineInNoh, _enableHealthIndicator, _spellIconDisplayHotkey, _enableAlphaScrollWheel, _useModernShop, _useExpandedColorPickerPalette, _openHealthBarForLastAttack;
+        private HueDisplay _namePlateCustomBgHue, _namePlateCustomBorderHuePicker;
         private Checkbox _hideJournalBorder, _hideJournalTimestamp, _gridHideBorder, _skillProgressBarOnChange, _uselastCooldownPosition, _closeHPBarWhenAnchored, _enableNearbyItemGump;
         private HotkeyBox _nearbyItemGumpHotkeyBox;
         private InputField _healthIndicatorPercentage, _healthIndicatorWidth, _skillProgressBarFormat;
-        private ModernColorPicker.HueDisplay _mainWindowHuePicker, _spellIconHotkeyHue;
+        private HueDisplay _mainWindowHuePicker, _spellIconHotkeyHue;
         private HSliderBar _spellIconScale, _overheadTextWidth, _gridHightlightLineSize, _maxJournalEntries;
         private HSliderBar _healthLineSizeMultiplier, _regularPlayerAlpha, _nameplateBorderOpacity;
 
@@ -717,7 +717,7 @@ namespace ClassicUO.Game.UI.Gumps
         {
             const int offsetX = 60;
             int offsetY = 60;
-            int bottomLineY = HEIGHT - 50;
+            int bottomLineY = HEIGHT - 42;
 
             Add(
                 new Line(
@@ -4732,7 +4732,7 @@ namespace ClassicUO.Game.UI.Gumps
                 gridSection.PushIndent();
                 gridSection.Add
                     (
-                     _gridBorderHue = new ModernColorPicker.HueDisplay(_currentProfile.GridBorderHue, null, true)
+                     _gridBorderHue = new HueDisplay(_currentProfile.GridBorderHue, null, true)
                     );
                 gridSection.AddRight(AddLabel(null, "Border hue", 0, 0));
                 gridSection.PopIndent();
@@ -4750,7 +4750,7 @@ namespace ClassicUO.Game.UI.Gumps
                     ));
 
                 gridSection.PushIndent();
-                gridSection.Add(_altGridContainerBackgroundHue = new ModernColorPicker.HueDisplay(_currentProfile.AltGridContainerBackgroundHue, null, true));
+                gridSection.Add(_altGridContainerBackgroundHue = new HueDisplay(_currentProfile.AltGridContainerBackgroundHue, null, true));
                 gridSection.AddRight(AddLabel(null, "Background hue", 0, 0));
                 gridSection.PopIndent();
 
@@ -4895,7 +4895,7 @@ namespace ClassicUO.Game.UI.Gumps
             _hueLabel.Y = 1;
             main.Add(_hueLabel);
 
-            var _hueSelector = new ModernColorPicker.HueDisplay(data.hue, null, true) { X = _hueLabel.X + _hueLabel.Width + 2, Y = 1 };
+            var _hueSelector = new HueDisplay(data.hue, null, true) { X = _hueLabel.X + _hueLabel.Width + 2, Y = 1 };
             main.Add(_hueSelector);
 
             InputField _name = AddInputField(null, _hueSelector.X + _hueSelector.Width + 10, 1, 100, TEXTBOX_HEIGHT);
@@ -5244,13 +5244,13 @@ namespace ClassicUO.Game.UI.Gumps
             sectionTitleBar.Add(AddLabel(null, "Display mode (choose one):", startX, startY));
             startY += 20;
 
-            sectionTitleBar.Add(_titleBarStatsModeText = AddCheckBox(null, "Text (HP 85/100, MP 42/50, SP 95/100)", _currentProfile.TitleBarStatsMode == TitleBarStatsMode.Text, startX, startY));
+            sectionTitleBar.Add(_titleBarStatsModeText = AddCheckBox(null, "Text (HP 85/100, MP 42/50, SP 95/100)", _currentProfile.EnableTitleBarStats && _currentProfile.TitleBarStatsMode == TitleBarStatsMode.Text, startX, startY));
             startY += _titleBarStatsModeText.Height + 6;
 
-            sectionTitleBar.Add(_titleBarStatsModePercent = AddCheckBox(null, "Percent (HP 85%, MP 84%, SP 95%)", _currentProfile.TitleBarStatsMode == TitleBarStatsMode.Percent, startX, startY));
+            sectionTitleBar.Add(_titleBarStatsModePercent = AddCheckBox(null, "Percent (HP 85%, MP 84%, SP 95%)", _currentProfile.EnableTitleBarStats && _currentProfile.TitleBarStatsMode == TitleBarStatsMode.Percent, startX, startY));
             startY += _titleBarStatsModePercent.Height + 6;
 
-            sectionTitleBar.Add(_titleBarStatsModeProgressBar = AddCheckBox(null, "Progress Bar (colored bars below each other)", _currentProfile.TitleBarStatsMode == TitleBarStatsMode.ProgressBar, startX, startY));
+            sectionTitleBar.Add(_titleBarStatsModeProgressBar = AddCheckBox(null, "Progress Bar (colored bars below each other)", _currentProfile.EnableTitleBarStats && _currentProfile.TitleBarStatsMode == TitleBarStatsMode.ProgressBar, startX, startY));
             startY += _titleBarStatsModeProgressBar.Height + 6;
 
             void UncheckOtherTitleBarModes(Checkbox selected)
@@ -5699,7 +5699,7 @@ namespace ClassicUO.Game.UI.Gumps
             sectionMiscTaz.AddRight(_regularPlayerAlpha = AddHSlider(null, 0, 100, _currentProfile.PlayerConstantAlpha, 0, 0, 200));
             sectionMiscTaz.Add(_enableImprovedBuffGump = AddCheckBox(null, _langDust.EnableImprovedBuffGump, _currentProfile.UseImprovedBuffBar, 0, 0));
             sectionMiscTaz.AddRight(_improvedBuffBarHue = AddHueDisplay(null, 0, 0, _currentProfile.ImprovedBuffBarHue, ""));
-            sectionMiscTaz.Add(_mainWindowHuePicker = new ModernColorPicker.HueDisplay(_currentProfile.MainWindowBackgroundHue, null, true));
+            sectionMiscTaz.Add(_mainWindowHuePicker = new HueDisplay(_currentProfile.MainWindowBackgroundHue, null, true));
             sectionMiscTaz.AddRight(AddLabel(null, _langDust.MainGameWindowBackground, 0, 0));
             sectionMiscTaz.Add(_enableHealthIndicator = AddCheckBox(null, _langDust.EnableHealthIndicatorBorder, _currentProfile.EnableHealthIndicator, 0, 0));
             sectionMiscTaz.PushIndent();
@@ -5716,12 +5716,14 @@ namespace ClassicUO.Game.UI.Gumps
             sectionMiscTaz.AddRight(AddLabel(null, _langDust.DisplayMatchingHotkeysOnSpellIcons, 0, 0));
             sectionMiscTaz.PushIndent();
             sectionMiscTaz.Add(AddLabel(null, _langDust.HotkeyTextHue, 0, 0));
-            sectionMiscTaz.AddRight(_spellIconHotkeyHue = new ModernColorPicker.HueDisplay(_currentProfile.SpellIcon_HotkeyHue, null, true));
+            sectionMiscTaz.AddRight(_spellIconHotkeyHue = new HueDisplay(_currentProfile.SpellIcon_HotkeyHue, null, true));
             sectionMiscTaz.PopIndent();
             sectionMiscTaz.Add(_enableAlphaScrollWheel = AddCheckBox(null, "", _currentProfile.EnableAlphaScrollingOnGumps, 0, 0));
             sectionMiscTaz.AddRight(AddLabel(null, _langDust.EnableGumpOpacityAdjustViaAltScroll, 0, 0));
             sectionMiscTaz.Add(_useModernShop = AddCheckBox(null, "", _currentProfile.UseModernShopGump, 0, 0));
             sectionMiscTaz.AddRight(AddLabel(null, _langDust.EnableAdvancedShopGump, 0, 0));
+            sectionMiscTaz.Add(_useExpandedColorPickerPalette = AddCheckBox(null, "", _currentProfile.UseExpandedColorPickerPalette, 0, 0));
+            sectionMiscTaz.AddRight(AddLabel(null, "Use expanded color picker palette", 0, 0));
             sectionMiscTaz.Add(_skillProgressBarOnChange = AddCheckBox(null, "", _currentProfile.DisplaySkillBarOnChange, 0, 0));
             sectionMiscTaz.AddRight(AddLabel(null, _langDust.DisplaySkillProgressBarOnSkillChanges, 0, 0));
             sectionMiscTaz.Add(AddLabel(null, _langDust.TextFormat, 0, 0));
@@ -6652,6 +6654,7 @@ namespace ClassicUO.Game.UI.Gumps
             _currentProfile.HideJournalTimestamp = _hideJournalTimestamp.IsChecked;
 
             _currentProfile.UseModernShopGump = _useModernShop.IsChecked;
+            _currentProfile.UseExpandedColorPickerPalette = _useExpandedColorPickerPalette.IsChecked;
 
             _currentProfile.OverheadChatWidth = _overheadTextWidth.Value;
 
@@ -7385,12 +7388,15 @@ namespace ClassicUO.Game.UI.Gumps
             // ## BEGIN - END ## // BASICSETUP
             // ## BEGIN - END ## // TITLE BAR
             _currentProfile.EnableTitleBarStats = _enableTitleBarStats?.IsChecked ?? _currentProfile.EnableTitleBarStats;
-            if (_titleBarStatsModeProgressBar != null && _titleBarStatsModeProgressBar.IsChecked)
-                _currentProfile.TitleBarStatsMode = TitleBarStatsMode.ProgressBar;
-            else if (_titleBarStatsModePercent != null && _titleBarStatsModePercent.IsChecked)
-                _currentProfile.TitleBarStatsMode = TitleBarStatsMode.Percent;
-            else if (_titleBarStatsModeText != null && _titleBarStatsModeText.IsChecked)
-                _currentProfile.TitleBarStatsMode = TitleBarStatsMode.Text;
+            if (_currentProfile.EnableTitleBarStats)
+            {
+                if (_titleBarStatsModeProgressBar != null && _titleBarStatsModeProgressBar.IsChecked)
+                    _currentProfile.TitleBarStatsMode = TitleBarStatsMode.ProgressBar;
+                else if (_titleBarStatsModePercent != null && _titleBarStatsModePercent.IsChecked)
+                    _currentProfile.TitleBarStatsMode = TitleBarStatsMode.Percent;
+                else
+                    _currentProfile.TitleBarStatsMode = TitleBarStatsMode.Text;
+            }
             if (World.Player != null)
             {
                 if (_currentProfile.EnableTitleBarStats)
@@ -7980,24 +7986,41 @@ namespace ClassicUO.Game.UI.Gumps
 
         private void UpdateTitleBarStatsControlsAvailability()
         {
-            if (_enableTitleBarStats != null)
-            {
-                _enableTitleBarStats.IsEnabled = true;
-            }
+            bool enabled = _enableTitleBarStats?.IsChecked ?? false;
 
             if (_titleBarStatsModeText != null)
             {
-                _titleBarStatsModeText.IsEnabled = true;
+                _titleBarStatsModeText.IsEnabled = enabled;
+                if (!enabled)
+                {
+                    _titleBarStatsModeText.IsChecked = false;
+                }
             }
 
             if (_titleBarStatsModePercent != null)
             {
-                _titleBarStatsModePercent.IsEnabled = true;
+                _titleBarStatsModePercent.IsEnabled = enabled;
+                if (!enabled)
+                {
+                    _titleBarStatsModePercent.IsChecked = false;
+                }
             }
 
             if (_titleBarStatsModeProgressBar != null)
             {
-                _titleBarStatsModeProgressBar.IsEnabled = true;
+                _titleBarStatsModeProgressBar.IsEnabled = enabled;
+                if (!enabled)
+                {
+                    _titleBarStatsModeProgressBar.IsChecked = false;
+                }
+            }
+
+            if (enabled && _titleBarStatsModeText != null && _titleBarStatsModePercent != null && _titleBarStatsModeProgressBar != null)
+            {
+                if (!_titleBarStatsModeText.IsChecked && !_titleBarStatsModePercent.IsChecked && !_titleBarStatsModeProgressBar.IsChecked)
+                {
+                    _titleBarStatsModeText.IsChecked = true;
+                }
             }
         }
 
@@ -8283,9 +8306,9 @@ namespace ClassicUO.Game.UI.Gumps
             return slider;
         }
 
-        private ModernColorPicker.HueDisplay AddHueDisplay(ScrollArea area, int x, int y, ushort hue, string text)
+        private HueDisplay AddHueDisplay(ScrollArea area, int x, int y, ushort hue, string text)
         {
-            ModernColorPicker.HueDisplay hueDisplay = new ModernColorPicker.HueDisplay(hue, null, true) { X = x, Y = y };
+            HueDisplay hueDisplay = new HueDisplay(hue, null, true) { X = x, Y = y };
 
             area?.Add(hueDisplay);
 

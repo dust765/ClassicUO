@@ -125,8 +125,8 @@ namespace ClassicUO.Dust765.UI.Gumps
                 }
             };
 
-            ModernColorPicker.HueDisplay hueDisplay;
-            area.Add(hueDisplay = new ModernColorPicker.HueDisplay(data.Hue, null, true) { X = 150, Y = y });
+            HueDisplay hueDisplay;
+            area.Add(hueDisplay = new HueDisplay(data.Hue, null, true) { X = 150, Y = y });
             hueDisplay.SetTooltip("Select grid highlight hue");
             hueDisplay.HueChanged += (s, e) =>
             {

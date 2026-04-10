@@ -10,6 +10,7 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using static ClassicUO.Game.UI.XmlGumpHandler;
@@ -817,7 +818,7 @@ namespace ClassicUO.Game.UI
 
         private uint nextUpdate = 0;
 
-        private bool savingFile = false;
+        private int _savingFile = 0; // 0 = idle, 1 = busy
         private uint saveFileAfter = uint.MaxValue;
 
         public XmlGump() : base(0, 0)
@@ -896,38 +897,52 @@ namespace ClassicUO.Game.UI
 
             if (SavePosition)
             {
-                saveFileAfter = Time.Ticks + 10000;
+                saveFileAfter = Time.Ticks + 2000;
             }
         }
 
         private void SaveFile()
         {
-            if (!savingFile)
+            if (Interlocked.CompareExchange(ref _savingFile, 1, 0) != 0)
+                return;
+
+            int snapshotX = X;
+            int snapshotY = Y;
+
+            if (!string.IsNullOrEmpty(FilePath) && File.Exists(FilePath))
             {
-                savingFile = true;
-
-                if (!string.IsNullOrEmpty(FilePath) && File.Exists(FilePath))
+                XmlDocument xmlDoc = new XmlDocument();
+                try
                 {
-                    XmlDocument xmlDoc = new XmlDocument();
-                    try
+                    xmlDoc.LoadXml(File.ReadAllText(FilePath));
+
+                    if (xmlDoc.DocumentElement != null)
                     {
-                        xmlDoc.LoadXml(File.ReadAllText(FilePath));
+                        XmlElement root = xmlDoc.DocumentElement;
+                        root.SetAttribute("x", snapshotX.ToString());
+                        root.SetAttribute("y", snapshotY.ToString());
 
-                        if (xmlDoc.DocumentElement != null)
-                        {
-                            XmlElement root = xmlDoc.DocumentElement;
-                            root.SetAttribute("x", X.ToString());
-                            root.SetAttribute("y", Y.ToString());
-
-                            xmlDoc.Save(FilePath);
-                        }
+                        xmlDoc.Save(FilePath);
                     }
-                    catch (Exception e) { GameActions.Print(e.Message); }
-
                 }
-
-                savingFile = false;
+                catch (Exception e) { GameActions.Print(e.Message); }
             }
+
+            Interlocked.Exchange(ref _savingFile, 0);
+        }
+
+        public override void Dispose()
+        {
+            if (SavePosition && (saveFileAfter != uint.MaxValue || Interlocked.CompareExchange(ref _savingFile, 0, 0) == 1))
+            {
+                // Wait briefly for in-flight async save, or do a fresh synchronous save
+                int attempts = 0;
+                while (Interlocked.CompareExchange(ref _savingFile, 0, 0) == 1 && attempts++ < 50)
+                    Thread.Sleep(10); // max 500ms wait
+                if (Interlocked.CompareExchange(ref _savingFile, 0, 0) == 0)
+                    SaveFile();
+            }
+            base.Dispose();
         }
     }
 

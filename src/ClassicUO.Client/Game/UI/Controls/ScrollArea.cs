@@ -186,6 +186,24 @@ namespace ClassicUO.Game.UI.Controls
             }
         }
 
+        protected override void OnMouseDown(int x, int y, MouseButtonType button)
+        {
+            if (button == MouseButtonType.Left && _scrollBar.IsVisible && x >= _scrollBar.X - 4 && x <= _scrollBar.X + _scrollBar.Width + 4)
+            {
+                // Compute scroll position from Y relative to scrollbar track, avoiding
+                // InvokeMouseDown coordinate math (it expects screen-space, not local coords).
+                int trackHeight = _scrollBar.Height;
+                if (trackHeight > 0)
+                {
+                    int relY = y - _scrollBar.Y;
+                    float fraction = Math.Clamp((float)relY / trackHeight, 0f, 1f);
+                    _scrollBar.Value = (int)(fraction * (_scrollBar.MaxValue - _scrollBar.MinValue)) + _scrollBar.MinValue;
+                }
+                return;
+            }
+            base.OnMouseDown(x, y, button);
+        }
+
         public override void Clear()
         {
             for (int i = 1; i < Children.Count; i++)

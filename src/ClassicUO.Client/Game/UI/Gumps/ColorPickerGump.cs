@@ -31,6 +31,10 @@
 #endregion
 
 using System;
+using ClassicUO.Assets;
+using ClassicUO.Game.Data;
+using ClassicUO.Game.GameObjects;
+using ClassicUO.Game.Managers;
 using ClassicUO.Game.UI.Controls;
 using ClassicUO.Network;
 
@@ -42,6 +46,8 @@ namespace ClassicUO.Game.UI.Gumps
         private const int SLIDER_MAX = 4;
         private readonly ColorPickerBox _box;
         private readonly StaticPic _dyeTybeImage;
+        private readonly HSliderBar _slider;
+        private ushort _selectedHue;
 
         private readonly ushort _graphic;
         private readonly Action<ushort> _okClicked;
@@ -54,7 +60,18 @@ namespace ClassicUO.Game.UI.Gumps
             AcceptMouseInput = false;
             X = x;
             Y = y;
+
             Add(new GumpPic(0, 0, 0x0906, 0));
+
+            Add
+            (
+                new Button(1, 0x5669, 0x566B, 0x566A)
+                {
+                    X = 212,
+                    Y = 33,
+                    ButtonAction = ButtonAction.Activate
+                }
+            );
 
             Add
             (
@@ -64,11 +81,9 @@ namespace ClassicUO.Game.UI.Gumps
                 }
             );
 
-            HSliderBar slider;
-
             Add
             (
-                slider = new HSliderBar
+                _slider = new HSliderBar
                 (
                     39,
                     142,
@@ -80,20 +95,26 @@ namespace ClassicUO.Game.UI.Gumps
                 )
             );
 
-            slider.ValueChanged += (sender, e) => { _box.Graduation = slider.Value; };
+            _slider.ValueChanged += (sender, e) => { _box.Graduation = _slider.Value; };
             Add(_box = new ColorPickerBox(34, 34));
-            _box.ColorSelectedIndex += (sender, e) => { _dyeTybeImage.Hue = _box.SelectedHue; };
+
+            _box.ColorSelectedIndex += (sender, e) =>
+            {
+                _selectedHue = _box.SelectedHue;
+                _dyeTybeImage.Hue = _selectedHue;
+            };
 
             Add
             (
                 _dyeTybeImage = new StaticPic(0x0FAB, 0)
                 {
-                    X = 200, Y = 58
+                    X = 200, Y = 78
                 }
             );
 
             _okClicked = okClicked;
-            _dyeTybeImage.Hue = _box.SelectedHue;
+            _selectedHue = _box.SelectedHue;
+            _dyeTybeImage.Hue = _selectedHue;
         }
 
         public ushort Graphic => _graphic;
@@ -106,13 +127,47 @@ namespace ClassicUO.Game.UI.Gumps
 
                     if (LocalSerial != 0)
                     {
-                        NetClient.Socket.Send_DyeDataResponse(LocalSerial, _graphic, _box.SelectedHue);
+                        NetClient.Socket.Send_DyeDataResponse(LocalSerial, _graphic, _selectedHue);
                     }
 
-                    _okClicked?.Invoke(_box.SelectedHue);
+                    _okClicked?.Invoke(_selectedHue);
                     Dispose();
 
                     break;
+                case 1:
+
+                    _ = TargetHelper.TargetObject(EntityTargeted);
+                    break;
+            }
+        }
+
+        private void EntityTargeted(Entity obj)
+        {
+            if (obj != null)
+            {
+                _box.SelectedHue = obj.Hue;
+
+                if (_box.SelectedHue == obj.Hue)
+                {
+                    _slider.Value = _box.Graduation;
+                    _selectedHue = _box.SelectedHue;
+                    _dyeTybeImage.Hue = _selectedHue;
+                }
+                else
+                {
+                    string badHueMessage = UOFileManager.Current.Clilocs.GetString(1042295);
+
+                    MessageManager.HandleMessage
+                    (
+                        obj,
+                        badHueMessage,
+                        "System",
+                        0,
+                        MessageType.Regular,
+                        3,
+                        TextType.SYSTEM
+                    );
+                }
             }
         }
     }

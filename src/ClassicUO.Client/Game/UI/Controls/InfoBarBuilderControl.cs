@@ -40,7 +40,7 @@ namespace ClassicUO.Game.UI.Controls
     internal class InfoBarBuilderControl : Control
     {
         private readonly StbTextBox infoLabel;
-        private readonly ModernColorPicker.HueDisplay labelColor;
+        private readonly HueDisplay labelColor;
         private readonly Combobox varStat;
 
         public InfoBarBuilderControl(InfoBarItem item)
@@ -59,7 +59,7 @@ namespace ClassicUO.Game.UI.Controls
                 (int) item.var
             );
 
-            labelColor = new ModernColorPicker.HueDisplay(item.hue, null, true) { X = 150, Y = (26 - 18) / 2 };
+            labelColor = new HueDisplay(item.hue, null, true) { X = 150, Y = (26 - 18) / 2 };
 
             NiceButton deleteButton = new NiceButton
             (

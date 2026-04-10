@@ -108,8 +108,8 @@ namespace ClassicUO.Game.Managers
                 "colorpicker",
                 s =>
                 {
-                    UIManager.Add(new UI.Gumps.ModernColorPicker(null, 8787));
-
+                    UIManager.GetGump<UI.Gumps.ColorPickerGump>()?.Dispose();
+                    UIManager.Add(new UI.Gumps.ColorPickerGump(8787, 0, 100, 100, h => GameActions.Print($"Selected hue: {h}")));
                 }
             );
 

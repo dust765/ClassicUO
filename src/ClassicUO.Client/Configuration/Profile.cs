@@ -896,6 +896,7 @@ namespace ClassicUO.Configuration
         public int TextBorderSize { get; set; } = 1;
 
         public bool UseModernShopGump { get; set; } = false;
+        public bool UseExpandedColorPickerPalette { get; set; } = false;
 
         public int MaxJournalEntries { get; set; } = 750;
         public bool HideJournalBorder { get; set; } = false;

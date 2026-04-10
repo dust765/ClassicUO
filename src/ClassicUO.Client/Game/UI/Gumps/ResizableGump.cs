@@ -212,8 +212,8 @@ namespace ClassicUO.Game.UI.Gumps
         {
             _borderControl.Width = Width;
             _borderControl.Height = Height;
-            _button.X = Width - (_button.Width >> 0) + 2;
-            _button.Y = Height - (_button.Height >> 0) + 2;
+            _button.X = Width - _button.Width + 2;
+            _button.Y = Height - _button.Height + 2;
             GroupMatrixHeight = Height;
             GroupMatrixWidth = Width;
         }

@@ -216,7 +216,7 @@ namespace ClassicUO.Game.UI.Gumps
             area.Add(_scale);
 
 
-            ModernColorPicker.HueDisplay _hueDisplay = new ModernColorPicker.HueDisplay(_macro.Hue, null, true)
+            HueDisplay _hueDisplay = new HueDisplay(_macro.Hue, null, true)
             {
                 X = 10,
                 Y = _scale.Y + _scale.Height + 15

@@ -70,9 +70,11 @@ namespace ClassicUO.Dust765.UI.Gumps
                 "/c[yellow]v3.0.9/cd",
                 "",
                 "- Update for net core 10",
-                "- align counter from oficial cuo version",
-                "- align nameplateoverhead from oficial cuo version",
-                "- update for fna to 26.01",
+                "- Update for fna to 26.01",
+                "- Custom inputs for ms turn movement",
+                "- Counters same experience as oficial cuo version",
+                "- Nameplateoverhead same experience as oficial cuo version",
+                "- Fixes for new cuo client 114",
                 ""
             };
 
