@@ -67,7 +67,7 @@ namespace ClassicUO.Dust765.UI.Gumps
             int contentY = 0;
             string[] sections =
             {
-                "/c[yellow]v3.0.9/cd",
+                "/c[yellow]v3.0.10/cd",
                 "",
                 "- Update for net core 10",
                 "- Update for fna to 26.01",
@@ -75,6 +75,7 @@ namespace ClassicUO.Dust765.UI.Gumps
                 "- Counters same experience as oficial cuo version",
                 "- Nameplateoverhead same experience as oficial cuo version",
                 "- Fixes for new cuo client 114",
+                "- Color picker same experience as oficial cuo version",
                 ""
             };
 
