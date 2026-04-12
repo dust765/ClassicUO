@@ -90,7 +90,7 @@ jobs:
             echo "RELEASE_TAG=Dust765-main-${CUO_ASSEMBLY_VERSION}" >> "$GITHUB_ENV"
             echo "RELEASE_NAME=Dust765 main ${CUO_ASSEMBLY_VERSION}" >> "$GITHUB_ENV"
             echo "RELEASE_PRERELEASE=false" >> "$GITHUB_ENV"
-            echo "RELEASE_ALLOW_UPDATES=false" >> "$GITHUB_ENV"
+            echo "RELEASE_ALLOW_UPDATES=true" >> "$GITHUB_ENV"
             echo "RELEASE_MAKE_LATEST=true" >> "$GITHUB_ENV"
             echo "RELEASE_FORCE_TAG=false" >> "$GITHUB_ENV"
           elif [[ "${BRANCH_NAME}" == "developer" ]]; then
