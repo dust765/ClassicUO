@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ClassicUO;
@@ -42,15 +43,14 @@ namespace ClassicUO.Dust765
                     var releases = JsonSerializer.Deserialize<GitHubReleaseData[]>(json);
                     if (releases != null && releases.Length > 0)
                     {
-                        MainReleaseData = releases[0];
-                        if (MainReleaseData.draft)
-                        {
-                            var published = releases.FirstOrDefault(r => !r.draft);
-                            if (published != null)
-                                MainReleaseData = published;
-                        }
-                        var tag = MainReleaseData.tag_name.TrimStart('v');
-                        if (Version.TryParse(tag, out var remote) && remote > CUOEnviroment.Version)
+                        // Prefer published stable releases first, then any published release.
+                        // This avoids picking draft/prerelease entries for normal update checks.
+                        MainReleaseData = releases.FirstOrDefault(r => !r.draft && !r.prerelease)
+                                          ?? releases.FirstOrDefault(r => !r.draft)
+                                          ?? releases[0];
+
+                        if (TryParseReleaseVersion(MainReleaseData.tag_name, out var remote)
+                            && remote > CUOEnviroment.Version)
                         {
                             HasUpdate = true;
                             UpdateStatusChanged?.Invoke(null, EventArgs.Empty);
@@ -59,6 +59,24 @@ namespace ClassicUO.Dust765
                 }
             }
             catch { }
+        }
+
+        private static bool TryParseReleaseVersion(string tag, out Version version)
+        {
+            version = null;
+
+            if (string.IsNullOrWhiteSpace(tag))
+            {
+                return false;
+            }
+
+            // Handles tags like:
+            // - v3.0.10
+            // - 3.0.10
+            // - Dust765-main-3.0.10.123
+            var match = Regex.Match(tag, @"\d+\.\d+\.\d+(?:\.\d+)?");
+
+            return match.Success && Version.TryParse(match.Value, out version);
         }
 
         public static void SendDelayedUpdateMessage()

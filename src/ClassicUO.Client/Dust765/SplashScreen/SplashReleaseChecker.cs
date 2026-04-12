@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ClassicUO;
 
@@ -87,21 +88,19 @@ namespace ClassicUO.Dust765
         private static bool TryParseReleaseVersion(string tag, out Version version)
         {
             version = null;
+
             if (string.IsNullOrWhiteSpace(tag))
             {
                 return false;
             }
-            string s = tag.Trim();
-            if (s.StartsWith("v", StringComparison.OrdinalIgnoreCase))
-            {
-                s = s.Substring(1);
-            }
-            int dash = s.IndexOf('-');
-            if (dash > 0)
-            {
-                s = s.Substring(0, dash);
-            }
-            return Version.TryParse(s, out version);
+
+            // Handles tags like:
+            // - v3.0.10
+            // - 3.0.10
+            // - Dust765-main-3.0.10.123
+            var match = Regex.Match(tag, @"\d+\.\d+\.\d+(?:\.\d+)?");
+
+            return match.Success && Version.TryParse(match.Value, out version);
         }
     }
 }
