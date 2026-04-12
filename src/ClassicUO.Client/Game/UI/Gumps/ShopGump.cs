@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -32,7 +32,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using ClassicUO.Configuration;
 using ClassicUO.Game.GameObjects;
 using ClassicUO.Game.UI.Controls;
@@ -350,7 +349,7 @@ namespace ClassicUO.Game.UI.Gumps
 
         //        if (fromcliloc)
         //        {
-        //            shopItem.SetName(ClilocLoader.Instance.Translate(it.Name, $"\t{it.Amount}\t{it.ItemData.Name}", true));
+        //            shopItem.SetName(UOFileManager.Current.Clilocs.Translate(it.Name, $"\t{it.Amount}\t{it.ItemData.Name}", true));
         //        }
         //    }
         //}
@@ -606,13 +605,15 @@ namespace ClassicUO.Game.UI.Gumps
 
         private void ShopItem_MouseClick(object sender, MouseEventArgs e)
         {
-            foreach (
-                ShopItem shopItem in _shopScrollArea.Children
-                    .SelectMany(o => o.Children)
-                    .OfType<ShopItem>()
-            )
+            foreach (Control o in _shopScrollArea.Children)
             {
-                shopItem.IsSelected = shopItem == sender;
+                foreach (Control c in o.Children)
+                {
+                    if (c is ShopItem shopItem && !shopItem.IsDisposed)
+                    {
+                        shopItem.IsSelected = shopItem == sender;
+                    }
+                }
             }
         }
 
@@ -621,9 +622,13 @@ namespace ClassicUO.Game.UI.Gumps
             switch ((Buttons)buttonID)
             {
                 case Buttons.Accept:
-                    Tuple<uint, ushort>[] items = _transactionItems
-                        .Select(t => new Tuple<uint, ushort>(t.Key, (ushort)t.Value.Amount))
-                        .ToArray();
+                    Tuple<uint, ushort>[] items = new Tuple<uint, ushort>[_transactionItems.Count];
+                    int idx = 0;
+
+                    foreach (KeyValuePair<uint, TransactionItem> kv in _transactionItems)
+                    {
+                        items[idx++] = new Tuple<uint, ushort>(kv.Key, (ushort)kv.Value.Amount);
+                    }
 
                     if (IsBuyGump)
                     {
@@ -640,7 +645,9 @@ namespace ClassicUO.Game.UI.Gumps
 
                 case Buttons.Clear:
 
-                    foreach (TransactionItem t in _transactionItems.Values.ToList())
+                    List<TransactionItem> toRemove = new List<TransactionItem>(_transactionItems.Values);
+
+                    foreach (TransactionItem t in toRemove)
                     {
                         RemoveTransactionItem(t);
                     }
@@ -710,7 +717,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                 if (SerialHelper.IsItem(serial))
                 {
-                    height = Math.Max(TileDataLoader.Instance.StaticData[graphic].Height, height);
+                    height = Math.Max(UOFileManager.Current.TileData.StaticData[graphic].Height, height);
                 }
 
                 Add(
@@ -754,9 +761,12 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 set
                 {
-                    foreach (Label label in Children.OfType<Label>())
+                    foreach (Control c in Children)
                     {
-                        label.Hue = (ushort)(value ? 0x0021 : 0x0219);
+                        if (c is Label label && !label.IsDisposed)
+                        {
+                            label.Hue = (ushort)(value ? 0x0021 : 0x0219);
+                        }
                     }
                 }
             }
@@ -773,7 +783,7 @@ namespace ClassicUO.Game.UI.Gumps
             private static byte GetAnimGroup(ushort graphic)
             {
                 var groupType = Client.Game.Animations.GetAnimType(graphic);
-                switch (AnimationsLoader.Instance.GetGroupIndex(graphic, groupType))
+                switch (UOFileManager.Current.Animations.GetGroupIndex(graphic, groupType))
                 {
                     case AnimationGroups.Low:
                         return (byte)LowAnimationGroup.Stand;
@@ -829,7 +839,7 @@ namespace ClassicUO.Game.UI.Gumps
                     {
                         hueVector = ShaderHueTranslator.GetHueVector(
                             hue2,
-                            TileDataLoader.Instance.StaticData[Graphic].IsPartialHue,
+                            UOFileManager.Current.TileData.StaticData[Graphic].IsPartialHue,
                             1f
                         );
 
@@ -856,7 +866,7 @@ namespace ClassicUO.Game.UI.Gumps
                     ref readonly var artInfo = ref Client.Game.Arts.GetArt(Graphic);
                     hueVector = ShaderHueTranslator.GetHueVector(
                         Hue,
-                        TileDataLoader.Instance.StaticData[Graphic].IsPartialHue,
+                        UOFileManager.Current.TileData.StaticData[Graphic].IsPartialHue,
                         1f
                     );
 

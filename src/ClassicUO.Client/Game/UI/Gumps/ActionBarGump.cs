@@ -40,6 +40,21 @@ namespace ClassicUO.Game.UI.Gumps
         {
             AnchorType = ANCHOR_TYPE.DISABLED;
             var profile = ProfileManager.CurrentProfile;
+            if (profile == null || !profile.ActionBarEnabled)
+            {
+                Dispose();
+                return;
+            }
+
+            if (profile.ActionBarSlots == null)
+                profile.ActionBarSlots = new List<ActionBarSlotData>();
+
+            if (profile.ActionBarSlots.Count == 0)
+            {
+                for (int i = 0; i < ActionBarManager.SLOT_COUNT; i++)
+                    profile.ActionBarSlots.Add(new ActionBarSlotData());
+            }
+
             X = profile.ActionBarPosition.X;
             Y = profile.ActionBarPosition.Y;
             int slotCount = Math.Max(1, Math.Min(profile?.ActionBarSlots?.Count ?? ActionBarManager.SLOT_COUNT, ActionBarManager.MAX_SLOT_COUNT));
@@ -93,6 +108,7 @@ namespace ClassicUO.Game.UI.Gumps
             slot.SpellID = 0;
             slot.SkillIndex = -1;
             slot.AbilityIndex = 0;
+            slot.MacroName = null;
             slot.Key = 0;
             slot.Alt = false;
             slot.Ctrl = false;
@@ -156,12 +172,20 @@ namespace ClassicUO.Game.UI.Gumps
         {
             var profile = ProfileManager.CurrentProfile;
             if (profile?.ActionBarSlots == null || slotIndex >= profile.ActionBarSlots.Count) return;
-            var slot = profile.ActionBarSlots[slotIndex];
-            bool hasAction = (slot.SlotType == (int)ActionBarSlotType.Spell || slot.SlotType == 0) && slot.SpellID > 0
-                || slot.SlotType == (int)ActionBarSlotType.Skill && slot.SkillIndex >= 0
-                || slot.SlotType == (int)ActionBarSlotType.Ability && slot.AbilityIndex > 0;
-            menu.Add(Language.Instance?.GetOptionsGumpLanguage?.GetActionBar?.ResetSlot ?? "Reset slot", () => ClearSlot(slotIndex));
-            menu.Add(Language.Instance?.GetOptionsGumpLanguage?.GetActionBar?.SetHotkey ?? "Set Hotkey", () => StartListeningForHotkey(slotIndex));
+            var langAb = Language.Instance?.GetOptionsGumpLanguage?.GetActionBar;
+            menu.Add(langAb?.BrowseSkills ?? "Browse skills…", () =>
+            {
+                if (!World.InGame || World.Player == null)
+                {
+                    return;
+                }
+
+                UIManager.Add(new ActionBarSkillSpellPickerGump(slotIndex, ActionBarPickerMode.Skills));
+            });
+            menu.Add(langAb?.BrowseSpellsBySchool ?? "Browse spells by school…", () => { UIManager.Add(new ActionBarSkillSpellPickerGump(slotIndex, ActionBarPickerMode.Spells)); });
+            menu.Add(langAb?.BrowseMacros ?? "Browse macros…", () => { UIManager.Add(new ActionBarMacroPickerGump(slotIndex)); });
+            menu.Add(langAb?.ResetSlot ?? "Reset slot", () => ClearSlot(slotIndex));
+            menu.Add(langAb?.SetHotkey ?? "Set Hotkey", () => StartListeningForHotkey(slotIndex));
         }
 
         private class ActionBarSlotControl : Control, IActionBarDropTarget
@@ -208,6 +232,7 @@ namespace ClassicUO.Game.UI.Gumps
                     else if (e.Button == MouseButtonType.Left)
                     {
                         _gump.SetSelectedSlot(_slotIndex);
+                        Client.Game.GetScene<GameScene>()?.ActionBar?.TryExecuteSlotByIndex(_slotIndex);
                     }
                 };
                 RefreshSlot();
@@ -241,24 +266,57 @@ namespace ClassicUO.Game.UI.Gumps
                     SetSkill(slot.SkillIndex);
                 else if (slot.SlotType == (int)ActionBarSlotType.Ability && slot.AbilityIndex > 0)
                     SetAbility(slot.AbilityIndex);
+                else if (slot.SlotType == (int)ActionBarSlotType.Macro && !string.IsNullOrEmpty(slot.MacroName))
+                    SetMacro(slot.MacroName);
                 else
                     SetEmpty();
             }
 
             private void UpdateHotkeyBadge(ActionBarSlotData slot)
             {
-                if (slot.Key != 0 && slot.Key != (int)SDL.SDL_Keycode.SDLK_UNKNOWN)
+                int displayKey = slot.Key;
+                bool hkAlt = slot.Alt;
+                bool hkCtrl = slot.Ctrl;
+                bool hkShift = slot.Shift;
+                bool haveKey = displayKey != 0 && (SDL.SDL_Keycode)displayKey != SDL.SDL_Keycode.SDLK_UNKNOWN;
+
+                if (!haveKey)
+                {
+                    MacroManager mm = MacroManager.TryGetMacroManager();
+                    if (slot.SlotType == (int)ActionBarSlotType.Macro && !string.IsNullOrEmpty(slot.MacroName))
+                    {
+                        Macro m = mm?.FindMacro(slot.MacroName);
+                        if (m != null && m.Key != SDL.SDL_Keycode.SDLK_UNKNOWN && !m.WheelScroll && m.MouseButton == MouseButtonType.None)
+                        {
+                            displayKey = (int)m.Key;
+                            hkAlt = m.Alt;
+                            hkCtrl = m.Ctrl;
+                            hkShift = m.Shift;
+                            haveKey = true;
+                        }
+                    }
+                    else if (mm != null && ActionBarMacroHotkeyLookup.TryFindKeyboardHotkeyForSlot(slot, mm, out int k, out bool a, out bool c, out bool sh))
+                    {
+                        displayKey = k;
+                        hkAlt = a;
+                        hkCtrl = c;
+                        hkShift = sh;
+                        haveKey = true;
+                    }
+                }
+
+                if (haveKey)
                 {
                     SDL.SDL_Keymod mod = SDL.SDL_Keymod.SDL_KMOD_NONE;
-                    if (slot.Alt) mod |= SDL.SDL_Keymod.SDL_KMOD_ALT;
-                    if (slot.Ctrl) mod |= SDL.SDL_Keymod.SDL_KMOD_CTRL;
-                    if (slot.Shift) mod |= SDL.SDL_Keymod.SDL_KMOD_SHIFT;
-                    string full = KeysTranslator.TryGetKey((SDL.SDL_Keycode)slot.Key, mod);
+                    if (hkAlt) mod |= SDL.SDL_Keymod.SDL_KMOD_ALT;
+                    if (hkCtrl) mod |= SDL.SDL_Keymod.SDL_KMOD_CTRL;
+                    if (hkShift) mod |= SDL.SDL_Keymod.SDL_KMOD_SHIFT;
+                    string full = KeysTranslator.TryGetKey((SDL.SDL_Keycode)displayKey, mod);
                     var sb = new System.Text.StringBuilder();
-                    if (slot.Ctrl) sb.Append("C");
-                    if (slot.Alt) sb.Append("A");
-                    if (slot.Shift) sb.Append("S");
-                    string keyPart = KeysTranslator.TryGetKey((SDL.SDL_Keycode)slot.Key, SDL.SDL_Keymod.SDL_KMOD_NONE);
+                    if (hkCtrl) sb.Append("C");
+                    if (hkAlt) sb.Append("A");
+                    if (hkShift) sb.Append("S");
+                    string keyPart = KeysTranslator.TryGetKey((SDL.SDL_Keycode)displayKey, SDL.SDL_Keymod.SDL_KMOD_NONE);
                     if (!string.IsNullOrEmpty(keyPart)) sb.Append(keyPart.Replace(" ", ""));
                     _hotkeyText = sb.ToString();
                     _hotkeyFullText = full ?? _hotkeyText;
@@ -301,6 +359,27 @@ namespace ClassicUO.Game.UI.Gumps
                 UpdateTooltip();
             }
 
+            private void SetMacro(string macroName)
+            {
+                if (string.IsNullOrEmpty(macroName))
+                {
+                    SetEmpty();
+                    return;
+                }
+                if (_lastType == 3 && _lastName == macroName) return;
+                _lastType = 3;
+                _lastId = 0;
+                _lastName = macroName;
+                _icon?.Dispose();
+                _icon = null;
+                _skillText?.Dispose();
+                _skillText = null;
+                UpdateTooltip();
+                string shortName = macroName.Length > 8 ? macroName.Substring(0, 8) + "…" : macroName;
+                _skillText = new Label(shortName, true, 0x0481, 0, 1, FontStyle.BlackBorder, TEXT_ALIGN_TYPE.TS_CENTER) { X = 0, Y = 4, Width = _iconSize, AcceptMouseInput = false };
+                Add(_skillText);
+            }
+
             private void SetSpell(int spellId)
             {
                 if (_lastType == 0 && _lastId == spellId) return;
@@ -329,10 +408,10 @@ namespace ClassicUO.Game.UI.Gumps
                 _icon = null;
                 _skillText?.Dispose();
                 _skillText = null;
-                if (World.InGame && World.Player != null && skillIndex >= 0 && skillIndex < World.Player.Skills.Length)
+                Skill skill = ActionBarSkillResolver.FindPlayerSkill(skillIndex);
+                if (skill != null)
                 {
-                    var skill = World.Player.Skills[skillIndex];
-                    _lastName = skill?.Name ?? "";
+                    _lastName = skill.Name ?? "";
                 }
                 else
                 {
@@ -368,26 +447,12 @@ namespace ClassicUO.Game.UI.Gumps
 
             public void AcceptSpell(int spellId)
             {
-                var profile = ProfileManager.CurrentProfile;
-                if (profile?.ActionBarSlots == null || _slotIndex >= profile.ActionBarSlots.Count) return;
-                var slot = profile.ActionBarSlots[_slotIndex];
-                slot.SlotType = (int)ActionBarSlotType.Spell;
-                slot.SpellID = spellId;
-                slot.SkillIndex = -1;
-                slot.AbilityIndex = 0;
-                RefreshSlot();
+                ActionBarSkillResolver.ApplySpellToSlot(_slotIndex, spellId);
             }
 
             public void AcceptSkill(int skillIndex)
             {
-                var profile = ProfileManager.CurrentProfile;
-                if (profile?.ActionBarSlots == null || _slotIndex >= profile.ActionBarSlots.Count) return;
-                var slot = profile.ActionBarSlots[_slotIndex];
-                slot.SlotType = (int)ActionBarSlotType.Skill;
-                slot.SpellID = 0;
-                slot.SkillIndex = skillIndex;
-                slot.AbilityIndex = 0;
-                RefreshSlot();
+                ActionBarSkillResolver.ApplySkillToSlot(_slotIndex, skillIndex);
             }
 
             public void AcceptAbility(int abilityIndex)
@@ -399,6 +464,7 @@ namespace ClassicUO.Game.UI.Gumps
                 slot.SpellID = 0;
                 slot.SkillIndex = -1;
                 slot.AbilityIndex = abilityIndex;
+                slot.MacroName = null;
                 RefreshSlot();
             }
 

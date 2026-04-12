@@ -67,17 +67,15 @@ namespace ClassicUO.Dust765.UI.Gumps
             int contentY = 0;
             string[] sections =
             {
-                "/c[yellow]v3.0.8/cd",
+                "/c[yellow]v3.0.9/cd",
                 "",
-                "/c[yellow]Features/cd",
-                "- Add Search in Options",
-                "",
-                "/c[yellow]Fixes/cd",
-                "- Fix nameplateoverheadgump",
-                "- Fix Target hue by notoriety",
-                "- Fix Show nearly item gump",
-                "- Fix OnCasting after recall",
-                "- Show Guild in World Map",
+                "- Update for net core 10",
+                "- Update for fna to 26.01",
+                "- Custom inputs for ms turn movement",
+                "- Counters same experience as oficial cuo version",
+                "- Nameplateoverhead same experience as oficial cuo version",
+                "- Fixes for new cuo client 114",
+                ""
             };
 
             foreach (string line in sections)

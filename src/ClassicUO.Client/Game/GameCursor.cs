@@ -765,20 +765,16 @@ namespace ClassicUO.Game
         {
             if (Client.Game.Scene is GameScene gs)
             {
-                if (
-                    !World.ClientFeatures.TooltipsEnabled
-                    || (
-                        SelectedObject.Object is Item selectedItem
-                        && selectedItem.IsLocked
-                        && selectedItem.ItemData.Weight == 255
-                        && !selectedItem.ItemData.IsContainer
-                        &&
-                        // We need to check if OPL contains data.
-                        // If not we can ignore tooltip.
-                        !World.OPL.Contains(selectedItem)
-                    )
-                    || (ItemHold.Enabled && !ItemHold.IsFixedPosition)
-                )
+                bool lockedDecorNoOpl =
+                    SelectedObject.Object is Item selectedItem
+                    && selectedItem.IsLocked
+                    && selectedItem.ItemData.Weight == 255
+                    && !selectedItem.ItemData.IsContainer
+                    && !World.OPL.Contains(selectedItem);
+
+                bool draggingHeldItem = ItemHold.Enabled && !ItemHold.IsFixedPosition;
+
+                if (lockedDecorNoOpl || draggingHeldItem)
                 {
                     if (
                         !_tooltip.IsEmpty
@@ -790,20 +786,24 @@ namespace ClassicUO.Game
                 }
                 else
                 {
-                    if (
-                        UIManager.IsMouseOverWorld
-                        && SelectedObject.Object is Entity item
-                        && World.OPL.Contains(item)
-                    )
+                    if (World.ClientFeatures.TooltipsEnabled)
                     {
-                        if (_tooltip.IsEmpty || item != _tooltip.Serial)
+                        if (
+                            UIManager.IsMouseOverWorld
+                            && SelectedObject.Object is Entity worldEntity
+                            && World.OPL.Contains(worldEntity)
+                        )
                         {
-                            _tooltip.SetGameObject(item);
+                            uint s = worldEntity;
+                            if (_tooltip.IsEmpty || s != _tooltip.Serial)
+                            {
+                                _tooltip.SetGameObject(s);
+                            }
+
+                            _tooltip.Draw(batcher, position.X, position.Y + 24);
+
+                            return;
                         }
-
-                        _tooltip.Draw(batcher, position.X, position.Y + 24);
-
-                        return;
                     }
 
                     if (

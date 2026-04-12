@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (C) 2020 project dust765
 // 
@@ -23,7 +23,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 
 using ClassicUO.Configuration;
 using ClassicUO.Game.GameObjects;
@@ -38,7 +37,7 @@ namespace ClassicUO.Dust765.Autos
     internal class AutoRangeDisplay
     {
         public static bool IsEnabled { get; set; }
-        public static Thread a_AutoRangeThread;
+        private static uint _nextCheckTick;
 
         private static Item _tempItemInLeftHand; //temp var
         private static Item _tempItemInRightHand;
@@ -58,11 +57,6 @@ namespace ClassicUO.Dust765.Autos
             CommandManager.Register("autorange", args => Toggle());
 
             LoadFile();
-
-            a_AutoRangeThread = new Thread(new ThreadStart(DoAutoRange))
-            {
-                IsBackground = true
-            };
 
             if (ProfileManager.CurrentProfile.AutoRangeDisplayAlways)
             {
@@ -85,92 +79,63 @@ namespace ClassicUO.Dust765.Autos
 		//##Perform AutoRangeDisplay Update on Toggle/Player Death##//
         public static void Update()
         {
-            if (!IsEnabled) // || World.Player.IsDead)            
-                DisableAutoRangeDisplay();
-
-            if (IsEnabled)
-                EnableAutoRangeDisplay();            
-        }
-
-		//##Enable AutoRangeDisplay##//
-        private static void EnableAutoRangeDisplay()
-        {
-            if (!a_AutoRangeThread.IsAlive)
+            if (!IsEnabled || World.Player == null || World.Player.IsDead || ProfileManager.CurrentProfile == null)
             {
-                a_AutoRangeThread = new Thread(new ThreadStart(DoAutoRange))
+                if (ProfileManager.CurrentProfile != null)
                 {
-                    IsBackground = true
-                };
-                a_AutoRangeThread.Start();
-            }
-        }
-
-		//##Disable AutoRangeDisplay##//
-        private static void DisableAutoRangeDisplay()
-        {
-            if (a_AutoRangeThread.IsAlive)
-            {
-                a_AutoRangeThread.Abort();
-            }
-        }
-		
-		//##Perform AutoRangeDisplay Checks##//
-        private static void DoAutoRange()
-        {
-            DateTime dateTime = DateTime.Now;
-            while (true)
-            {
-
-                //if (World.Player == null || World.Player.IsDead)
-                //    DisableAutoRangeDisplay();
-
-                if (World.Player == null || World.Player.IsDead || ProfileManager.CurrentProfile == null)
-                    return;
-
-                _tempItemInLeftHand = null;
-                _tempItemInRightHand = null;
-                _tempItemInLeftHand = World.Player.FindItemByLayer(Layer.OneHanded);
-                _tempItemInRightHand = World.Player.FindItemByLayer(Layer.TwoHanded);
-
-                int range = 0;
-                int index = 0;
-
-                if (_tempItemInRightHand != null)
-                {
-                    index = WeaponsList.IndexOf(_tempItemInRightHand.Graphic);
-
-                    if (index != 0)
-                    {
-                        range = WeaponsList[index + 1];
-
-                        ProfileManager.CurrentProfile.AutoRangeDisplayActive = true;
-                        ProfileManager.CurrentProfile.AutoRangeDisplayActiveRange = range;
-                    } else
-                    {
-                        ProfileManager.CurrentProfile.AutoRangeDisplayActive = false;
-                    }
-                }
-                if (_tempItemInLeftHand != null)
-                {
-                    index = WeaponsList.IndexOf(_tempItemInLeftHand.Graphic);
-
-                    if (index != 0)
-                    {
-                        range = WeaponsList[index + 1];
-
-                        ProfileManager.CurrentProfile.AutoRangeDisplayActive = true;
-                        ProfileManager.CurrentProfile.AutoRangeDisplayActiveRange = range;
-                    }
-                    else
-                    {
-                        ProfileManager.CurrentProfile.AutoRangeDisplayActive = false;
-                    }
-                }
-
-                if (_tempItemInRightHand == null && _tempItemInLeftHand == null)
                     ProfileManager.CurrentProfile.AutoRangeDisplayActive = false;
+                }
+                return;
+            }
 
-                Thread.Sleep(50);
+            uint now = Time.Ticks;
+            if (now < _nextCheckTick)
+            {
+                return;
+            }
+            _nextCheckTick = now + 100;
+
+            _tempItemInLeftHand = World.Player.FindItemByLayer(Layer.OneHanded);
+            _tempItemInRightHand = World.Player.FindItemByLayer(Layer.TwoHanded);
+
+            int range = 0;
+            int index = 0;
+
+            if (_tempItemInRightHand != null)
+            {
+                index = WeaponsList.IndexOf(_tempItemInRightHand.Graphic);
+
+                if (index > -1 && index + 1 < WeaponsList.Count)
+                {
+                    range = WeaponsList[index + 1];
+                    ProfileManager.CurrentProfile.AutoRangeDisplayActive = true;
+                    ProfileManager.CurrentProfile.AutoRangeDisplayActiveRange = range;
+                }
+                else
+                {
+                    ProfileManager.CurrentProfile.AutoRangeDisplayActive = false;
+                }
+            }
+
+            if (_tempItemInLeftHand != null)
+            {
+                index = WeaponsList.IndexOf(_tempItemInLeftHand.Graphic);
+
+                if (index > -1 && index + 1 < WeaponsList.Count)
+                {
+                    range = WeaponsList[index + 1];
+                    ProfileManager.CurrentProfile.AutoRangeDisplayActive = true;
+                    ProfileManager.CurrentProfile.AutoRangeDisplayActiveRange = range;
+                }
+                else
+                {
+                    ProfileManager.CurrentProfile.AutoRangeDisplayActive = false;
+                }
+            }
+
+            if (_tempItemInRightHand == null && _tempItemInLeftHand == null)
+            {
+                ProfileManager.CurrentProfile.AutoRangeDisplayActive = false;
             }
         }
 		

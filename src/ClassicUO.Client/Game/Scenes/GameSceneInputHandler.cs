@@ -46,7 +46,7 @@ using ClassicUO.Utility;
 using Microsoft.Xna.Framework;
 using SDL3;
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using MathHelper = ClassicUO.Utility.MathHelper;
 
 namespace ClassicUO.Game.Scenes
@@ -65,6 +65,7 @@ namespace ClassicUO.Game.Scenes
             _continueRunning;
         private Point _selectionStart,
             _selectionEnd;
+        private readonly List<BaseHealthBarGump> _dragSelectHealthBarsSorted = new List<BaseHealthBarGump>(64);
         private int AnchorOffset => ProfileManager.CurrentProfile.DragSelectAsAnchor ? 0 : 2;
 
         private bool MoveCharacterByMouseInput()
@@ -269,8 +270,9 @@ namespace ClassicUO.Game.Scenes
             }
 
 
-            foreach (Mobile mobile in World.Mobiles.Values)
+            foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
             {
+                Mobile mobile = mkv.Value;
                 if ((
                         (ProfileManager.CurrentProfile.DragSelect_PlayersModifier == 1 && ctrl) ||
                         (ProfileManager.CurrentProfile.DragSelect_PlayersModifier == 2 && shift) ||
@@ -291,14 +293,7 @@ namespace ClassicUO.Game.Scenes
                         (ProfileManager.CurrentProfile.DragSelect_NameplateModifier == 3 && alt)
                     ))
                 {
-                    bool _skip = true;
-                    foreach (NameOverheadGump g in UIManager.Gumps.OfType<NameOverheadGump>())
-                        if (g.LocalSerial == mobile.Serial)
-                        {
-                            _skip = false;
-                            continue;
-                        }
-                    skip = _skip;
+                    skip = !UIManager.HasNameOverheadForSerial(mobile.Serial);
                 }
 
                 if (skip) continue;
@@ -354,14 +349,8 @@ namespace ClassicUO.Game.Scenes
                         hbgc.X = finalX;
                         hbgc.Y = finalY;
 
-                        foreach (
-                            BaseHealthBarGump bar in UIManager.Gumps
-                                .OfType<BaseHealthBarGump>()
-                                //.OrderBy(s => mobile.NotorietyFlag)
-                                //.OrderBy(s => s.ScreenCoordinateX) ///testing placement SYRUPZ SYRUPZ SYRUPZ
-                                .OrderBy(s => s.ScreenCoordinateX)
-                                .ThenBy(s => s.ScreenCoordinateY)
-                        )
+                        UIManager.GetBaseHealthBarGumpsSortedByScreen(_dragSelectHealthBarsSorted);
+                        foreach (BaseHealthBarGump bar in _dragSelectHealthBarsSorted)
                         {
                             if (bar.Bounds.Intersects(hbgc.Bounds))
                             {
@@ -536,7 +525,7 @@ namespace ClassicUO.Game.Scenes
                 return false;
             }
 
-            if (UIManager.SystemChat != null && !UIManager.SystemChat.IsFocused)
+            if (UIManager.SystemChat != null && UIManager.KeyboardFocusControl != UIManager.SystemChat.TextBoxControl)
             {
                 UIManager.KeyboardFocusControl = null;
                 UIManager.SystemChat.SetFocus();
@@ -636,7 +625,7 @@ namespace ClassicUO.Game.Scenes
                         if (gobj is Land land) { }
                         else
                         {
-                            ref StaticTiles itemData = ref TileDataLoader.Instance.StaticData[
+                            ref StaticTiles itemData = ref UOFileManager.Current.TileData.StaticData[
                                 gobj.Graphic
                             ];
 
@@ -812,7 +801,7 @@ namespace ClassicUO.Game.Scenes
 
                         if (string.IsNullOrEmpty(name))
                         {
-                            name = ClilocLoader.Instance.GetString(
+                            name = UOFileManager.Current.Clilocs.GetString(
                                 1020000 + st.Graphic,
                                 st.ItemData.Name
                             );
@@ -842,7 +831,7 @@ namespace ClassicUO.Game.Scenes
 
                         if (string.IsNullOrEmpty(name))
                         {
-                            name = ClilocLoader.Instance.GetString(
+                            name = UOFileManager.Current.Clilocs.GetString(
                                 1020000 + multi.Graphic,
                                 multi.ItemData.Name
                             );
@@ -1018,7 +1007,7 @@ namespace ClassicUO.Game.Scenes
                 {
                     if (obj is Static || obj is Multi || obj is Item)
                     {
-                        ref StaticTiles itemdata = ref TileDataLoader.Instance.StaticData[obj.Graphic];
+                        ref StaticTiles itemdata = ref UOFileManager.Current.TileData.StaticData[obj.Graphic];
 
                         if (itemdata.IsSurface && Pathfinder.WalkTo(obj.X, obj.Y, obj.Z, 0))
                         {
@@ -1073,7 +1062,7 @@ namespace ClassicUO.Game.Scenes
                 {
                     if (obj is Static || obj is Multi || obj is Item)
                     {
-                        ref StaticTiles itemdata = ref TileDataLoader.Instance.StaticData[
+                        ref StaticTiles itemdata = ref UOFileManager.Current.TileData.StaticData[
                             obj.Graphic
                         ];
 

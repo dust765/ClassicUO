@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -34,8 +34,8 @@ namespace ClassicUO.Game.UI.Gumps
         private const int MAX_NAME_LEN = 25;
 
         private const int MAP_MIN_CORD = 0;
-        private readonly int _mapMaxX = MapLoader.Instance.MapsDefaultSize[World.MapIndex, 0];
-        private readonly int _mapMaxY = MapLoader.Instance.MapsDefaultSize[World.MapIndex, 1];
+        private readonly int _mapMaxX = UOFileManager.Current.Maps.MapsDefaultSize[World.MapIndex, 0];
+        private readonly int _mapMaxY = UOFileManager.Current.Maps.MapsDefaultSize[World.MapIndex, 1];
 
         private readonly string _userMarkersFilePath = Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Client", $"{USER_MARKERS_FILE}.usr");
 

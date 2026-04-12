@@ -45,7 +45,7 @@ namespace ClassicUO.Game.UI.Controls
         private readonly int _cellHeight;
         private readonly int _cellWidth;
         private readonly int _columns;
-        private readonly ushort[] _customPallete;
+        private ushort[] _customPallete;
         private int _graduation, _selectedIndex;
         private ushort[] _hues;
         private bool _needToFileeBoxes = true;
@@ -84,6 +84,12 @@ namespace ClassicUO.Game.UI.Controls
         public event EventHandler ColorSelectedIndex;
 
         public bool ShowLivePreview { get; set; }
+
+        public void SetCustomPalette(ushort[] palette)
+        {
+            _customPallete = palette;
+            _needToFileeBoxes = true;
+        }
 
         public ushort[] Hues
         {
@@ -130,7 +136,29 @@ namespace ClassicUO.Game.UI.Controls
             }
         }
 
-        public ushort SelectedHue => SelectedIndex < 0 || SelectedIndex >= _hues.Length ? (ushort)0 : _hues[SelectedIndex];
+        public ushort SelectedHue
+        {
+            get => SelectedIndex < 0 || SelectedIndex >= _hues.Length ? (ushort)0 : _hues[SelectedIndex];
+            set
+            {
+                CreateTexture();
+
+                for (int graduation = 0; graduation <= 4; graduation++)
+                {
+                    ushort startHue = (ushort)(graduation + 2);
+
+                    for (int idx = 0; idx < _hues.Length; idx++)
+                    {
+                        if ((ushort)(startHue + idx * 5) == value)
+                        {
+                            Graduation = graduation;
+                            SelectedIndex = idx;
+                            return;
+                        }
+                    }
+                }
+            }
+        }
 
 
         public override void Update()

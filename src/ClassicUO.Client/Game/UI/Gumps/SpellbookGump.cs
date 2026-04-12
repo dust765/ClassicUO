@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -456,7 +456,7 @@ namespace ClassicUO.Game.UI.Gumps
                                                 if (toolTipCliloc > 0)
                                                 {
                                                     string tooltip =
-                                                        ClilocLoader.Instance.GetString(
+                                                        UOFileManager.Current.Clilocs.GetString(
                                                             toolTipCliloc + id
                                                         );
 
@@ -781,7 +781,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                 if (toolTipCliloc > 0)
                 {
-                    string tooltip = ClilocLoader.Instance.GetString(toolTipCliloc + i);
+                    string tooltip = UOFileManager.Current.Clilocs.GetString(toolTipCliloc + i);
                     icon.SetTooltip(tooltip, 250);
                 }
 

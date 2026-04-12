@@ -9,7 +9,6 @@ using ClassicUO.Renderer;
 using ClassicUO.Utility.Collections;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Xml;
 using Point = Microsoft.Xna.Framework.Point;
 
@@ -219,7 +218,7 @@ namespace ClassicUO.Game.UI.Gumps
                     }
                 //case BorderStyle.Style9:
                 //    {
-                //        if (Assets.GumpsLoader.Instance.GetGumpTexture(40313, out var bounds) != null)
+                //        if (Assets.UOFileManager.Current.Gumps.GetGumpTexture(40313, out var bounds) != null)
                 //        {
                 //            graphic = 40313;
                 //            borderSize = 75;
@@ -312,9 +311,12 @@ namespace ClassicUO.Game.UI.Gumps
 
         public static void UpdateJournalOptions()
         {
-            foreach (ResizableJournal j in UIManager.Gumps.OfType<ResizableJournal>())
+            for (LinkedListNode<Gump> node = UIManager.Gumps.First; node != null; node = node.Next)
             {
-                j.UpdateOptions();
+                if (node.Value is ResizableJournal j && !j.IsDisposed)
+                {
+                    j.UpdateOptions();
+                }
             }
         }
 
@@ -712,7 +714,7 @@ namespace ClassicUO.Game.UI.Gumps
                                 {
                                     MessageType[] selectedTypes = ProfileManager.CurrentProfile.JournalTabs[name];
 
-                                    if (selectedTypes.Contains(item))
+                                    if (Array.IndexOf(selectedTypes, item) >= 0)
                                     {
                                         ProfileManager.CurrentProfile.JournalTabs[name] = RemoveType(selectedTypes, item);
                                         ResizableJournal.ReloadTabs = true;
@@ -725,7 +727,7 @@ namespace ClassicUO.Game.UI.Gumps
                                 }
                             },
                             true,
-                            selectedTypes.Contains(item));
+                            Array.IndexOf(selectedTypes, item) >= 0);
                     }
                 }
 

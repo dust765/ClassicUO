@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -100,7 +100,7 @@ namespace ClassicUO.Game.UI.Controls
                 Width = artInfo.UV.Width;
                 Height = artInfo.UV.Height;
 
-                IsPartialHue = TileDataLoader.Instance.StaticData[value].IsPartialHue;
+                IsPartialHue = UOFileManager.Current.TileData.StaticData[value].IsPartialHue;
             }
         }
 

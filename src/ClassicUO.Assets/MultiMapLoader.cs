@@ -196,11 +196,11 @@ namespace ClassicUO.Assets
             }
 
             int s = Marshal.SizeOf<HuesGroup>();
-            IntPtr ptr = Marshal.AllocHGlobal(s * HuesLoader.Instance.HuesRange.Length);
+            IntPtr ptr = Marshal.AllocHGlobal(s * UOFileManager.Current.Hues.HuesRange.Length);
 
-            for (int i = 0; i < HuesLoader.Instance.HuesRange.Length; i++)
+            for (int i = 0; i < UOFileManager.Current.Hues.HuesRange.Length; i++)
             {
-                Marshal.StructureToPtr(HuesLoader.Instance.HuesRange[i], ptr + i * s, false);
+                Marshal.StructureToPtr(UOFileManager.Current.Hues.HuesRange[i], ptr + i * s, false);
             }
 
             ushort* huesData = (ushort*)(byte*)(ptr + 30800);

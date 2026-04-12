@@ -42,6 +42,7 @@ using ClassicUO.Resources;
 using ClassicUO.Utility;
 using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Generic;
 using static ClassicUO.Network.NetClient;
 
 namespace ClassicUO.Game
@@ -57,6 +58,7 @@ namespace ClassicUO.Game
         // ## BEGIN - END ## // ONCASTINGGUMP
         public static bool iscasting { get; set; } = false;
         // ## BEGIN - END ## // ONCASTINGGUMP
+        public static ClassicUO.Dust765.Managers.SpellAction spellCircle { get; set; } = 0;
 
 
         public static void ToggleWarMode()
@@ -1039,7 +1041,7 @@ namespace ClassicUO.Game
                 GameCursor._spellTime = 0;
                 // ## BEGIN - END ## // VISUAL HELPERS
                 // ## BEGIN - END ## // ONCASTINGGUMP
-                if (ProfileManager.CurrentProfile.OnCastingGump)
+                if (ProfileManager.CurrentProfile.OnCastingGump && World.Player.OnCasting != null)
                 {
                     if (!iscasting)
                         World.Player.OnCasting.Start((uint) index);
@@ -1060,7 +1062,7 @@ namespace ClassicUO.Game
                 GameCursor._spellTime = 0;
                 // ## BEGIN - END ## // VISUAL HELPERS
                  // ## BEGIN - END ## // ONCASTINGGUMP
-                if (ProfileManager.CurrentProfile.OnCastingGump)
+                if (ProfileManager.CurrentProfile.OnCastingGump && World.Player.OnCasting != null)
                 {
                     if (!iscasting)
                         World.Player.OnCasting.Start((uint) index);
@@ -1165,16 +1167,18 @@ namespace ClassicUO.Game
 
         public static void AllNames()
         {
-            foreach (Mobile mobile in World.Mobiles.Values)
+            foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
             {
+                Mobile mobile = mkv.Value;
                 if (mobile != World.Player)
                 {
                     Socket.Send_ClickRequest(mobile.Serial);
                 }
             }
 
-            foreach (Item item in World.Items.Values)
+            foreach (KeyValuePair<uint, Item> ikv in World.Items)
             {
+                Item item = ikv.Value;
                 if (item.IsCorpse)
                 {
                     Socket.Send_ClickRequest(item.Serial);

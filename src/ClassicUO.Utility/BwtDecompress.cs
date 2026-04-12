@@ -75,6 +75,9 @@ namespace ClassicUO.Utility
 
         static byte[] InternalDecompress(Span<byte> input, uint len)
         {
+            if (input.Length < 1024)
+                return Array.Empty<byte>();
+
             Span<char> symbolTable = stackalloc char[256];
             Span<char> frequency = stackalloc char[256];
             Span<int> partialInput = stackalloc int[256 * 3];
@@ -113,6 +116,8 @@ namespace ClassicUO.Utility
             for (int i = 0, m = 0; i < nonZeroCount; ++i)
             {
                 var freq = (byte)frequency[i];
+                if (m + 1024 >= input.Length)
+                    break;
                 symbolTable[input[m + 1024]] = (char)freq;
                 partialInput[freq + 256] = m + 1;
                 m += partialInput[freq];
@@ -138,6 +143,8 @@ namespace ClassicUO.Utility
                     }
                     else
                     {
+                        if (firstValRef + 1024 >= input.Length)
+                            break;
                         var idx = (char)input[firstValRef + 1024];
                         firstValRef++;
 

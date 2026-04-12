@@ -63,7 +63,6 @@ namespace ClassicUO.Game.UI.Controls
             Layer.Gloves,
             Layer.Skirt,
             Layer.Robe,
-            Layer.Waist,
             Layer.Necklace,
             Layer.Hair,
             Layer.Beard,
@@ -71,7 +70,8 @@ namespace ClassicUO.Game.UI.Controls
             Layer.Helmet,
             Layer.OneHanded,
             Layer.TwoHanded,
-            Layer.Talisman
+            Layer.Talisman,
+            Layer.Waist
         };
 
         private static readonly Layer[] _layerOrder_quiver_fix =
@@ -90,7 +90,6 @@ namespace ClassicUO.Game.UI.Controls
             Layer.Skirt,
             Layer.Robe,
             Layer.Cloak,
-            Layer.Waist,
             Layer.Necklace,
             Layer.Hair,
             Layer.Beard,
@@ -98,7 +97,8 @@ namespace ClassicUO.Game.UI.Controls
             Layer.Helmet,
             Layer.OneHanded,
             Layer.TwoHanded,
-            Layer.Talisman
+            Layer.Talisman,
+            Layer.Waist
         };
 
         private static readonly Layer[] _layerOrder_parrot_fix =
@@ -117,7 +117,6 @@ namespace ClassicUO.Game.UI.Controls
             Layer.Skirt,
             Layer.Robe,
             Layer.Cloak,
-            Layer.Waist,
             Layer.Necklace,
             Layer.Hair,
             Layer.Beard,
@@ -125,7 +124,8 @@ namespace ClassicUO.Game.UI.Controls
             Layer.Helmet,
             Layer.OneHanded,
             Layer.TwoHanded,
-            Layer.Talisman
+            Layer.Talisman,
+            Layer.Waist
         };
 
         private readonly PaperDollGump _paperDollGump;
@@ -161,6 +161,11 @@ namespace ClassicUO.Game.UI.Controls
         {
             _updateUI = HasFakeItem && !value || !HasFakeItem && value;
             HasFakeItem = value;
+        }
+
+        public void RequestRefresh()
+        {
+            _updateUI = true;
         }
 
         private void UpdateUI()
@@ -304,7 +309,10 @@ namespace ClassicUO.Game.UI.Controls
 
                 if (equipItem != null)
                 {
-                    if (Mobile.IsCovered(mobile, layer))
+                    bool isOwnPaperdoll = World.Player != null && LocalSerial == World.Player.Serial;
+                    bool showAllLayersPaperdoll = isOwnPaperdoll && (ProfileManager.CurrentProfile?.ShowAllLayersPaperdoll ?? false);
+
+                    if (!showAllLayersPaperdoll && Mobile.IsCovered(mobile, layer))
                     {
                         continue;
                     }
@@ -457,7 +465,7 @@ namespace ClassicUO.Game.UI.Controls
             Client.Game.Animations.ConvertBodyIfNeeded(ref graphic);
 
             if (
-                AnimationsLoader.Instance.EquipConversions.TryGetValue(
+                UOFileManager.Current.Animations.EquipConversions.TryGetValue(
                     graphic,
                     out Dictionary<ushort, EquipConvData> dict
                 )

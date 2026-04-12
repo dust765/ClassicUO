@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -49,7 +49,6 @@ using System.IO;
 using System.Collections.Generic;
 using System.Text.Json;
 using static ClassicUO.Game.UI.Controls.PaperDollInteractable;
-using FontStashSharp.RichText;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using ClassicUO.Renderer;
@@ -113,7 +112,7 @@ namespace ClassicUO.Game.UI.Gumps.Login
             byte font = (byte)(isAsianLang ? 1 : 2);
             ushort hue = (ushort)(isAsianLang ? 0 : 0);
 
-            Add(new UOLabel(ClilocLoader.Instance.GetString(3000050, "Character Selection"), 1, 32, TEXT_ALIGN_TYPE.TS_CENTER, 300, FontStyle.BlackBorder) { X = LoginLayoutHelper.CenterOffsetX(300), Y = LoginLayoutHelper.Y(listTitleY) });
+            Add(new UOLabel(UOFileManager.Current.Clilocs.GetString(3000050, "Character Selection"), 1, 32, TEXT_ALIGN_TYPE.TS_CENTER, 300, FontStyle.BlackBorder) { X = LoginLayoutHelper.CenterOffsetX(300), Y = LoginLayoutHelper.Y(listTitleY) });
 
 
             for (int i = 0, valid = 0; i < loginScene.Characters.Length; i++)
@@ -442,30 +441,49 @@ namespace ClassicUO.Game.UI.Gumps.Login
         internal bool _isSelected;
         private GumpPic _paperdollBg;
 
-            public PaperdollSaveDataDto Load()
+            public PaperdollSaveData Load()
             {
-                if (!File.Exists(savePath))
+                if (string.IsNullOrEmpty(savePath) || !File.Exists(savePath))
                 {
                     return null;
                 }
                 try
                 {
                     string json = File.ReadAllText(savePath);
-                    return JsonSerializer.Deserialize<PaperdollSaveDataDto>(json);
+                    PaperdollSaveData dto =
+                        JsonSerializer.Deserialize(json, typeof(PaperdollSaveData), GameManagersJsonContext.Default)
+                        as PaperdollSaveData;
+                    if (dto != null && dto.Items != null && dto.Items.Count > 0)
+                    {
+                        return dto;
+                    }
+
+                    if (dto != null && (dto.BodyId != 0 || dto.NameHue != 0))
+                    {
+                        return dto;
+                    }
+
+                    Dictionary<string, PaperdollItem> dict =
+                        JsonSerializer.Deserialize(json, typeof(Dictionary<string, PaperdollItem>), GameManagersJsonContext.Default)
+                        as Dictionary<string, PaperdollItem>;
+                    if (dict != null && dict.Count > 0)
+                    {
+                        return new PaperdollSaveData
+                        {
+                            Items = dict,
+                            BodyId = dto?.BodyId ?? 0,
+                            IsFemale = dto?.IsFemale ?? false,
+                            Race = dto?.Race ?? (byte)RaceType.HUMAN,
+                            NameHue = dto?.NameHue ?? 0
+                        };
+                    }
+
+                    return dto;
                 }
                 catch
                 {
                     return null;
                 }
-            }
-
-            internal class PaperdollSaveDataDto
-            {
-                public ushort BodyId { get; set; }
-                public bool IsFemale { get; set; }
-                public byte Race { get; set; }
-                public ushort NameHue { get; set; }
-                public Dictionary<string, PaperdollItem> Items { get; set; }
             }
 
             private static ushort GetBodyIdFromRaceAndGender(RaceType race, bool isFemale)
@@ -486,7 +504,8 @@ namespace ClassicUO.Game.UI.Gumps.Login
             {
                 CharacterIndex = index;
                 _indexCharacter = index;
-                savePath = Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Profiles", Settings.GlobalSettings.Username, World.ServerName, character, "paperdollSelectCharManager.json");
+                savePath = ProfileManager.FindExistingPaperdollSelectCharJson(character)
+                    ?? ProfileManager.ResolvePrimaryPaperdollSelectCharJsonReadPath(character);
                 var saveData = Load();
                 ushort resolvedBodyId;
                 bool isFemale;
@@ -520,13 +539,13 @@ namespace ClassicUO.Game.UI.Gumps.Login
                     var customLayerOrder = new Dictionary<Layer, int>
                     {
                     { Layer.Helmet, 7 },
-                    { Layer.Robe, 6},
+                    { Layer.Robe, 6 },
                     { Layer.Hair, 5 },
                     { Layer.Beard, 4 },
-                    { Layer.Waist, 3 },
-                    { Layer.OneHanded, 2},
+                    { Layer.OneHanded, 2 },
                     { Layer.TwoHanded, 2 },
-                    { Layer.Talisman, 1 }
+                    { Layer.Talisman, 1 },
+                    { Layer.Waist, 20 }
                     };
 
                     foreach (var item in items.Values

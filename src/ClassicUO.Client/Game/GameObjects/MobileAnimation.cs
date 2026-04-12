@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -1414,9 +1414,9 @@ namespace ClassicUO.Game.GameObjects
 
         public static bool IsReplacedObjectAnimation(byte anim, ushort v13)
         {
-            if (anim < AnimationsLoader.Instance.GroupReplaces.Length)
+            if (anim < UOFileManager.Current.Animations.GroupReplaces.Length)
             {
-                foreach (var tuple in AnimationsLoader.Instance.GroupReplaces[anim])
+                foreach (var tuple in UOFileManager.Current.Animations.GroupReplaces[anim])
                 {
                     if (tuple.Item1 == v13)
                     {
@@ -1448,7 +1448,7 @@ namespace ClassicUO.Game.GameObjects
                 return idx;
             }
 
-            AnimationGroups group = AnimationsLoader.Instance.GetGroupIndex(
+            AnimationGroups group = UOFileManager.Current.Animations.GetGroupIndex(
                 graphic,
                 Client.Game.Animations.GetAnimType(graphic)
             );
@@ -1457,7 +1457,7 @@ namespace ClassicUO.Game.GameObjects
             {
                 return (byte)(
                     getReplacedGroup(
-                        AnimationsLoader.Instance.GroupReplaces[0],
+                        UOFileManager.Current.Animations.GroupReplaces[0],
                         index,
                         (ushort)LowAnimationGroup.Walk
                     ) % (ushort)LowAnimationGroup.AnimationCount
@@ -1468,7 +1468,7 @@ namespace ClassicUO.Game.GameObjects
             {
                 return (byte)(
                     getReplacedGroup(
-                        AnimationsLoader.Instance.GroupReplaces[1],
+                        UOFileManager.Current.Animations.GroupReplaces[1],
                         index,
                         (ushort)PeopleAnimationGroup.WalkUnarmed
                     ) % (ushort)PeopleAnimationGroup.AnimationCount

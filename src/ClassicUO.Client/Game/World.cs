@@ -55,6 +55,8 @@ namespace ClassicUO.Game
         private static readonly EffectManager _effectManager = new EffectManager();
         private static readonly List<uint> _toRemove = new List<uint>();
         private static uint _timeToDelete;
+        private static uint _orphanSweepTime;
+        private static readonly List<uint> _orphanRemove = new List<uint>();
 
         public static Point RangeSize;
 
@@ -149,7 +151,7 @@ namespace ClassicUO.Game
                         {
                             value = 0;
                         }
-                        MapLoader.Instance.LoadMap(value, ClientFeatures.Flags.HasFlag(CharacterListFlags.CLF_UNLOCK_FELUCCA_AREAS));
+                        UOFileManager.Current.Maps.LoadMap(value, ClientFeatures.Flags.HasFlag(CharacterListFlags.CLF_UNLOCK_FELUCCA_AREAS));
                         Map = new Map.Map(value);
 
                         Player.SetInWorldTile(x, y, z);
@@ -157,7 +159,7 @@ namespace ClassicUO.Game
                     }
                     else
                     {
-                        MapLoader.Instance.LoadMap(value, ClientFeatures.Flags.HasFlag(CharacterListFlags.CLF_UNLOCK_FELUCCA_AREAS));
+                        UOFileManager.Current.Maps.LoadMap(value, ClientFeatures.Flags.HasFlag(CharacterListFlags.CLF_UNLOCK_FELUCCA_AREAS));
                         Map = new Map.Map(value);
                     }
 
@@ -387,6 +389,61 @@ namespace ClassicUO.Game
 
                     _toRemove.Clear();
                 }
+
+                // ## BEGIN - END ## // RAM - orphan item sweep
+                if (Time.Ticks >= _orphanSweepTime)
+                {
+                    _orphanSweepTime = Time.Ticks + 60_000;
+
+                    foreach (var kvp in Items)
+                    {
+                        Item item = kvp.Value;
+
+                        if (item.IsDestroyed)
+                            continue;
+
+                        uint container = item.Container;
+
+                        if (container == 0xFFFF_FFFF)
+                            continue;
+
+                        if (!SerialHelper.IsValid(container))
+                            continue;
+
+                        if (container == Player.Serial)
+                            continue;
+
+                        if (Items.Contains(container) || Mobiles.Contains(container))
+                            continue;
+
+                        if (UIManager.GetGump<ContainerGump>(container) != null
+                            || UIManager.GetGump<GridContainer>(container) != null
+                            || UIManager.GetGump<PaperDollGump>(container) != null
+                            || UIManager.GetGump<GridLootGump>(container) != null)
+                            continue;
+
+                        if (Client.Game.GameCursor != null
+                            && Client.Game.GameCursor.ItemHold.Enabled
+                            && Client.Game.GameCursor.ItemHold.Serial == item.Serial)
+                            continue;
+
+                        if (CorpseManager.Exists(container, 0))
+                            continue;
+
+                        _orphanRemove.Add(item.Serial);
+
+                        if (_orphanRemove.Count >= 100)
+                            break;
+                    }
+
+                    for (int i = 0; i < _orphanRemove.Count; i++)
+                    {
+                        RemoveItem(_orphanRemove[i], true);
+                    }
+
+                    _orphanRemove.Clear();
+                }
+                // ## BEGIN - END ## // RAM - orphan item sweep
 
                 // ## BEGIN - END ## // AUTOMATIONS
                 ModulesManager.OnWorldUpdate();
@@ -636,8 +693,9 @@ namespace ClassicUO.Game
 
             if (scanType == ScanTypeObject.Objects)
             {
-                foreach (Item item in Items.Values)
+                foreach (KeyValuePair<uint, Item> ikv in Items)
                 {
+                    Item item = ikv.Value;
                     if (item.IsMulti || item.IsDestroyed || !item.OnGround)
                     {
                         continue;
@@ -652,8 +710,9 @@ namespace ClassicUO.Game
             }
             else
             {
-                foreach (Mobile mobile in Mobiles.Values)
+                foreach (KeyValuePair<uint, Mobile> mkv in Mobiles)
                 {
+                    Mobile mobile = mkv.Value;
                     if (mobile.IsDestroyed || mobile == Player)
                     {
                         continue;
@@ -786,14 +845,14 @@ namespace ClassicUO.Game
 
         public static void Clear()
         {
-            foreach (Mobile mobile in Mobiles.Values)
+            foreach (KeyValuePair<uint, Mobile> mkv in Mobiles)
             {
-                RemoveMobile(mobile);
+                RemoveMobile(mkv.Value);
             }
 
-            foreach (Item item in Items.Values)
+            foreach (KeyValuePair<uint, Item> ikv in Items)
             {
-                RemoveItem(item);
+                RemoveItem(ikv.Value);
             }
 
             UIManager.GetGump<BaseHealthBarGump>(Player.Serial)?.Dispose();
@@ -842,8 +901,9 @@ namespace ClassicUO.Game
                 Player = null;
             }
 
-            foreach (Item item in Items.Values)
+            foreach (KeyValuePair<uint, Item> ikv in Items)
             {
+                Item item = ikv.Value;
                 if (noplayer && Player != null && !Player.IsDestroyed)
                 {
                     if (item.RootContainer == Player)
@@ -867,8 +927,9 @@ namespace ClassicUO.Game
 
             _toRemove.Clear();
 
-            foreach (Mobile mob in Mobiles.Values)
+            foreach (KeyValuePair<uint, Mobile> mkv in Mobiles)
             {
+                Mobile mob = mkv.Value;
                 if (noplayer && Player != null && !Player.IsDestroyed)
                 {
                     if (mob == Player)

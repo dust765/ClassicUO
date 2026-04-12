@@ -84,7 +84,12 @@ namespace ClassicUO.Game.Data
 
             PopupEnabled = (flags & CharacterListFlags.CLF_CONTEXT_MENU) != 0;
 
-            TooltipsEnabled = (flags & CharacterListFlags.CLF_PALADIN_NECROMANCER_TOOLTIPS) != 0 && Client.Version >= ClientVersion.CV_308Z;
+            TooltipsEnabled =
+                Client.Version >= ClientVersion.CV_308Z
+                && (
+                    (flags & CharacterListFlags.CLF_PALADIN_NECROMANCER_TOOLTIPS) != 0
+                    || Client.Version >= ClientVersion.CV_7000
+                );
 
             PaperdollBooks = (flags & CharacterListFlags.CLF_PALADIN_NECROMANCER_TOOLTIPS) != 0;
         }

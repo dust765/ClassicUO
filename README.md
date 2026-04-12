@@ -1,11 +1,11 @@
 <div align="center">
   <img src="src/ClassicUO.Assets/gumpartassets/logodust.png" alt="Legion Logo" width="200"/>
 
-  [![.NET Framework](https://img.shields.io/badge/.NET-Framework%204.8-blue.svg)](https://dotnet.microsoft.com/download/dotnet-framework/net48)
-  [![FNA](https://img.shields.io/badge/FNA-21.10-green.svg)](https://github.com/FNA-XNA/FNA)
+  [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4.svg)](https://dotnet.microsoft.com/download/dotnet/10.0)
+  [![FNA](https://img.shields.io/badge/FNA-26.04-green.svg)](https://github.com/FNA-XNA/FNA)
   [![Cross-Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-orange.svg)](https://github.com/andreakarasho/ClassicUO)
   [![Discord](https://img.shields.io/badge/Discord-Join%20us-7289da.svg)](https://discord.gg/9Vh7aqqX)
-  [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
+  [![License](https://img.shields.io/badge/License-BSD%202--Clause-blue.svg)](LICENSE.md)
 
 </div>
 
@@ -29,6 +29,27 @@ Dust765: 7 Link, 6 Gaechti, 5 Syrupz and jsebold666 (astraroth)
 - 🌍 **No Platform Discrimination** - Windows, Linux, macOS - we treat them all equally
 - 🔥 **No Drama** - Leave your high school mentality at the door
 - 💀 **Pure Innovation** - We're here to build, not to gossip
+
+### 🖼️ **Client graphics**
+
+<table>
+<tr>
+<td align="center" width="50%">
+  <img src="./docs/login.png" alt="Dust765 client — login screen" width="100%"/>
+</td>
+<td align="center" width="50%">
+  <img src="./docs/selectcharacter.png" alt="Dust765 client — character selecton" width="100%"/>
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+  <img src="./docs/create.png" alt="Dust765 client — create character" width="100%"/>
+</td>
+<td align="center" width="50%">
+  <img src="./docs/options.png" alt="Dust765 client — options menu" width="100%"/>
+</td>
+</tr>
+</table>
 
 ### 🎯 **The Mission**
 
@@ -109,7 +130,6 @@ mono mscorlib.dll
 - **Windows**: `scripts\build-cross-platform.cmd`
 - **Linux/macOS**: `scripts/build-cross-platform.sh`
 
-
 ### 💡 **How to Contribute**
 
 1. **Fork** the repository (the right way)
@@ -133,7 +153,7 @@ mono mscorlib.dll
 
 ## 📜 **License**
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+**BSD 2-Clause** — see [LICENSE.md](LICENSE.md). Fork built on [ClassicUO](https://github.com/ClassicUO/ClassicUO); `external/` submodules keep their own licenses.
 
 ## 🙏 **Acknowledgments**
 

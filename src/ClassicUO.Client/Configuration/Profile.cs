@@ -253,6 +253,12 @@ namespace ClassicUO.Configuration
         public int QuickHealSpell { get; set; }
         public int QuickCureSpell { get; set; }
         public ushort TurnDelay { get; set; } = 100;
+        public int MovementTurnDelay { get; set; } = 100;
+        public int MovementTurnDelayFast { get; set; } = 45;
+        public int MovementWalkingDelay { get; set; } = 150;
+        public int MovementPlayerWalkingDelay { get; set; } = 150;
+        public bool AdaptiveMovementTiming { get; set; } = true;
+        public int AdaptiveMovementMaxExtraDelay { get; set; } = 120;
         public bool DisableDefaultHotkeys { get; set; }
         public bool DisableArrowBtn { get; set; }
         public bool DisableTabBtn { get; set; }
@@ -296,7 +302,7 @@ namespace ClassicUO.Configuration
         public bool CBBlackBGToggled { get; set; }
 
         public bool ShowInfoBar { get; set; }
-        public bool ShowHPInTitleBar { get; set; } = true;
+        public bool ShowHPInTitleBar { get; set; } = false;
         public bool EnableTitleBarStats { get; set; }
         public TitleBarStatsMode TitleBarStatsMode { get; set; } = TitleBarStatsMode.Text;
         public int InfoBarHighlightType { get; set; } // 0 = text colour changes, 1 = underline
@@ -491,16 +497,10 @@ namespace ClassicUO.Configuration
         // ## BEGIN - END ## // PvM/PvP
         public bool PvM_DamageCounterOnLastTarget { get; set; } = false;
         public bool PvM_DamageCounterAsOverhead { get; set; } = false;
-        public bool PvM_AggroIndicatorOnHealthBar { get; set; } = false;
-        public bool PvM_CorpseFilterByNotoriety { get; set; } = false;
-        public int PvM_CorpseFilterMode { get; set; } = 0;
         public bool PvM_LowHpAlertOnLastTarget { get; set; } = false;
         public bool PvM_KillCountMarkerPerSession { get; set; } = false;
         public bool PvM_LootHighlightOnCorpse { get; set; } = false;
-        public bool PvP_CriminalAttackableAlert { get; set; } = false;
-        public bool PvP_WarModeIndicator { get; set; } = false;
         public bool PvP_GreyCriminalTimer { get; set; } = false;
-        public bool PvP_LastAttackerHighlight { get; set; } = false;
         public bool PvP_SpellRangeOnCursor { get; set; } = true;
         public bool PvP_QuickTargetEnemyList { get; set; } = false;
         public bool PvP_OptimizedMode { get; set; } = true;
@@ -508,8 +508,6 @@ namespace ClassicUO.Configuration
         public bool PvX_NameOverheadProfilesByContext { get; set; } = false;
         public int PvM_NameOverheadProfileFlags { get; set; } = (int)NameOverheadOptions.MobilesAndCorpses;
         public int PvP_NameOverheadProfileFlags { get; set; } = (int)(NameOverheadOptions.Criminal | NameOverheadOptions.Gray | NameOverheadOptions.Enemy | NameOverheadOptions.Murderer);
-        public bool PvX_ConfigurableSoundsPerEvent { get; set; } = false;
-        public int PvX_SoundCriminalAlert { get; set; } = 0;
         public bool PvX_BlockBeneficialOnEnemies { get; set; } = false;
         public bool PvX_LastTargetDirectionIndicator { get; set; } = false;
         public bool PvX_LockLastTarget { get; set; } = false;
@@ -559,13 +557,13 @@ namespace ClassicUO.Configuration
         public bool UOClassicCombatLines_ToggleHMBlue { get; set; } = false;
         
         // ## BEGIN - END ## // PERFORMANCE SETTINGS
-        public int GraphicsQuality { get; set; } = 2; // 0 = Low, 1 = Medium, 2 = High
+        public int GraphicsQuality { get; set; } = 0; // 0 = Low, 1 = Medium, 2 = High
         public bool EnableFrustumCulling { get; set; } = true;
-        public bool EnableTextureCaching { get; set; } = true;
-        public bool EnableChunkPreload { get; set; } = true;
-        public int MaxRenderDistance { get; set; } = 24; // Max view range
+        public bool EnableTextureCaching { get; set; } = false;
+        public bool EnableChunkPreload { get; set; } = false;
+        public int MaxRenderDistance { get; set; } = 18; // Max view range
         public bool UseRenderTarget { get; set; } = true;
-        public float RenderTargetScale { get; set; } = 1f;
+        public float RenderTargetScale { get; set; } = 0.85f;
         public bool EnableLOD { get; set; } = true;
         public int LODDistanceTiles { get; set; } = 24;
         public int ImageRenderingMode { get; set; } = 0;
@@ -659,7 +657,6 @@ namespace ClassicUO.Configuration
         public Point PullPartyAllyBars { get; set; } = new Point(1470, 214);
         public Point PullPartyAllyBarsFinalLocation { get; set; } = new Point(1550, 0); // X difference needs to be 120 to get bars next to one another
         public uint CustomSerial { get; set; }
-        public uint Mimic_PlayerSerial { get; set; }
         // ## BEGIN - END ## // ADVMACROS
         // ## BEGIN - END ## // AUTOMATIONS
         public bool AutoWorldmapMarker { get; set; }
@@ -699,7 +696,7 @@ namespace ClassicUO.Configuration
         // ## BEGIN - END ## // ONCASTINGGUMP
         public bool OnCastingGump { get; set; }
         public bool OnCastingGump_hidden { get; set; } = false;
-        public bool OnCastingUnderPlayerBar { get; set; } = true;
+        public bool OnCastingHarmfulHueOnPlayer { get; set; } = true;
         // ## BEGIN - END ## // ONCASTINGGUMP
         // ## BEGIN - END ## // MISC3 SHOWALLLAYERS
         public bool ShowAllLayers { get; set; }
@@ -720,7 +717,7 @@ namespace ClassicUO.Configuration
         public bool PerformanceBatchOptimization { get; set; } = true;
         public bool PerformanceLODSystem { get; set; } = true;
         public bool PerformanceTextureStreaming { get; set; } = true;
-        public bool PerformanceOcclusionCulling { get; set; } = false;
+        public bool PerformanceOcclusionCulling { get; set; } = true;
         public int PerformanceQualityLevel { get; set; } = 2; // 0=Low, 1=Medium, 2=High, 3=Ultra
         public bool PerformanceShowStats { get; set; } = false;
         // ## BEGIN - END ## // VISUALRESPONSEMANAGER
@@ -768,9 +765,15 @@ namespace ClassicUO.Configuration
         public bool NamePlateHealthBar { get; set; } = true;
         public byte NamePlateOpacity { get; set; } = 75;
         public byte NamePlateHealthBarOpacity { get; set; } = 50;
-        public bool NamePlateHideAtFullHealth { get; set; } = true;
-        public bool NamePlateHideAtFullHealthInWarmode { get; set; } = true;
+        public bool NamePlateHideAtFullHealth { get; set; } = false;
+        public bool NamePlateHideAtFullHealthInWarmode { get; set; } = false;
         public byte NamePlateBorderOpacity { get; set; } = 50;
+        public bool NamePlateUseCustomChrome { get; set; }
+        public ushort NamePlateCustomBackgroundHue { get; set; } = 0x0481;
+        public ushort NamePlateCustomBorderHue { get; set; }
+        public bool NamePlateHealthBarMatchStrip { get; set; }
+        public bool NamePlateFullPlateWidthScalesWithHp { get; set; }
+        public bool ShowHPLineInNOH { get; set; } = true;
 
         public bool LeftAlignToolTips { get; set; } = false;
         public bool ForceCenterAlignTooltipMobiles { get; set; } = false;
@@ -781,7 +784,7 @@ namespace ClassicUO.Configuration
         public bool JournalMessagesOnlyInJournalBox { get; set; } = false;
 
         #region GRID CONTAINER
-        public bool UseGridLayoutContainerGumps { get; set; } = true;
+        public bool UseGridLayoutContainerGumps { get; set; } = false;
         public int GridContainerSearchMode { get; set; } = 1;
         public bool EnableGridContainerAnchor { get; set; } = false;
         public byte GridBorderAlpha { get; set; } = 75;
@@ -890,10 +893,10 @@ namespace ClassicUO.Configuration
         public byte NamePlateFont { get; set; } = 1;
         public int NamePlateFontSize { get; set; } = 20;
 
-        public string DefaultTTFFont { get; set; } = "Roboto-Regular";
         public int TextBorderSize { get; set; } = 1;
 
         public bool UseModernShopGump { get; set; } = false;
+        public bool UseExpandedColorPickerPalette { get; set; } = false;
 
         public int MaxJournalEntries { get; set; } = 750;
         public bool HideJournalBorder { get; set; } = false;
@@ -1017,6 +1020,19 @@ namespace ClassicUO.Configuration
         public bool EnableNearbyItemGump { get; set; } = false;
         public int NearbyItemGumpHotkeyKey { get; set; }
         public uint NearbyItemGumpHotkeyMod { get; set; }
+
+        public void EnsurePerformanceFeaturesEnabled()
+        {
+            PerformanceOptimizations = true;
+            PerformanceFrustumCulling = true;
+            PerformanceBatchOptimization = true;
+            PerformanceLODSystem = true;
+            PerformanceTextureStreaming = true;
+            PerformanceOcclusionCulling = true;
+            EnableFrustumCulling = true;
+            EnableLOD = true;
+            OptimizeBackgroundRendering = true;
+        }
 
         public void Save(string path, bool saveGumps = true)
         {
@@ -1356,15 +1372,6 @@ namespace ClassicUO.Configuration
                                     break;
                                 case GumpType.DurabilityGump:
                                     gump = new DurabilitysGump();
-                                    break;
-                                case GumpType.ScriptManager:
-                                    gump = new LegionScripting.ScriptManagerGump();
-                                    break;
-                                case GumpType.LegionScriptStudio:
-                                    gump = new LegionScripting.LegionScriptStudioGump();
-                                    break;
-                                case GumpType.RunningScripts:
-                                    gump = new LegionScripting.RunningScriptsGump();
                                     break;
                             }
 

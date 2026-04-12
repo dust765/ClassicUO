@@ -1,4 +1,4 @@
-﻿using ClassicUO.Utility;
+using ClassicUO.Utility;
 using System;
 using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
@@ -95,11 +95,9 @@ namespace ClassicUO.IO
                 return 0;
             }
 
-            BinaryPrimitives.TryReadUInt16LittleEndian(_data.Slice(Position), out ushort v);
-
-            Skip(2);
-
-            return v;
+            int p = Position;
+            Position += 2;
+            return (ushort)(_data[p] | (_data[p + 1] << 8));
         }
 
         [MethodImpl(IMPL_OPTION)]
@@ -110,11 +108,9 @@ namespace ClassicUO.IO
                 return 0;
             }
 
-            BinaryPrimitives.TryReadInt16LittleEndian(_data.Slice(Position), out short v);
-
-            Skip(2);
-
-            return v;
+            int p = Position;
+            Position += 2;
+            return (short)(_data[p] | (_data[p + 1] << 8));
         }
 
         [MethodImpl(IMPL_OPTION)]
@@ -125,11 +121,14 @@ namespace ClassicUO.IO
                 return 0;
             }
 
-            BinaryPrimitives.TryReadUInt32LittleEndian(_data.Slice(Position), out uint v);
-
-            Skip(4);
-
-            return v;
+            int p = Position;
+            Position += 4;
+            return (uint)(
+                _data[p]
+                | (_data[p + 1] << 8)
+                | (_data[p + 2] << 16)
+                | (_data[p + 3] << 24)
+            );
         }
 
         [MethodImpl(IMPL_OPTION)]
@@ -140,11 +139,14 @@ namespace ClassicUO.IO
                 return 0;
             }
 
-            int v = BinaryPrimitives.ReadInt32LittleEndian(_data.Slice(Position));
-
-            Skip(4);
-
-            return v;
+            int p = Position;
+            Position += 4;
+            return (int)(
+                (uint)_data[p]
+                | ((uint)_data[p + 1] << 8)
+                | ((uint)_data[p + 2] << 16)
+                | ((uint)_data[p + 3] << 24)
+            );
         }
 
         [MethodImpl(IMPL_OPTION)]
@@ -155,11 +157,21 @@ namespace ClassicUO.IO
                 return 0;
             }
 
-            BinaryPrimitives.TryReadUInt64LittleEndian(_data.Slice(Position), out ulong v);
-
-            Skip(8);
-
-            return v;
+            int p = Position;
+            Position += 8;
+            uint lo = (uint)(
+                _data[p]
+                | (_data[p + 1] << 8)
+                | (_data[p + 2] << 16)
+                | (_data[p + 3] << 24)
+            );
+            uint hi = (uint)(
+                _data[p + 4]
+                | (_data[p + 5] << 8)
+                | (_data[p + 6] << 16)
+                | (_data[p + 7] << 24)
+            );
+            return lo | ((ulong)hi << 32);
         }
 
         [MethodImpl(IMPL_OPTION)]
@@ -170,11 +182,21 @@ namespace ClassicUO.IO
                 return 0;
             }
 
-            BinaryPrimitives.TryReadInt64LittleEndian(_data.Slice(Position), out long v);
-
-            Skip(8);
-
-            return v;
+            int p = Position;
+            Position += 8;
+            uint lo = (uint)(
+                _data[p]
+                | (_data[p + 1] << 8)
+                | (_data[p + 2] << 16)
+                | (_data[p + 3] << 24)
+            );
+            uint hi = (uint)(
+                _data[p + 4]
+                | (_data[p + 5] << 8)
+                | (_data[p + 6] << 16)
+                | (_data[p + 7] << 24)
+            );
+            return (long)(lo | ((ulong)hi << 32));
         }
 
 

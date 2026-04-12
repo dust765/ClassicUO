@@ -35,9 +35,12 @@ using ClassicUO.Utility;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Buffers.Binary;
 using System.IO;
+using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using ZLibNative;
 
 namespace ClassicUO.Assets
 {
@@ -171,7 +174,7 @@ namespace ClassicUO.Assets
         public Texture2D GetGumpTexture(ushort graphic, out Rectangle bounds)
         {
             // ## BEGIN - END ## // TAZUO
-            Texture2D png = PNGLoader.Instance.LoadGumpTexture2d(graphic);
+            Texture2D png = UOFileManager.Current.Png.LoadGumpTexture2d(graphic);
             if (png != null)
             {
                 bounds = png.Bounds;
@@ -201,7 +204,7 @@ namespace ClassicUO.Assets
         {
             ref UOFileIndex entry = ref GetValidRefEntry((int)index);
 
-            if (entry.Width <= 0 && entry.Height <= 0)
+            if (entry.Length <= 0)
             {
                 return default;
             }
@@ -211,30 +214,94 @@ namespace ClassicUO.Assets
             _file.SetData(entry.Address, entry.FileSize);
             _file.Seek(entry.Offset);
 
+            byte[] cbuf = _file.ReadArray(entry.Length);
+            ReadOnlySpan<byte> raw = cbuf;
 
-            ReadOnlySpan<byte> output;
-            var newFileFormat = UOFileManager.Version >= ClientVersion.CV_7010400;
-            if (newFileFormat)
-            {
-                var cbuf = _file.ReadArray(entry.Length);
-                var dbuf = new byte[entry.DecompressedLength];
-                var result = ZLib.Decompress(cbuf, 0, dbuf, dbuf.Length);
-                if (result != ZLib.ZLibError.Okay)
-                {
-                    return default;
-                }
+            bool hintCompressed =
+                UOFileManager.Version >= ClientVersion.CV_7010400
+                || GumpDataLooksZlibCompressed(raw);
 
-                output = BwtDecompress.Decompress(dbuf);
-            }
-            else
+            GumpInfo gi = default;
+            if (hintCompressed)
             {
-                output = new ReadOnlySpan<byte>(_file.PositionAddress.ToPointer(), entry.Length);
+                gi = TryDecodeGumpZlibBwt(cbuf, color);
             }
 
-            var reader = new StackDataReader(output);
-            var w = newFileFormat ? reader.ReadUInt32LE() : (uint)entry.Width;
-            var h = newFileFormat ? reader.ReadUInt32LE() : (uint)entry.Height;
+            if (gi.Pixels.IsEmpty)
+            {
+                gi = TryDecodeGumpLegacyMul(raw, entry.Width, entry.Height, color);
+            }
 
+            if (gi.Pixels.IsEmpty && !hintCompressed)
+            {
+                gi = TryDecodeGumpZlibBwt(cbuf, color);
+            }
+
+            return gi;
+        }
+
+        private static bool GumpDataLooksZlibCompressed(ReadOnlySpan<byte> s) =>
+            s.Length >= 2 && s[0] == 0x78 && (s[1] == 0x01 || s[1] == 0x5E || s[1] == 0x9C || s[1] == 0xDA);
+
+        private static bool TryZlibInflateToArray(ReadOnlySpan<byte> source, out byte[] inflated)
+        {
+            inflated = null;
+            try
+            {
+                byte[] arr = source.ToArray();
+                using var ms = new MemoryStream(arr, writable: false);
+                using var ds = new ZLIBStream(ms, CompressionMode.Decompress);
+                using var output = new MemoryStream();
+                ds.CopyTo(output);
+                inflated = output.ToArray();
+                return inflated.Length > 0;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private unsafe GumpInfo TryDecodeGumpZlibBwt(byte[] cbuf, ushort color)
+        {
+            if (!TryZlibInflateToArray(cbuf, out byte[] zlibOut) || zlibOut.Length < 8)
+            {
+                return default;
+            }
+
+            byte[] payload;
+            try
+            {
+                payload = BwtDecompress.Decompress(zlibOut);
+            }
+            catch
+            {
+                payload = zlibOut;
+            }
+
+            if (payload == null || payload.Length < 8)
+            {
+                return default;
+            }
+
+            ReadOnlySpan<byte> p = payload;
+            uint w = BinaryPrimitives.ReadUInt32LittleEndian(p.Slice(0, 4));
+            uint h = BinaryPrimitives.ReadUInt32LittleEndian(p.Slice(4, 4));
+            return DecodeGumpRunLengthPixels(p.Slice(8), w, h, color);
+        }
+
+        private unsafe GumpInfo TryDecodeGumpLegacyMul(ReadOnlySpan<byte> raw, int idxW, int idxH, ushort color)
+        {
+            if (idxW <= 0 || idxH <= 0)
+            {
+                return default;
+            }
+
+            return DecodeGumpRunLengthPixels(raw, (uint)idxW, (uint)idxH, color);
+        }
+
+        private unsafe GumpInfo DecodeGumpRunLengthPixels(ReadOnlySpan<byte> runData, uint w, uint h, ushort color)
+        {
             if (w == 0 || h == 0 || w > 0x4000 || h > 0x4000)
             {
                 return default;
@@ -247,6 +314,7 @@ namespace ClassicUO.Assets
                 return default;
             }
 
+            var reader = new StackDataReader(runData);
             IntPtr dataStart = reader.PositionAddress;
             var pixels = new uint[(int)pixelCount];
             int* lookuplist = (int*)dataStart;
@@ -287,12 +355,11 @@ namespace ClassicUO.Assets
 
                     if (color != 0 && val != 0)
                     {
-                        val = HuesLoader.Instance.ApplyHueRgba5551(gmul[i].Value, color);
+                        val = UOFileManager.Current.Hues.ApplyHueRgba5551(gmul[i].Value, color);
                     }
 
                     if (val != 0)
                     {
-                        //val = 0x8000 | val;
                         val = HuesHelper.Color16To32(gmul[i].Value) | 0xFF_00_00_00;
                     }
 

@@ -122,7 +122,7 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
         public void SelectProfession(ProfessionInfo info)
         {
 
-            if (info.Type == ProfessionLoader.PROF_TYPE.CATEGORY && ProfessionLoader.Instance.Professions.TryGetValue(info, out List<ProfessionInfo> list) && list != null)
+            if (info.Type == ProfessionLoader.PROF_TYPE.CATEGORY && UOFileManager.Current.Professions.Professions.TryGetValue(info, out List<ProfessionInfo> list) && list != null)
             {
                 Parent.Add(new CreateCharProfessionGump(info));
                 Parent.Remove(this);
@@ -199,7 +199,7 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
 
                 int skillIndex = info.SkillDefVal[i, 0];
                 int skillValue = info.SkillDefVal[i, 1];
-                var skillEntry = SkillsLoader.Instance.Skills.Find(s => s.Index == skillIndex);
+                var skillEntry = UOFileManager.Current.Skills.Skills.Find(s => s.Index == skillIndex);
                 string skillName = skillEntry?.Name ?? $"Skill {skillIndex}";
 
                 var combo = new GothicStyleCombobox(posX, posY, ComboWidth, ComboHeight, new[] { skillName }, 0);
@@ -279,9 +279,9 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
             ProfessionInfo parent = null;
             _Parent = parent;
 
-            if (parent == null || !ProfessionLoader.Instance.Professions.TryGetValue(parent, out List<ProfessionInfo> professions) || professions == null)
+            if (parent == null || !UOFileManager.Current.Professions.Professions.TryGetValue(parent, out List<ProfessionInfo> professions) || professions == null)
             {
-                professions = new List<ProfessionInfo>(ProfessionLoader.Instance.Professions.Keys);
+                professions = new List<ProfessionInfo>(UOFileManager.Current.Professions.Professions.Keys);
             }
 
             Color panelBg = Color.Black;
@@ -377,9 +377,9 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
             int AttrX1 = CENTER_X + SECTION_PADDING + AttrOffset;
             int AttrX2 = AttrX1 + AttrSlotWidth;
             int AttrX3 = AttrX2 + AttrSlotWidth;
-            Add(new UOLabel(ClilocLoader.Instance.GetString(3000111), 1, UOLabelHue.Accent, Assets.TEXT_ALIGN_TYPE.TS_LEFT, 120) { X = AttrX1, Y = AttrLabelY });
-            Add(new UOLabel(ClilocLoader.Instance.GetString(3000112), 1, UOLabelHue.Accent, Assets.TEXT_ALIGN_TYPE.TS_LEFT, 120) { X = AttrX2, Y = AttrLabelY });
-            Add(new UOLabel(ClilocLoader.Instance.GetString(3000113), 1, UOLabelHue.Accent, Assets.TEXT_ALIGN_TYPE.TS_LEFT, 120) { X = AttrX3, Y = AttrLabelY });
+            Add(new UOLabel(UOFileManager.Current.Clilocs.GetString(3000111), 1, UOLabelHue.Accent, Assets.TEXT_ALIGN_TYPE.TS_LEFT, 120) { X = AttrX1, Y = AttrLabelY });
+            Add(new UOLabel(UOFileManager.Current.Clilocs.GetString(3000112), 1, UOLabelHue.Accent, Assets.TEXT_ALIGN_TYPE.TS_LEFT, 120) { X = AttrX2, Y = AttrLabelY });
+            Add(new UOLabel(UOFileManager.Current.Clilocs.GetString(3000113), 1, UOLabelHue.Accent, Assets.TEXT_ALIGN_TYPE.TS_LEFT, 120) { X = AttrX3, Y = AttrLabelY });
 
             _attributeSliders = new GothicStyleSliderBar[3];
             Add(_attributeSliders[0] = new GothicStyleSliderBar(AttrX1, AttrSliderY, AttrSliderW, 10, 60, ProfessionInfo._VoidStats[0], true));
@@ -388,7 +388,7 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
 
             var clientFlags = World.ClientLockedFeatures.Flags;
             
-            _skillList = SkillsLoader.Instance.SortedSkills
+            _skillList = UOFileManager.Current.Skills.SortedSkills
                          .Where(s =>
                                      // All standard client versions ignore these skills by defualt
                                      //s.Index != 26 && // MagicResist
@@ -433,7 +433,7 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
             }
              
 
-            _skillList = SkillsLoader.Instance.SortedSkills.ToList();
+            _skillList = UOFileManager.Current.Skills.SortedSkills.ToList();
 
            
 
@@ -476,18 +476,18 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
             var selected = _skillsCombobox.Where(s => s.SelectedIndex >= 0).Select(s => s.SelectedIndex).ToList();
             if (selected.Count < MIN_ADVANCED_SKILLS)
             {
-                UIManager.GetGump<CharCreationGump>()?.ShowMessage(Client.Version <= ClientVersion.CV_5090 ? ResGumps.YouMustHaveThreeUniqueSkillsChosen : ClilocLoader.Instance.GetString(1080032));
+                UIManager.GetGump<CharCreationGump>()?.ShowMessage(Client.Version <= ClientVersion.CV_5090 ? ResGumps.YouMustHaveThreeUniqueSkillsChosen : UOFileManager.Current.Clilocs.GetString(1080032));
                 return false;
             }
             if (selected.Count > CharCreationGump._skillsCount)
             {
-                UIManager.GetGump<CharCreationGump>()?.ShowMessage(ClilocLoader.Instance.GetString(1080032));
+                UIManager.GetGump<CharCreationGump>()?.ShowMessage(UOFileManager.Current.Clilocs.GetString(1080032));
                 return false;
             }
             int distinctCount = selected.Distinct().Count();
             if (distinctCount != selected.Count)
             {
-                UIManager.GetGump<CharCreationGump>()?.ShowMessage(ClilocLoader.Instance.GetString(1080032));
+                UIManager.GetGump<CharCreationGump>()?.ShowMessage(UOFileManager.Current.Clilocs.GetString(1080032));
                 return false;
             }
             return true;
@@ -686,9 +686,12 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
                 Remove(_facialLabel);
             }
 
-            foreach (CustomColorPicker customPicker in Children.OfType<CustomColorPicker>().ToList())
+            for (int ci = Children.Count - 1; ci >= 0; ci--)
             {
-                Remove(customPicker);
+                if (Children[ci] is CustomColorPicker customPicker)
+                {
+                    Remove(customPicker);
+                }
             }
 
             // Hair
@@ -703,7 +706,7 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
             ushort hue = (ushort)(isAsianLang ? 0xFFFF : 0);
 
 
-            Add(_hairLabel = new UOLabel(ClilocLoader.Instance.GetString(race == RaceType.GARGOYLE ? 1112309 : 3000121), 1, UOLabelHue.Accent, Assets.TEXT_ALIGN_TYPE.TS_LEFT, 300, FontStyle.BlackBorder) { X = RIGHT_X, Y = RIGHT_LABEL_Y_HAIR });
+            Add(_hairLabel = new UOLabel(UOFileManager.Current.Clilocs.GetString(race == RaceType.GARGOYLE ? 1112309 : 3000121), 1, UOLabelHue.Accent, Assets.TEXT_ALIGN_TYPE.TS_LEFT, 300, FontStyle.BlackBorder) { X = RIGHT_X, Y = RIGHT_LABEL_Y_HAIR });
             _hairCombobox = new GothicStyleCombobox(RIGHT_X, RIGHT_COMBO_Y_HAIR, RIGHT_COMBO_WIDTH, 25, content.Labels, CurrentOption[Layer.Hair]);
             ApplyGothicRedTheme(_hairCombobox);
             Add(_hairCombobox, 1);
@@ -714,7 +717,7 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
             {
                 content = CharacterCreationValues.GetFacialHairComboContent(race);
 
-                Add(_facialLabel = new UOLabel(ClilocLoader.Instance.GetString(race == RaceType.GARGOYLE ? 1112511 : 3000122), 1, UOLabelHue.Accent, Assets.TEXT_ALIGN_TYPE.TS_LEFT, 300, FontStyle.BlackBorder) { X = RIGHT_X, Y = RIGHT_LABEL_Y_FACIAL });
+                Add(_facialLabel = new UOLabel(UOFileManager.Current.Clilocs.GetString(race == RaceType.GARGOYLE ? 1112511 : 3000122), 1, UOLabelHue.Accent, Assets.TEXT_ALIGN_TYPE.TS_LEFT, 300, FontStyle.BlackBorder) { X = RIGHT_X, Y = RIGHT_LABEL_Y_FACIAL });
                 _facialCombobox = new GothicStyleCombobox(RIGHT_X, RIGHT_COMBO_Y_FACIAL, RIGHT_COMBO_WIDTH, 25, content.Labels, CurrentOption[Layer.Beard]);
                 ApplyGothicRedTheme(_facialCombobox);
                 Add(_facialCombobox, 1);
@@ -1007,7 +1010,7 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
             int invalid = Validate(character.Name);
             if (invalid > 0)
             {
-                UIManager.GetGump<CharCreationGump>()?.ShowMessage(ClilocLoader.Instance.GetString(invalid));
+                UIManager.GetGump<CharCreationGump>()?.ShowMessage(UOFileManager.Current.Clilocs.GetString(invalid));
 
                 return false;
             }
@@ -1278,7 +1281,7 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
 
 
 
-                Add(new UOLabel(ClilocLoader.Instance.GetString(label), 1, 32, Assets.TEXT_ALIGN_TYPE.TS_LEFT, 300, Game.FontStyle.BlackBorder) { X = 0, Y = 0 });
+                Add(new UOLabel(UOFileManager.Current.Clilocs.GetString(label), 1, 32, Assets.TEXT_ALIGN_TYPE.TS_LEFT, 300, Game.FontStyle.BlackBorder) { X = 0, Y = 0 });
 
 
                 Add

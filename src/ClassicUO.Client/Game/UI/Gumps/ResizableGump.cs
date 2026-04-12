@@ -35,6 +35,7 @@ using ClassicUO.Game.UI.Controls;
 using ClassicUO.Input;
 using ClassicUO.Renderer;
 using Microsoft.Xna.Framework;
+using System;
 using System.Xml;
 
 namespace ClassicUO.Game.UI.Gumps
@@ -44,10 +45,21 @@ namespace ClassicUO.Game.UI.Gumps
         private readonly BorderControl _borderControl;
         private readonly Button _button;
         private bool _clicked;
-        private Point _lastSize, _savedSize;
-        private readonly int _minH;
-        private readonly int _minW;
+        private Point _lastSize, _savedSize, _beforeResizeSize;
+        private int _minH;
+        private int _minW;
         protected bool _isLocked = false;
+
+        public class ResizeCompletedEventArgs : EventArgs
+        {
+            public ResizeCompletedEventArgs(Point beforeResize) => BeforeResize = beforeResize;
+
+            public Point BeforeResize { get; }
+        }
+
+        public delegate void ResizeCompletedHandler(object sender, ResizeCompletedEventArgs e);
+
+        public event ResizeCompletedHandler ResizeCompleted;
         protected bool? _prevCanMove = null, _prevCloseWithRightClick = null, _prevBorder = null;
 
         public BorderControl BorderControl { get { return _borderControl; } }
@@ -79,12 +91,17 @@ namespace ClassicUO.Game.UI.Gumps
             _button = new Button(0, 0x837, 0x838, 0x838);
             Add(_button);
 
-            _button.MouseDown += (sender, e) => { _clicked = true; };
+            _button.MouseDown += (sender, e) =>
+            {
+                _clicked = true;
+                _beforeResizeSize = _savedSize;
+            };
 
             _button.MouseUp += (sender, e) =>
             {
                 ResizeWindow(_lastSize);
                 _clicked = false;
+                ResizeCompleted?.Invoke(this, new ResizeCompletedEventArgs(_beforeResizeSize));
             };
 
             WantUpdateSize = false;
@@ -101,12 +118,33 @@ namespace ClassicUO.Game.UI.Gumps
             OnResize();
         }
 
+        protected int MinW
+        {
+            get => _minW;
+            set
+            {
+                _minW = value;
+                Update();
+            }
+        }
+
+        protected int MinH
+        {
+            get => _minH;
+            set
+            {
+                _minH = value;
+                Update();
+            }
+        }
+
         public bool ShowBorder
         {
             get => _borderControl.IsVisible;
             set => _borderControl.IsVisible = _button.IsVisible = value;
         }
 
+        public int BoderSize => _borderControl.BorderSize;
 
         public Point ResizeWindow(Point newSize)
         {
@@ -174,8 +212,8 @@ namespace ClassicUO.Game.UI.Gumps
         {
             _borderControl.Width = Width;
             _borderControl.Height = Height;
-            _button.X = Width - (_button.Width >> 0) + 2;
-            _button.Y = Height - (_button.Height >> 0) + 2;
+            _button.X = Width - _button.Width + 2;
+            _button.Y = Height - _button.Height + 2;
             GroupMatrixHeight = Height;
             GroupMatrixWidth = Width;
         }

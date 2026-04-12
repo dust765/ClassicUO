@@ -41,7 +41,7 @@ namespace ClassicUO.Game.UI.Gumps.Login
 {
     internal class SelectServerBackground : Gump
     {
-        private Texture2D LoginBackgroundImg = PNGLoader.Instance.GetImageTexture(Path.Combine(CUOEnviroment.ExecutablePath, "ExternalImages", "serverbg.png"));
+        private Texture2D LoginBackgroundImg = UOFileManager.Current.Png.GetImageTexture(Path.Combine(CUOEnviroment.ExecutablePath, "ExternalImages", "serverbg.png"));
        
         public SelectServerBackground() : base(0, 0)
         {

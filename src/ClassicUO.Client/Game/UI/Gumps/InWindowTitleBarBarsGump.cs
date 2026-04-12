@@ -46,9 +46,9 @@ namespace ClassicUO.Game.UI.Gumps
             string bgPath = Path.Combine(dataPath, "titlebar_bar_bg.png");
             string fillPath = Path.Combine(dataPath, "titlebar_bar_fill.png");
             if (File.Exists(bgPath))
-                _texBarBg = PNGLoader.Instance.GetImageTexture(bgPath);
+                _texBarBg = UOFileManager.Current.Png.GetImageTexture(bgPath);
             if (File.Exists(fillPath))
-                _texBarFill = PNGLoader.Instance.GetImageTexture(fillPath);
+                _texBarFill = UOFileManager.Current.Png.GetImageTexture(fillPath);
         }
 
         public InWindowTitleBarBarsGump() : base(0, 0)

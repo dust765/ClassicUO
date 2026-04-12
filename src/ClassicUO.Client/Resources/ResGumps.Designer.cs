@@ -888,6 +888,72 @@ namespace ClassicUO.Resources {
             }
         }
         
+        public static string CounterCompareTo {
+            get {
+                return ResourceManager.GetString("CounterCompareTo", resourceCulture);
+            }
+        }
+        
+        public static string CounterCompareToDialogInvalid {
+            get {
+                return ResourceManager.GetString("CounterCompareToDialogInvalid", resourceCulture);
+            }
+        }
+        
+        public static string CounterCompareToDialogText1 {
+            get {
+                return ResourceManager.GetString("CounterCompareToDialogText1", resourceCulture);
+            }
+        }
+        
+        public static string CounterCompareToDialogText2 {
+            get {
+                return ResourceManager.GetString("CounterCompareToDialogText2", resourceCulture);
+            }
+        }
+        
+        public static string CounterEmptyHelpText {
+            get {
+                return ResourceManager.GetString("CounterEmptyHelpText", resourceCulture);
+            }
+        }
+        
+        public static string CounterErrorSlotNotFound {
+            get {
+                return ResourceManager.GetString("CounterErrorSlotNotFound", resourceCulture);
+            }
+        }
+        
+        public static string CounterErrorSlotNotValid {
+            get {
+                return ResourceManager.GetString("CounterErrorSlotNotValid", resourceCulture);
+            }
+        }
+        
+        public static string CounterIgnoreHueOff {
+            get {
+                return ResourceManager.GetString("CounterIgnoreHueOff", resourceCulture);
+            }
+        }
+        
+        public static string CounterIgnoreHueOn {
+            get {
+                return ResourceManager.GetString("CounterIgnoreHueOn", resourceCulture);
+            }
+        }
+        
+        public static string CounterReadonlyOff {
+            get {
+                return ResourceManager.GetString("CounterReadonlyOff", resourceCulture);
+            }
+        }
+        
+        public static string CounterReadonlyOn {
+            get {
+                return ResourceManager.GetString("CounterReadonlyOn", resourceCulture);
+            }
+        }
+        
         /// <summary>
         ///   Looks up a localized string similar to Rows:.
         /// </summary>

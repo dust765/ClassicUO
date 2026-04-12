@@ -356,9 +356,9 @@ namespace ClassicUO.Game.UI.Controls
         public ImageButton(int x, int y, string normalPath, string pressedPath = null, string overPath = null)
         {
 
-            _textureNormal = PNGLoader.Instance.GetImageTexture(normalPath);
-            _texturePressed = pressedPath != null ? PNGLoader.Instance.GetImageTexture(pressedPath) : null;
-            _textureOver = overPath != null ? PNGLoader.Instance.GetImageTexture(overPath) : null;
+            _textureNormal = UOFileManager.Current.Png.GetImageTexture(normalPath);
+            _texturePressed = pressedPath != null ? UOFileManager.Current.Png.GetImageTexture(pressedPath) : null;
+            _textureOver = overPath != null ? UOFileManager.Current.Png.GetImageTexture(overPath) : null;
             X = x;
             Y = y;
 

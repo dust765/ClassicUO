@@ -46,6 +46,7 @@ using ClassicUO.Utility;
 using ClassicUO.Utility.Logging;
 using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -102,12 +103,10 @@ namespace ClassicUO.Game.Scenes
 
             try
             {
-                string path = Path.Combine(
-                    CUOEnviroment.ExecutablePath, "Data", "Profiles",
-                    Settings.GlobalSettings.Username, World.ServerName, character,
-                    "paperdollSelectCharManager.json");
+                string path = ProfileManager.FindExistingPaperdollSelectCharJson(character)
+                    ?? ProfileManager.ResolvePrimaryPaperdollSelectCharJsonReadPath(character);
 
-                if (File.Exists(path))
+                if (!string.IsNullOrEmpty(path) && File.Exists(path))
                 {
                     string json = File.ReadAllText(path);
                     using var doc = System.Text.Json.JsonDocument.Parse(json);
@@ -293,14 +292,14 @@ namespace ClassicUO.Game.Scenes
 
         private Gump GetGumpForStep()
         {
-            foreach (Item item in World.Items.Values)
+            foreach (KeyValuePair<uint, Item> ikv in World.Items)
             {
-                World.RemoveItem(item);
+                World.RemoveItem(ikv.Value);
             }
 
-            foreach (Mobile mobile in World.Mobiles.Values)
+            foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
             {
-                World.RemoveMobile(mobile);
+                World.RemoveMobile(mkv.Value);
             }
 
             World.Mobiles.Clear();
@@ -370,26 +369,26 @@ namespace ClassicUO.Game.Scenes
                 switch (CurrentLoginStep)
                 {
                     case LoginSteps.Connecting:
-                        labelText = ClilocLoader.Instance.GetString(3000002, ResGeneral.Connecting); // "Connecting..."
+                        labelText = UOFileManager.Current.Clilocs.GetString(3000002, ResGeneral.Connecting); // "Connecting..."
 
                         showButtons = LoginButtons.Cancel;
 
                         break;
 
                     case LoginSteps.VerifyingAccount:
-                        labelText = ClilocLoader.Instance.GetString(3000003, ResGeneral.VerifyingAccount); // "Verifying Account..."
+                        labelText = UOFileManager.Current.Clilocs.GetString(3000003, ResGeneral.VerifyingAccount); // "Verifying Account..."
 
                         showButtons = LoginButtons.Cancel;
 
                         break;
 
                     case LoginSteps.LoginInToServer:
-                        labelText = ClilocLoader.Instance.GetString(3000053, ResGeneral.LoggingIntoShard); // logging into shard
+                        labelText = UOFileManager.Current.Clilocs.GetString(3000053, ResGeneral.LoggingIntoShard); // logging into shard
 
                         break;
 
                     case LoginSteps.EnteringBritania:
-                        labelText = ClilocLoader.Instance.GetString(3000001, ResGeneral.EnteringBritannia); // Entering Britania...
+                        labelText = UOFileManager.Current.Clilocs.GetString(3000001, ResGeneral.EnteringBritannia); // Entering Britania...
                         UIManager.GetGump<SelectServerBackground>()?.Dispose();
                         break;
 
@@ -870,7 +869,7 @@ namespace ClassicUO.Game.Scenes
                         cityIndex,
                         cityName,
                         cityBuilding,
-                        ClilocLoader.Instance.GetString((int)cityDescription),
+                        UOFileManager.Current.Clilocs.GetString((int)cityDescription),
                         cityX,
                         cityY,
                         cityZ,

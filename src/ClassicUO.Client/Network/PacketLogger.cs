@@ -1,4 +1,4 @@
-﻿using ClassicUO.Utility;
+using ClassicUO.Utility;
 using ClassicUO.Utility.Logging;
 using System;
 using System.Collections.Generic;
@@ -26,6 +26,7 @@ namespace ClassicUO.Network
 
         public void Log(Span<byte> message, bool toServer)
         {
+#if DEBUG
             if (!Enabled) return;
 
             if (LogPacketID.Count != 0 && !LogPacketID.Contains(message[0]))
@@ -111,6 +112,7 @@ namespace ClassicUO.Network
 
                 output.Dispose();
             }
+#endif
         }
     }
 }

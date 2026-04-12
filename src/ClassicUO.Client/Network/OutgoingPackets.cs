@@ -34,7 +34,6 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using ClassicUO.Configuration;
@@ -404,7 +403,13 @@ namespace ClassicUO.Network
             writer.WriteUInt8((byte) character.Dexterity);
             writer.WriteUInt8((byte) character.Intelligence);
 
-            List<Skill> skills = character.Skills.OrderByDescending(o => o.Value).Take(skillcount).ToList();
+            List<Skill> skills = new List<Skill>(character.Skills);
+            skills.Sort((a, b) => b.Value.CompareTo(a.Value));
+
+            if (skills.Count > skillcount)
+            {
+                skills.RemoveRange(skillcount, skills.Count - skillcount);
+            }
 
             foreach (Skill skill in skills)
             {
@@ -963,7 +968,7 @@ namespace ClassicUO.Network
                 writer.WriteZero(2);
             }
 
-            List<SpeechEntry> entries = SpeechesLoader.Instance.GetKeywords(text);
+            List<SpeechEntry> entries = UOFileManager.Current.Speeches.GetKeywords(text);
             bool encoded = entries != null && entries.Count != 0;
 
             if (encoded)
@@ -1013,7 +1018,7 @@ namespace ClassicUO.Network
                 writer.WriteZero(2);
             }
 
-            List<SpeechEntry> entries = SpeechesLoader.Instance.GetKeywords(text);
+            List<SpeechEntry> entries = UOFileManager.Current.Speeches.GetKeywords(text);
             bool encoded = entries != null && entries.Count != 0;
 
             if (encoded)
@@ -4619,9 +4624,9 @@ namespace ClassicUO.Network
             writer.WriteUInt16BE(0xBEEF);
             writer.WriteUInt8(0x01);
 
-            writer.WriteUInt16BE((ushort)SkillsLoader.Instance.SortedSkills.Count);
+            writer.WriteUInt16BE((ushort)UOFileManager.Current.Skills.SortedSkills.Count);
 
-            foreach (SkillEntry s in SkillsLoader.Instance.SortedSkills)
+            foreach (SkillEntry s in UOFileManager.Current.Skills.SortedSkills)
             {
                 writer.WriteUInt16BE((ushort) s.Index);
                 writer.WriteBool(s.HasAction);

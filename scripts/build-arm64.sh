@@ -69,7 +69,7 @@ dotnet build "$PROJECT_PATH" -c "$CONFIG" -p:Platform="$PLATFORM" -o "$OUTPUT_DI
 
 echo "Publishing self-contained for ARM64..."
 PUBLISH_DIR="$OUTPUT_BASE/publish-arm64"
-dotnet publish "$PROJECT_PATH" -c "$CONFIG" -p:Platform="$PLATFORM" -r "$RUNTIME" --self-contained true -o "$PUBLISH_DIR"
+dotnet publish "$PROJECT_PATH" -c "$CONFIG" -f net10.0 -p:Platform="$PLATFORM" -r "$RUNTIME" --self-contained true -o "$PUBLISH_DIR"
 
 echo ""
 echo "========================================"

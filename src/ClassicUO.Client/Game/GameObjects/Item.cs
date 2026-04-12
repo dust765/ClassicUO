@@ -214,7 +214,7 @@ namespace ClassicUO.Game.GameObjects
         }
 
         public ref StaticTiles ItemData =>
-            ref TileDataLoader.Instance.StaticData[IsMulti ? MultiGraphic : Graphic];
+            ref UOFileManager.Current.TileData.StaticData[IsMulti ? MultiGraphic : Graphic];
 
         public bool IsLootable =>
             ItemData.Layer != (int)Layer.Hair
@@ -295,15 +295,15 @@ namespace ClassicUO.Game.GameObjects
                 house.ClearComponents();
             }
 
-            ref UOFileIndex entry = ref MultiLoader.Instance.GetValidRefEntry(Graphic);
-            MultiLoader.Instance.File.SetData(entry.Address, entry.FileSize);
+            ref UOFileIndex entry = ref UOFileManager.Current.Multis.GetValidRefEntry(Graphic);
+            UOFileManager.Current.Multis.File.SetData(entry.Address, entry.FileSize);
             bool movable = false;
 
-            if (MultiLoader.Instance.IsUOP)
+            if (UOFileManager.Current.Multis.IsUOP)
             {
                 if (entry.Length > 0 && entry.DecompressedLength > 0)
                 {
-                    MultiLoader.Instance.File.Seek(entry.Offset);
+                    UOFileManager.Current.Multis.File.Seek(entry.Offset);
 
                     byte[] buffer = null;
                     Span<byte> span =
@@ -320,7 +320,7 @@ namespace ClassicUO.Game.GameObjects
                         fixed (byte* dataPtr = span)
                         {
                             ZLib.Decompress(
-                                MultiLoader.Instance.File.PositionAddress,
+                                UOFileManager.Current.Multis.File.PositionAddress,
                                 entry.Length,
                                 0,
                                 (IntPtr)dataPtr,
@@ -413,13 +413,13 @@ namespace ClassicUO.Game.GameObjects
             }
             else
             {
-                int count = entry.Length / MultiLoader.Instance.Offset;
-                MultiLoader.Instance.File.Seek(entry.Offset);
+                int count = entry.Length / UOFileManager.Current.Multis.Offset;
+                UOFileManager.Current.Multis.File.Seek(entry.Offset);
 
                 for (int i = 0; i < count; i++)
                 {
                     MultiBlock* block = (MultiBlock*)(
-                        MultiLoader.Instance.File.PositionAddress + i * MultiLoader.Instance.Offset
+                        UOFileManager.Current.Multis.File.PositionAddress + i * UOFileManager.Current.Multis.Offset
                     );
 
                     if (block->X < minX)
@@ -755,14 +755,14 @@ namespace ClassicUO.Game.GameObjects
                     ushort id = GetGraphicForAnimation();
 
                     bool mirror = false;
-                    AnimationsLoader.Instance.GetAnimDirection(ref dir, ref mirror);
+                    UOFileManager.Current.Animations.GetAnimDirection(ref dir, ref mirror);
 
                     if (id < Client.Game.Animations.MaxAnimationCount && dir < 5)
                     {
                         Client.Game.Animations.ConvertBodyIfNeeded(ref id);
                         var animGroup = Client.Game.Animations.GetAnimType(id);
                         var animFlags = Client.Game.Animations.GetAnimFlags(id);                   
-                        byte action = AnimationsLoader.Instance.GetDeathAction(
+                        byte action = UOFileManager.Current.Animations.GetDeathAction(
                             id,
                             animFlags,
                             animGroup,

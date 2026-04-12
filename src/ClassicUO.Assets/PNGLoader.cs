@@ -26,6 +26,18 @@ namespace ClassicUO.Assets
         public static PNGLoader _instance;
         public static PNGLoader Instance => _instance ?? (_instance = new PNGLoader());
 
+        public Texture2D GetDataClientImage(string executableDirectory, string fileName)
+        {
+            if (string.IsNullOrEmpty(executableDirectory) || string.IsNullOrEmpty(fileName))
+                return null;
+            string path = Path.Combine(executableDirectory, "Data", "Client", fileName);
+            Texture2D texture = GetImageTexture(path);
+            if (texture != null)
+                return texture;
+            EmbeddedArt.TryGetValue(fileName, out texture);
+            return texture;
+        }
+
         public Texture2D GetImageTexture(string fullImagePath)
         {
             Texture2D texture = null;
@@ -183,6 +195,16 @@ namespace ClassicUO.Assets
                 {
                     string strExeFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
                     exePath = Path.GetDirectoryName(strExeFilePath);
+                    if (string.IsNullOrEmpty(exePath))
+                    {
+                        exePath = AppContext.BaseDirectory;
+                    }
+
+                    exePath = exePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                    if (string.IsNullOrEmpty(exePath))
+                    {
+                        return;
+                    }
 
                     string gumpPath = Path.Combine(exePath, IMAGES_FOLDER, GUMP_EXTERNAL_FOLDER);
                     if (Directory.Exists(gumpPath))
@@ -242,10 +264,10 @@ namespace ClassicUO.Assets
                     {
                         var gumpInfo = LoadGumpTexture(i);
 
-                        if (gumpInfo.Pixels == null || gumpInfo.Pixels.IsEmpty)
+                        if (gumpInfo.Pixels.IsEmpty)
                         {
-                            gumpInfo = GumpsLoader.Instance.GetGump(i);
-                            if (gumpInfo.Pixels != null && !gumpInfo.Pixels.IsEmpty)
+                            gumpInfo = UOFileManager.Current.Gumps.GetGump(i);
+                            if (!gumpInfo.Pixels.IsEmpty)
                                 continue;
                         }
                         else

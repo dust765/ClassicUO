@@ -58,7 +58,7 @@ namespace ClassicUO.Game.UI.Gumps.Login
         private const ushort SELECTED_COLOR = 0x0481;
         private const ushort NORMAL_COLOR = 0x0481;
         private GothicStyleButtonLogin button;
-        private Texture2D LogoBackgroundImg = PNGLoader.Instance.GetImageTexture(Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Client", "logodust.png"));
+        private Texture2D LogoBackgroundImg = UOFileManager.Current.Png.GetImageTexture(Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Client", "logodust.png"));
 
         public ServerSelectionGump() : base(0, 0)
         {
@@ -115,11 +115,11 @@ namespace ClassicUO.Game.UI.Gumps.Login
 
             if (Client.Version >= ClientVersion.CV_500A)
             {
-                Add(new UOLabel(ClilocLoader.Instance.GetString(1044579), 1, 32, Assets.TEXT_ALIGN_TYPE.TS_LEFT, 300, FontStyle.BlackBorder) { X = LoginLayoutHelper.X(210), Y = LoginLayoutHelper.Y(70) });
+                Add(new UOLabel(UOFileManager.Current.Clilocs.GetString(1044579), 1, 32, Assets.TEXT_ALIGN_TYPE.TS_LEFT, 300, FontStyle.BlackBorder) { X = LoginLayoutHelper.X(210), Y = LoginLayoutHelper.Y(70) });
 
                 if (CUOEnviroment.NoServerPing == false)
                 {
-                    Add(new UOLabel(ClilocLoader.Instance.GetString(1044577), 1, 32, Assets.TEXT_ALIGN_TYPE.TS_LEFT, 300, FontStyle.BlackBorder) { X = LoginLayoutHelper.X(650), Y = LoginLayoutHelper.Y(70) });
+                    Add(new UOLabel(UOFileManager.Current.Clilocs.GetString(1044577), 1, 32, Assets.TEXT_ALIGN_TYPE.TS_LEFT, 300, FontStyle.BlackBorder) { X = LoginLayoutHelper.X(650), Y = LoginLayoutHelper.Y(70) });
                    
 
                 }

@@ -1,28 +1,40 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <TargetFramework>net48</TargetFramework>
     <ApplicationIcon>cuoicon.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <AssemblyName>ClassicUO</AssemblyName>
+    <AssemblyName>cuo</AssemblyName>
     <RootNamespace>ClassicUO</RootNamespace>
-    <AssemblyVersion>3.0.8</AssemblyVersion>
-    <FileVersion>3.0.8</FileVersion>
+    <AssemblyVersion>3.0.9</AssemblyVersion>
+    <FileVersion>3.0.9</FileVersion>
     <Copyright>Dust765</Copyright>
     <StartupObject></StartupObject>
+    <TargetFramework>net10.0</TargetFramework>
     <PlatformTarget>x64</PlatformTarget>
+    <PublishAot>true</PublishAot>
+    <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
+    <NoWarn>$(NoWarn);IL3000;IL3050</NoWarn>
   </PropertyGroup>
+
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows')) OR ('$(RuntimeIdentifier)' != '' AND $([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win')))">
+    <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Dust765\SplashScreen\SplashForm.cs" />
+  </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <OutputPath>$(ProjectDir)..\..\bin\Release\</OutputPath>
     <PublishDir>$(ProjectDir)..\..\bin\dist\</PublishDir>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
     <Optimize>true</Optimize>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <OutputPath>$(ProjectDir)..\..\bin\Debug\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
     <DefineConstants>$(DefineConstants)TRACE</DefineConstants>
     <OutputType>Exe</OutputType>
   </PropertyGroup>
@@ -37,30 +49,6 @@
     </AssemblyAttribute>
   </ItemGroup>
 
-  <!-- // ## BEGIN - END ## // TEXTUREMANAGER // -->
-  <ItemGroup>
-    <EmbeddedResource Include="halo_green.png" />
-    <EmbeddedResource Include="halo_purple.png" />
-    <EmbeddedResource Include="halo_red.png" />
-    <EmbeddedResource Include="halo_red2.png" />
-    <EmbeddedResource Include="halo_yellow.png" />
-    <EmbeddedResource Include="halo_orange.png" />
-    <EmbeddedResource Include="halo_white.png" />
-    <EmbeddedResource Include="halo_blue.png" />
-    <EmbeddedResource Include="halo_blue2.png" />
-    <EmbeddedResource Include="arrow_blue.png" />
-    <EmbeddedResource Include="arrow_blue2.png" />
-    <EmbeddedResource Include="arrow_green.png" />
-    <EmbeddedResource Include="arrow_purple.png" />
-    <EmbeddedResource Include="arrow_red.png" />
-    <EmbeddedResource Include="arrow_yellow.png" />
-    <EmbeddedResource Include="arrow_yellow2.png" />
-    <EmbeddedResource Include="arrow_orange.png" />
-    <EmbeddedResource Include="LegionScripting\LScript.md" />
-  </ItemGroup>
-<!-- // ## BEGIN - END ## // TEXTUREMANAGER // -->
-
-
   <ItemGroup>
     <Folder Include="Dust765\External\" />
     <Folder Include="Properties\" />
@@ -68,14 +56,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="System.Windows.Forms" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="IronPython" Version="2.7.12" />
-    <PackageReference Include="Sentry" Version="6.1.0" />
+    <PackageReference Include="Sentry" Version="5.10.0" />
     <ProjectReference Include="..\..\external\FNA\FNA.Core.csproj" />
-    <ProjectReference Include="..\..\external\UOSteam\UOScript\UOScript.csproj" />
     <ProjectReference Include="..\ClassicUO.Assets\ClassicUO.Assets.csproj" />
     <ProjectReference Include="..\ClassicUO.Renderer\ClassicUO.Renderer.csproj" />
     <ProjectReference Include="..\ClassicUO.Utility\ClassicUO.Utility.csproj" />
@@ -125,11 +107,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
-    <PackageReference Include="System.CodeDom" Version="4.7.0" />
+    <PackageReference Include="Cyotek.Drawing.BitmapFont" Version="2.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.5" />
+    <PackageReference Include="System.CodeDom" Version="8.0.0" />
     <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="2.1.13" />
-    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
   </ItemGroup>
 
   <ItemGroup>
@@ -137,37 +119,34 @@
       <HintPath>..\..\external\cuoapi\cuoapi.dll</HintPath>
     </Reference>
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Update="System.Text.Json" Version="8.0.5" />
-  </ItemGroup>
 
   <ItemGroup>
     <None Remove="Dust765\" />
     <None Remove="Dust765\Dust765\" />
   </ItemGroup>
   <ItemGroup>
-    <DataClientImages Include="$(ProjectDir)..\ClassicUO.Assets\gumpartassets\loginbg.png" />
-    <DataClientImages Include="$(ProjectDir)..\ClassicUO.Assets\gumpartassets\logodust.png" />
+    <DataClientImages Include="$(ProjectDir)..\ClassicUO.Assets\gumpartassets\loginbg.png" Condition="Exists('$(ProjectDir)..\ClassicUO.Assets\gumpartassets\loginbg.png')" />
+    <DataClientImages Include="$(ProjectDir)..\ClassicUO.Assets\gumpartassets\logodust.png" Condition="Exists('$(ProjectDir)..\ClassicUO.Assets\gumpartassets\logodust.png')" />
   </ItemGroup>
 
-  <Target Name="CopyDataClientImages_build" AfterTargets="Build">
+  <Target Name="CopyDataClientImages_build" AfterTargets="Build" Condition="'$(TargetFramework)' != ''">
     <MakeDir Directories="$(TargetDir)Data\Client" />
     <Copy SourceFiles="@(DataClientImages)" DestinationFolder="$(TargetDir)Data\Client\" SkipUnchangedFiles="true" />
   </Target>
 
-  <Target Name="CopyExternalDeps_build" AfterTargets="Build">
+  <Target Name="CopyExternalDeps_build" AfterTargets="Build" Condition="'$(TargetFramework)' != ''">
     <Copy SourceFiles="@(DataFiles_x64)" DestinationFolder="$(TargetDir)\x64\" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(NativeLibs)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(DataLanguageFiles)" DestinationFolder="$(TargetDir)\Data\Languages\" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(DataLanguageRoot)" DestinationFolder="$(TargetDir)\Data\" SkipUnchangedFiles="true" />
   </Target>
 
-  <Target Name="CopyDataClientImages_publish" AfterTargets="Publish">
+  <Target Name="CopyDataClientImages_publish" AfterTargets="Publish" Condition="'$(TargetFramework)' != ''">
     <MakeDir Directories="$(PublishDir)Data\Client" />
     <Copy SourceFiles="@(DataClientImages)" DestinationFolder="$(PublishDir)Data\Client\" SkipUnchangedFiles="true" />
   </Target>
 
-  <Target Name="CopyExternalDeps_publish" AfterTargets="Publish">
+  <Target Name="CopyExternalDeps_publish" AfterTargets="Publish" Condition="'$(TargetFramework)' != ''">
     <ItemGroup>
       <MonockickstartPath Include="$(ProjectDir)..\..\tools\monokickstart\*.*" />
     </ItemGroup>

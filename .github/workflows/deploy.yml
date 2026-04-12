@@ -1,0 +1,161 @@
+name: Deploy
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main, developer]
+
+permissions:
+  contents: write
+
+env:
+  CUO_OUTPUT_PATH: "dist"
+  CUO_PROJECT_PATH: "src/ClassicUO.Client/ClassicUO.Client.csproj"
+  BOOT_PROJECT_PATH: "src/ClassicUO.Bootstrap/src/ClassicUO.Bootstrap.csproj"
+
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  NUGET_XMLDOC_MODE: skip
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    env:
+      BRANCH_NAME: ${{ github.ref_name }}
+      COMMIT_SHA:  ${{ github.sha }}
+
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target: win-x64
+            tfm: net10.0
+            bootTfm: net472
+            bootOutputType: WinExe
+          - os: ubuntu-22.04
+            target: linux-x64
+            tfm: net10.0
+            bootTfm: net472
+            bootOutputType: Exe
+          - os: macos-14
+            target: osx-x64
+            tfm: net10.0
+            bootTfm: net472
+            bootOutputType: Exe
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
+
+      - name: Init submodules
+        run: |
+          git config --global url."https://".insteadOf git://
+          git submodule sync --recursive
+          git submodule update --init --recursive
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+          include-prerelease: false
+
+      - name: Resolve assembly version
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=$(dotnet msbuild "${{ env.CUO_PROJECT_PATH }}" -getProperty:AssemblyVersion -nologo | tail -1 | tr -d '\r')
+          if [[ -z "${BASE}" ]]; then
+            echo "Could not read AssemblyVersion from ${{ env.CUO_PROJECT_PATH }}"
+            exit 1
+          fi
+          VER=$(echo "${BASE}" | awk -F. -v r="${GITHUB_RUN_NUMBER}" '{
+            if (NF >= 3) { printf "%s.%s.%s.%s", $1, $2, $3, r }
+            else if (NF == 2) { printf "%s.%s.0.%s", $1, $2, r }
+            else { printf "%s.0.0.%s", $1, r }
+          }')
+          echo "CUO_ASSEMBLY_VERSION=${VER}" >> "${GITHUB_ENV}"
+          echo "AssemblyVersion base=${BASE} -> CI ${VER}"
+
+      - name: Set release metadata
+        shell: bash
+        run: |
+          if [[ "${BRANCH_NAME}" == "main" ]]; then
+            echo "CUO_ZIP_NAME=Dust765-${{ matrix.target }}-release.zip" >> "$GITHUB_ENV"
+            echo "RELEASE_TAG=Dust765-main-${CUO_ASSEMBLY_VERSION}" >> "$GITHUB_ENV"
+            echo "RELEASE_NAME=Dust765 main ${CUO_ASSEMBLY_VERSION}" >> "$GITHUB_ENV"
+            echo "RELEASE_PRERELEASE=false" >> "$GITHUB_ENV"
+            echo "RELEASE_ALLOW_UPDATES=false" >> "$GITHUB_ENV"
+            echo "RELEASE_MAKE_LATEST=true" >> "$GITHUB_ENV"
+            echo "RELEASE_FORCE_TAG=false" >> "$GITHUB_ENV"
+          elif [[ "${BRANCH_NAME}" == "developer" ]]; then
+            echo "CUO_ZIP_NAME=Dust765-${{ matrix.target }}-dev.zip" >> "$GITHUB_ENV"
+            echo "RELEASE_TAG=Dust765-developer-prerelease" >> "$GITHUB_ENV"
+            echo "RELEASE_NAME=Dust765 developer prerelease" >> "$GITHUB_ENV"
+            echo "RELEASE_PRERELEASE=true" >> "$GITHUB_ENV"
+            echo "RELEASE_ALLOW_UPDATES=true" >> "$GITHUB_ENV"
+            echo "RELEASE_MAKE_LATEST=false" >> "$GITHUB_ENV"
+            echo "RELEASE_FORCE_TAG=true" >> "$GITHUB_ENV"
+          else
+            echo "Unsupported branch for deploy: ${BRANCH_NAME}"
+            exit 1
+          fi
+
+      - name: Build Bootstrap
+        run: dotnet publish "${{ env.BOOT_PROJECT_PATH }}" -c Release -f "${{ matrix.bootTfm }}" -o "${{ env.CUO_OUTPUT_PATH }}" /p:AssemblyVersion=${{ env.CUO_ASSEMBLY_VERSION }} /p:FileVersion=${{ env.CUO_ASSEMBLY_VERSION }} /p:OutputType=${{ matrix.bootOutputType }}
+
+      - name: Build ClassicUO (NativeAOT)
+        run: dotnet publish "${{ env.CUO_PROJECT_PATH }}" -c Release -r "${{ matrix.target }}" -o "${{ env.CUO_OUTPUT_PATH }}" /p:AssemblyVersion=${{ env.CUO_ASSEMBLY_VERSION }} /p:FileVersion=${{ env.CUO_ASSEMBLY_VERSION }} /p:NativeLib=Shared /p:OutputType=Library /p:BuildNativeAot=true /p:TargetFramework=${{ matrix.tfm }} /p:DeleteExistingFiles=false
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_ENV: production
+
+      - name: Create package
+        uses: thedoctor0/zip-release@master
+        with:
+          type: "zip"
+          directory: ${{ env.CUO_OUTPUT_PATH }}
+          filename: ${{ env.CUO_ZIP_NAME }}
+          exclusions: "*.zip"
+
+      - name: Move output
+        shell: bash
+        run: mkdir -p upload && mv "${{ env.CUO_OUTPUT_PATH }}/${{ env.CUO_ZIP_NAME }}" upload
+
+      # Only one matrix job manages the git tag to avoid concurrent force-push conflicts
+      - name: Move tag to latest commit
+        if: matrix.os == 'windows-latest'
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${env:TOKEN}@github.com/${{ github.repository }}.git"
+          git fetch --no-tags --prune --depth=1 origin "${{ env.BRANCH_NAME }}"
+          if ("${{ env.RELEASE_FORCE_TAG }}" -eq "true") {
+            git tag -f "${{ env.RELEASE_TAG }}" "${{ env.COMMIT_SHA }}"
+            git push -f origin "${{ env.RELEASE_TAG }}"
+          } else {
+            git tag "${{ env.RELEASE_TAG }}" "${{ env.COMMIT_SHA }}"
+            git push origin "${{ env.RELEASE_TAG }}"
+          }
+
+      - name: Upload Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "upload/${{ env.CUO_ZIP_NAME }}"
+          name: "${{ env.RELEASE_NAME }}"
+          body: "NativeAOT build. Use at your own risk."
+          draft: false
+          prerelease: ${{ env.RELEASE_PRERELEASE }}
+          makeLatest: ${{ env.RELEASE_MAKE_LATEST }}
+          allowUpdates: ${{ env.RELEASE_ALLOW_UPDATES }}
+          tag: "${{ env.RELEASE_TAG }}"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit: ${{ env.COMMIT_SHA }}

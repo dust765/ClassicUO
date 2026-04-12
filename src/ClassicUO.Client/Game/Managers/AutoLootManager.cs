@@ -1,7 +1,6 @@
 using ClassicUO.Configuration;
 using ClassicUO.Game.GameObjects;
 using ClassicUO.Game.UI.Gumps;
-using ClassicUO.LegionScripting;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -9,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using ClassicUO.Utility.Logging;
 
 namespace ClassicUO.Game.Managers
 {
@@ -24,6 +24,7 @@ namespace ClassicUO.Game.Managers
         private bool loaded = false;
         private string savePath = Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Profiles", "AutoLoot.json");
         private bool lootTaskRunning = false;
+        private int _lootTaskRunningFlag = 0;
         private ProgressBarGump progressBarGump;
         private int currentLootTotalCount = 0;
 
@@ -35,15 +36,15 @@ namespace ClassicUO.Game.Managers
         /// </summary>
         public void StartLooting()
         {
-            if (loaded && !lootTaskRunning)
+            if (loaded && System.Threading.Interlocked.CompareExchange(ref _lootTaskRunningFlag, 1, 0) == 0)
             {
                 int delay = ProfileManager.CurrentProfile == null ? 1000 : ProfileManager.CurrentProfile.MoveMultiObjectDelay;
-                Task.Factory.StartNew(() =>
+                _ = Task.Run(async () =>
                 {
-                    Task.Delay(delay).Wait();
                     try
                     {
                         lootTaskRunning = true;
+                        await Task.Delay(delay).ConfigureAwait(false);
                         if (lootItems != null && !lootItems.IsEmpty)
                         {
                             int totalToLoot = Math.Max(1, currentLootTotalCount);
@@ -77,7 +78,7 @@ namespace ClassicUO.Game.Managers
                                 if (m != null)
                                 {
                                     GameActions.GrabItem(m, m.Amount);
-                                    Task.Delay(delay).Wait();
+                                    await Task.Delay(delay).ConfigureAwait(false);
                                 }
                             }
                         }
@@ -90,6 +91,7 @@ namespace ClassicUO.Game.Managers
                         lootTaskRunning = false;
                         MainThreadQueue.EnqueueAction(() => { progressBarGump?.Dispose(); progressBarGump = null; });
                         currentLootTotalCount = 0;
+                        System.Threading.Interlocked.Exchange(ref _lootTaskRunningFlag, 0);
                     }
                 });
             }
@@ -199,7 +201,7 @@ namespace ClassicUO.Game.Managers
 
         private void Load()
         {
-            Task.Factory.StartNew(() =>
+            _ = Task.Run(() =>
             {
                 if (!File.Exists(savePath))
                 {
@@ -211,8 +213,11 @@ namespace ClassicUO.Game.Managers
                     try
                     {
                         string data = File.ReadAllText(savePath);
-                        AutoLootItem[] tItem = JsonSerializer.Deserialize<AutoLootItem[]>(data);
-                        autoLootItems = tItem.ToList<AutoLootItem>();
+                        var parsed = JsonSerializer.Deserialize(
+                            data,
+                            typeof(List<AutoLootItem>),
+                            GameManagersJsonContext.Default) as List<AutoLootItem>;
+                        autoLootItems = parsed ?? new List<AutoLootItem>();
                         loaded = true;
                     }
                     catch
@@ -231,12 +236,17 @@ namespace ClassicUO.Game.Managers
             {
                 try
                 {
-                    var options = new JsonSerializerOptions() { WriteIndented = true };
-                    string fileData = JsonSerializer.Serialize(autoLootItems, options);
+                    string fileData = JsonSerializer.Serialize(
+                        autoLootItems,
+                        typeof(List<AutoLootItem>),
+                        GameManagersJsonContext.Default);
 
                     File.WriteAllText(savePath, fileData);
                 }
-                catch (Exception e) { Console.WriteLine(e.ToString()); }
+                catch (Exception e)
+                {
+                    Log.Error($"AutoLootManager.Save: {e}");
+                }
             }
         }
 

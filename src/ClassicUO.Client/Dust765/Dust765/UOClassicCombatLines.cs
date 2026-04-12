@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (C) 2020 project dust765
 // 
@@ -307,8 +307,9 @@ namespace ClassicUO.Dust765.Dust765
             UOClassicCombatLines UOClassicCombatLines = UIManager.GetGump<UOClassicCombatLines>();
             if (UOClassicCombatLines != null)
             {
-                foreach (Mobile mobile in World.Mobiles.Values)
+                foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
                 {
+                    Mobile mobile = mkv.Value;
                     if (mobile == World.Player)
                         continue;
 
@@ -331,8 +332,9 @@ namespace ClassicUO.Dust765.Dust765
             UOClassicCombatLines UOClassicCombatLines = UIManager.GetGump<UOClassicCombatLines>();
             if (UOClassicCombatLines != null)
             {
-                foreach (Mobile mobile in World.Mobiles.Values)
+                foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
                 {
+                    Mobile mobile = mkv.Value;
                     if (mobile == World.Player)
                         continue;
 
@@ -420,8 +422,9 @@ namespace ClassicUO.Dust765.Dust765
             Entity _lasttarget = World.Get(TargetManager.LastTargetInfo.Serial);
 
             //SEARCH MOBS IN LIST
-            foreach (Mobile mobile in World.Mobiles.Values)
+            foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
             {
+                Mobile mobile = mkv.Value;
                 //VAR FOR MODES
                 bool _draw = false;
                 Color color = Color.White;

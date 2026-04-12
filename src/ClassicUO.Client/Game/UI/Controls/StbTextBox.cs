@@ -321,7 +321,7 @@ namespace ClassicUO.Game.UI.Controls
         {
             if (IsUnicode)
             {
-                return FontsLoader.Instance.GetInfoUnicode
+                return UOFileManager.Current.Fonts.GetInfoUnicode
                 (
                     _rendererText.Font,
                     text,
@@ -333,7 +333,7 @@ namespace ClassicUO.Game.UI.Controls
                 );
             }
 
-            return FontsLoader.Instance.GetInfoASCII
+            return UOFileManager.Current.Fonts.GetInfoASCII
             (
                 _rendererText.Font,
                 text,
@@ -391,7 +391,7 @@ namespace ClassicUO.Game.UI.Controls
                 }
 
 
-                int realWidth = _rendererText.IsUnicode ? FontsLoader.Instance.GetWidthUnicode(_rendererText.Font, text) : FontsLoader.Instance.GetWidthASCII(_rendererText.Font, text);
+                int realWidth = _rendererText.IsUnicode ? UOFileManager.Current.Fonts.GetWidthUnicode(_rendererText.Font, text) : UOFileManager.Current.Fonts.GetWidthASCII(_rendererText.Font, text);
 
                 if (realWidth > _rendererText.MaxWidth)
                 {
@@ -404,7 +404,7 @@ namespace ClassicUO.Game.UI.Controls
                     }
 
                     //MultilinesFontInfo info = _rendererText.IsUnicode
-                    //                              ? FontsLoader.Instance.GetInfoUnicode(
+                    //                              ? UOFileManager.Current.Fonts.GetInfoUnicode(
                     //                                                                    _rendererText.Font,
                     //                                                                    text,
                     //                                                                    text.Length,
@@ -412,7 +412,7 @@ namespace ClassicUO.Game.UI.Controls
                     //                                                                    (ushort) _rendererText.FontStyle,
                     //                                                                    realWidth
                     //                                                                   )
-                    //                              : FontsLoader.Instance.GetInfoASCII(
+                    //                              : UOFileManager.Current.Fonts.GetInfoASCII(
                     //                                                                  _rendererText.Font,
                     //                                                                  text,
                     //                                                                  text.Length,

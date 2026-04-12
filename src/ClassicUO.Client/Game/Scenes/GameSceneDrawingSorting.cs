@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -50,7 +50,7 @@ namespace ClassicUO.Game.Scenes
 {
     internal partial class GameScene
     {
-        private static GameObject[] _foliages = new GameObject[100];
+        private static GameObject[] _foliages = new GameObject[512];
         private static readonly TreeUnion[] _treeInfos =
         {
             new TreeUnion(0x0D45, 0x0D4C),
@@ -80,7 +80,7 @@ namespace ClassicUO.Game.Scenes
         private int _foliageCount;
 
         // Array-based render lists for cache-friendly iteration
-        private const int INITIAL_RENDER_LIST_SIZE = 2048;
+        private const int INITIAL_RENDER_LIST_SIZE = 4096;
 
         // statics
         private GameObject[] _renderListStaticsArray = new GameObject[INITIAL_RENDER_LIST_SIZE];
@@ -95,8 +95,11 @@ namespace ClassicUO.Game.Scenes
         private int _renderListAnimationCount;
 
         // effects
-        private GameObject[] _renderListEffectsArray = new GameObject[512];
+        private GameObject[] _renderListEffectsArray = new GameObject[1024];
         private int _renderListEffectCount;
+
+        // high-water-mark per-list to pre-grow before next frame
+        private int _hwmStatics, _hwmTransparent, _hwmAnimations, _hwmEffects, _hwmFoliages;
 
         public sbyte FoliageIndex { get; private set; }
 
@@ -166,7 +169,7 @@ namespace ClassicUO.Game.Scenes
 
                     if (tileZ > pz14 && _maxZ > tileZ)
                     {
-                        ref StaticTiles itemdata = ref TileDataLoader.Instance.StaticData[
+                        ref StaticTiles itemdata = ref UOFileManager.Current.TileData.StaticData[
                             obj.Graphic
                         ];
 
@@ -215,7 +218,7 @@ namespace ClassicUO.Game.Scenes
                         {
                             if (!(obj2 is Land))
                             {
-                                ref StaticTiles itemdata = ref TileDataLoader.Instance.StaticData[
+                                ref StaticTiles itemdata = ref UOFileManager.Current.TileData.StaticData[
                                     obj2.Graphic
                                 ];
 
@@ -367,10 +370,7 @@ namespace ClassicUO.Game.Scenes
                 }
 
                 if (_foliageCount >= _foliages.Length)
-                {
-                    int newsize = _foliages.Length + 50;
-                    Array.Resize(ref _foliages, newsize);
-                }
+                    Array.Resize(ref _foliages, _foliages.Length * 2);
 
                 _foliages[_foliageCount++] = obj;
             }
@@ -388,7 +388,10 @@ namespace ClassicUO.Game.Scenes
             allowSelection = true;
             if (ProfileManager.CurrentProfile.UseCircleOfTransparency && ProfileManager.CurrentProfile.CircleOfTransparencyType == 2)
             {
-                if (Vector2.Distance(new Vector2(obj.RealScreenPosition.X, obj.RealScreenPosition.Y), playerPos) < ProfileManager.CurrentProfile.CircleOfTransparencyRadius)
+                float _cotDx = obj.RealScreenPosition.X - playerPos.X;
+                float _cotDy = obj.RealScreenPosition.Y - playerPos.Y;
+                float _cotR = ProfileManager.CurrentProfile.CircleOfTransparencyRadius;
+                if (_cotDx * _cotDx + _cotDy * _cotDy < _cotR * _cotR)
                 {
                     if (obj.Z >= _maxZ)
                     {
@@ -513,8 +516,9 @@ namespace ClassicUO.Game.Scenes
                 // ## BEGIN - END ## // MISC2
 
                 int maxDist = ProfileManager.CurrentProfile.CircleOfTransparencyRadius + 0;
-                Vector2 pos = new Vector2(obj.RealScreenPosition.X, obj.RealScreenPosition.Y - 44);
-                Vector2.Distance(ref playerPos, ref pos, out float dist);
+                float _dx = obj.RealScreenPosition.X - playerPos.X;
+                float _dy = (obj.RealScreenPosition.Y - 44) - playerPos.Y;
+                float dist = (float)Math.Sqrt(_dx * _dx + _dy * _dy);
 
                 if (dist <= maxDist)
                 {
@@ -625,21 +629,26 @@ namespace ClassicUO.Game.Scenes
             return !(itemData.IsFoliage && !itemData.IsMultiMovable && season >= Season.Winter);
         }
 
-        private bool HasSurfaceOverhead(Entity obj)
+        private bool HasSurfaceOverhead(Mobile mob)
         {
-            if (
-                obj.Serial == World.Player.Serial /* || _maxZ == _maxGroundZ*/
-            )
+            if (mob.Serial == World.Player.Serial)
             {
                 return false;
             }
 
-            // ## BEGIN - END ## // MISC2
             if (ProfileManager.CurrentProfile != null && ProfileManager.CurrentProfile.DrawMobilesWithSurfaceOverhead)
             {
                 return false;
             }
-            // ## BEGIN - END ## // MISC2
+
+            Profile profile = ProfileManager.CurrentProfile;
+            if (profile != null && !profile.InvisibleHousesEnabled
+                && mob._surfaceOverheadCacheX == mob.X
+                && mob._surfaceOverheadCacheY == mob.Y
+                && mob._surfaceOverheadCacheMaxZ == _maxZ)
+            {
+                return mob._cachedHasSurfaceOverhead;
+            }
 
             bool found = false;
 
@@ -647,7 +656,9 @@ namespace ClassicUO.Game.Scenes
             {
                 for (int x = -1; x <= 2; ++x)
                 {
-                    GameObject tile = World.Map.GetTile(obj.X + x, obj.Y + y);
+                    GameObject groundTile = World.Map.GetTile(mob.X + x, mob.Y + y);
+                    int gt_z = groundTile?.Z ?? 0;
+                    GameObject tile = groundTile;
 
                     found = false;
 
@@ -655,16 +666,36 @@ namespace ClassicUO.Game.Scenes
                     {
                         var next = tile.TNext;
 
-                        if (tile.Z > obj.Z && (tile is Static || tile is Multi))
+                        if (tile.Z > mob.Z && (tile is Static || tile is Multi))
                         {
-                            ref var itemData = ref TileDataLoader.Instance.StaticData[tile.Graphic];
+                            if (tile is Multi multiTile)
+                            {
+                                if ((multiTile.State & CUSTOM_HOUSE_MULTI_OBJECT_FLAGS.CHMOF_IGNORE_IN_RENDER) != 0
+                                    || (multiTile.State & CUSTOM_HOUSE_MULTI_OBJECT_FLAGS.CHMOF_PREVIEW) != 0
+                                    || (multiTile.State & CUSTOM_HOUSE_MULTI_OBJECT_FLAGS.CHMOF_TRANSPARENT) != 0)
+                                {
+                                    tile = next;
+                                    continue;
+                                }
+                            }
+
+                            if (profile?.InvisibleHousesEnabled == true && World.Player != null)
+                            {
+                                if ((tile.Z - World.Player.Z) > profile.InvisibleHousesZ
+                                    && (tile.Z - gt_z) > profile.DontRemoveHouseBelowZ)
+                                {
+                                    tile = next;
+                                    continue;
+                                }
+                            }
+
+                            ref var itemData = ref UOFileManager.Current.TileData.StaticData[tile.Graphic];
 
                             if (itemData.IsNoShoot || itemData.IsWindow)
                             {
-                                if (_maxZ - tile.Z + 5 >= tile.Z - obj.Z)
+                                if (_maxZ - tile.Z + 5 >= tile.Z - mob.Z)
                                 {
                                     found = true;
-
                                     break;
                                 }
                             }
@@ -675,10 +706,20 @@ namespace ClassicUO.Game.Scenes
 
                     if (!found)
                     {
-                        return false;
+                        break;
                     }
                 }
+
+                if (!found)
+                {
+                    break;
+                }
             }
+
+            mob._surfaceOverheadCacheX = mob.X;
+            mob._surfaceOverheadCacheY = mob.Y;
+            mob._surfaceOverheadCacheMaxZ = _maxZ;
+            mob._cachedHasSurfaceOverhead = found;
 
             return found;
         }
@@ -825,9 +866,9 @@ namespace ClassicUO.Game.Scenes
                     }
 
                     // ## BEGIN - END ## // ART / HUE CHANGES
-                    //if (itemData.IsFoliage && ProfileManager.CurrentProfile.TreeToStumps)
-                    // ## BEGIN - END ## // ART / HUE CHANGES
-                    // ArtloaderFilters handles tree type conversion, so we don't skip foliage here
+                    // Hide foliage when tree-to-stump/tile mode is active
+                    if (itemData.IsFoliage && !itemData.IsMultiMovable && ProfileManager.CurrentProfile.TreeType != 0)
+                        continue;
                     // ## BEGIN - END ## // ART / HUE CHANGES
 
                     if (
@@ -914,9 +955,9 @@ namespace ClassicUO.Game.Scenes
                     if (!itemData.IsMultiMovable)
                     {
                         // ## BEGIN - END ## // ART / HUE CHANGES
-                        //if (itemData.IsFoliage && ProfileManager.CurrentProfile.TreeToStumps)
-                        // ## BEGIN - END ## // ART / HUE CHANGES
-                        // ArtloaderFilters handles tree type conversion, so we don't skip foliage here
+                        // Hide foliage when tree-to-stump/tile mode is active
+                        if (itemData.IsFoliage && ProfileManager.CurrentProfile.TreeType != 0)
+                            continue;
                         // ## BEGIN - END ## // ART / HUE CHANGES
 
                         if (multi.IsVegetation && ProfileManager.CurrentProfile.HideVegetation)
@@ -1004,7 +1045,8 @@ namespace ClassicUO.Game.Scenes
                         continue;
                     }
 
-                    obj.AllowedToDraw = !HasSurfaceOverhead(mobile);
+                    Profile p = ProfileManager.CurrentProfile;
+                    obj.AllowedToDraw = (p?.InvisibleHousesEnabled == true) || !HasSurfaceOverhead(mobile);
 
                     PushToRenderList(
                         obj,
@@ -1017,7 +1059,7 @@ namespace ClassicUO.Game.Scenes
                 {
                     ref StaticTiles itemData = ref (
                         item.IsMulti
-                            ? ref TileDataLoader.Instance.StaticData[item.MultiGraphic]
+                            ? ref UOFileManager.Current.TileData.StaticData[item.MultiGraphic]
                             : ref item.ItemData
                     );
 
@@ -1057,10 +1099,9 @@ namespace ClassicUO.Game.Scenes
                     }
 
                     // ## BEGIN - END ## // ART / HUE CHANGES
-                    //if (!itemData.IsMultiMovable && itemData.IsFoliage && ProfileManager.CurrentProfile.TreeToStumps)
-                    // ## BEGIN - END ## // ART / HUE CHANGES
-                    // ## BEGIN - END ## // ART / HUE CHANGES
-                    // ArtloaderFilters handles tree type conversion, so we don't skip foliage here
+                    // Hide foliage when tree-to-stump/tile mode is active
+                    if (!itemData.IsMultiMovable && itemData.IsFoliage && ProfileManager.CurrentProfile.TreeType != 0)
+                        continue;
                     // ## BEGIN - END ## // ART / HUE CHANGES
 
                     byte height = 0;
@@ -1109,7 +1150,7 @@ namespace ClassicUO.Game.Scenes
                     if (
                         !ProcessAlpha(
                             obj,
-                            ref TileDataLoader.Instance.StaticData[effect.Graphic],
+                            ref UOFileManager.Current.TileData.StaticData[effect.Graphic],
                             false,
                             ref playerScreePos,
                             cotZ,

@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -31,6 +31,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 using ClassicUO.Game.Data;
@@ -173,8 +174,9 @@ namespace ClassicUO.Game.UI.Gumps
 
                 Texture2D mobilesTextureDot = SolidColorTextureCache.GetTexture(Color.Red);
 
-                foreach (Mobile mob in World.Mobiles.Values)
+                foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
                 {
+                    Mobile mob = mkv.Value;
                     if (mob == World.Player)
                     {
                         continue;
@@ -269,7 +271,7 @@ namespace ClassicUO.Game.UI.Gumps
             }
 
             int maxBlockIndex = World.Map.BlocksCount;
-            int mapBlockHeight = MapLoader.Instance.MapBlocksSize[World.MapIndex, 1];
+            int mapBlockHeight = UOFileManager.Current.Maps.MapBlocksSize[World.MapIndex, 1];
             int index = _useLargeMap ? 1 : 0;
 
             _blankGumpsPixels[index].CopyTo(_blankGumpsPixels[index + 2], 0);
@@ -384,11 +386,11 @@ namespace ClassicUO.Game.UI.Gumps
 
                             if (isLand && color > 0x4000)
                             {
-                                color = HuesLoader.Instance.GetHueColorRgba5551(16, (ushort) (color - 0x4000));
+                                color = UOFileManager.Current.Hues.GetHueColorRgba5551(16, (ushort) (color - 0x4000));
                             }
                             else
                             {
-                                color = HuesLoader.Instance.GetRadarColorData(color);
+                                color = UOFileManager.Current.Hues.GetRadarColorData(color);
                             }
 
                             int py = realBlockY + y - lastY;

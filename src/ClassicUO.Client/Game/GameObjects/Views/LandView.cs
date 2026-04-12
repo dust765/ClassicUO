@@ -37,7 +37,6 @@ using ClassicUO.Dust765.Dust765;
 // ## BEGIN - END ## // MISC2
 // ## BEGIN - END ## // VISUAL HELPERS
 using ClassicUO.Assets;
-using ClassicUO.Configuration;
 using ClassicUO.Game.Managers;
 using ClassicUO.Renderer;
 using Microsoft.Xna.Framework;
@@ -150,7 +149,7 @@ namespace ClassicUO.Game.GameObjects
                 posY += Z << 2;
 
                 ref readonly var texmapInfo = ref Client.Game.Texmaps.GetTexmap(
-                    TileDataLoader.Instance.LandData[Graphic].TexID
+                    UOFileManager.Current.TileData.LandData[Graphic].TexID
                 );
 
                 if (texmapInfo.Texture != null)
@@ -186,7 +185,7 @@ namespace ClassicUO.Game.GameObjects
                 ref readonly var artInfo = ref Client.Game.Arts.GetLand(Graphic);
 
                 ref readonly var texmapInfo = ref Client.Game.Texmaps.GetTexmap(
-                    TileDataLoader.Instance.LandData[Graphic].TexID
+                    UOFileManager.Current.TileData.LandData[Graphic].TexID
                 );
 
                 if (artInfo.Texture != null)

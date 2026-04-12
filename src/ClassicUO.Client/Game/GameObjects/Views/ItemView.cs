@@ -83,18 +83,6 @@ namespace ClassicUO.Game.GameObjects
 
             if (IsCorpse)
             {
-                if (ProfileManager.CurrentProfile?.PvM_CorpseFilterByNotoriety == true && ProfileManager.CurrentProfile.PvM_CorpseFilterMode != 0)
-                {
-                    NotorietyFlag? ownerNoto = World.CorpseManager.GetOwnerNotoriety(Serial);
-                    if (ownerNoto.HasValue)
-                    {
-                        int mode = ProfileManager.CurrentProfile.PvM_CorpseFilterMode;
-                        bool friendly = ownerNoto == NotorietyFlag.Innocent || ownerNoto == NotorietyFlag.Ally;
-                        bool enemy = ownerNoto == NotorietyFlag.Gray || ownerNoto == NotorietyFlag.Criminal || ownerNoto == NotorietyFlag.Enemy || ownerNoto == NotorietyFlag.Murderer;
-                        if (mode == 1 && !friendly) return false;
-                        if (mode == 2 && !enemy) return false;
-                    }
-                }
                 hueVec = ShaderHueTranslator.GetHueVector(0, false, alpha);
                 return DrawCorpse(batcher, posX, posY - 3, hueVec, depth);
             }
@@ -107,12 +95,12 @@ namespace ClassicUO.Game.GameObjects
                 {
                     if (StaticFilters.IsOutStamina())
                     {
-                        TileDataLoader.Instance.StaticData[Graphic].SetImpassable(true);
+                        UOFileManager.Current.TileData.StaticData[Graphic].SetImpassable(true);
 
                     }
                     else
                     {
-                        TileDataLoader.Instance.StaticData[Graphic].SetImpassable(false);
+                        UOFileManager.Current.TileData.StaticData[Graphic].SetImpassable(false);
                     }
                         
                 }
@@ -132,12 +120,12 @@ namespace ClassicUO.Game.GameObjects
                 {
                     if (StaticFilters.IsOutStamina())
                     {
-                        TileDataLoader.Instance.StaticData[Graphic].Flags  = TileFlag.Impassable;
+                        UOFileManager.Current.TileData.StaticData[Graphic].Flags  = TileFlag.Impassable;
 
                     }
                     else
                     {
-                        TileDataLoader.Instance.StaticData[Graphic].Flags = TileFlag.Impassable;
+                        UOFileManager.Current.TileData.StaticData[Graphic].Flags = TileFlag.Impassable;
                     }
                         
                 }
@@ -149,11 +137,11 @@ namespace ClassicUO.Game.GameObjects
                 {
                     if (ProfileManager.CurrentProfile.BlockWoSFelOnly && World.MapIndex != 0)
                     {
-                        TileDataLoader.Instance.StaticData[Graphic].Flags &= ~TileFlag.Impassable;
+                        UOFileManager.Current.TileData.StaticData[Graphic].Flags &= ~TileFlag.Impassable;
                     }
                     else
                     {
-                        TileDataLoader.Instance.StaticData[Graphic].Flags |= TileFlag.Impassable;
+                        UOFileManager.Current.TileData.StaticData[Graphic].Flags |= TileFlag.Impassable;
                     }
                 }
             }
@@ -163,11 +151,11 @@ namespace ClassicUO.Game.GameObjects
                 {
                     if (ProfileManager.CurrentProfile.BlockEnergyFFelOnly && World.MapIndex != 0)
                     {
-                        TileDataLoader.Instance.StaticData[Graphic].Flags &= ~TileFlag.Impassable;
+                        UOFileManager.Current.TileData.StaticData[Graphic].Flags &= ~TileFlag.Impassable;
                     }
                     else
                     {
-                        TileDataLoader.Instance.StaticData[Graphic].Flags |= TileFlag.Impassable;
+                        UOFileManager.Current.TileData.StaticData[Graphic].Flags |= TileFlag.Impassable;
                     }
                 }
             }
@@ -316,7 +304,7 @@ namespace ClassicUO.Game.GameObjects
             posY += 22;
 
             byte direction = (byte)((byte)Layer & 0x7F & 7);
-            AnimationsLoader.Instance.GetAnimDirection(ref direction, ref IsFlipped);
+            UOFileManager.Current.Animations.GetAnimDirection(ref direction, ref IsFlipped);
 
             byte animIndex = (byte)AnimIndex;
             ushort graphic = GetGraphicForAnimation();
@@ -324,7 +312,7 @@ namespace ClassicUO.Game.GameObjects
             Client.Game.Animations.ConvertBodyIfNeeded(ref graphic, isCorpse: IsCorpse);
             var animGroup = Client.Game.Animations.GetAnimType(graphic);
             var animFlags = Client.Game.Animations.GetAnimFlags(graphic);
-            byte group = AnimationsLoader.Instance.GetDeathAction(
+            byte group = UOFileManager.Current.Animations.GetDeathAction(
                 graphic,
                 animFlags,
                 animGroup,
@@ -414,7 +402,7 @@ namespace ClassicUO.Game.GameObjects
                 ispartialhue = itemEquip.ItemData.IsPartialHue;
 
                 if (
-                    AnimationsLoader.Instance.EquipConversions.TryGetValue(
+                    UOFileManager.Current.Animations.EquipConversions.TryGetValue(
                         graphic,
                         out Dictionary<ushort, EquipConvData> map
                     )
@@ -449,7 +437,7 @@ namespace ClassicUO.Game.GameObjects
                 color = newHue;
             }
 
-            if (frames == null || frames.Length == 0)
+            if (frames.IsEmpty)
             {
                 return;
             }
@@ -603,7 +591,7 @@ namespace ClassicUO.Game.GameObjects
                     }
                     else
                     {
-                        ref UOFileIndex index = ref ArtLoader.Instance.GetValidRefEntry(
+                        ref UOFileIndex index = ref UOFileManager.Current.Arts.GetValidRefEntry(
                             graphic + 0x4000
                         );
 
@@ -613,7 +601,7 @@ namespace ClassicUO.Game.GameObjects
 
                 if (Client.Game.Arts.GetArt(graphic).Texture != null)
                 {
-                    ref var index = ref ArtLoader.Instance.GetValidRefEntry(graphic + 0x4000);
+                    ref var index = ref UOFileManager.Current.Arts.GetValidRefEntry(graphic + 0x4000);
 
                     Point position = RealScreenPosition;
                     position.X += (int)Offset.X;
@@ -663,7 +651,7 @@ namespace ClassicUO.Game.GameObjects
                 position.Y += 22;
 
                 byte direction = (byte)((byte)Layer & 0x7F & 7);
-                AnimationsLoader.Instance.GetAnimDirection(ref direction, ref IsFlipped);
+                UOFileManager.Current.Animations.GetAnimDirection(ref direction, ref IsFlipped);
                 byte animIndex = AnimIndex;
                 bool ishuman =
                     MathHelper.InRange(Amount, 0x0190, 0x0193)
@@ -700,7 +688,7 @@ namespace ClassicUO.Game.GameObjects
                         graphic = itemEquip.ItemData.AnimID;
 
                         if (
-                            AnimationsLoader.Instance.EquipConversions.TryGetValue(
+                            UOFileManager.Current.Animations.EquipConversions.TryGetValue(
                                 graphic,
                                 out Dictionary<ushort, EquipConvData> map
                             )
@@ -721,7 +709,7 @@ namespace ClassicUO.Game.GameObjects
                     Client.Game.Animations.ConvertBodyIfNeeded(ref graphic, isCorpse: IsCorpse);
                     var animGroup = Client.Game.Animations.GetAnimType(graphic);
                     var animFlags = Client.Game.Animations.GetAnimFlags(graphic);
-                    byte group = AnimationsLoader.Instance.GetDeathAction(
+                    byte group = UOFileManager.Current.Animations.GetDeathAction(
                         graphic,
                         animFlags,
                         animGroup,

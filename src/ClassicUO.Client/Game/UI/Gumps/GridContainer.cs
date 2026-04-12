@@ -666,9 +666,12 @@ namespace ClassicUO.Game.UI.Gumps
 
         public static void UpdateAllGridContainers()
         {
-            foreach (GridContainer _ in UIManager.Gumps.OfType<GridContainer>())
+            for (LinkedListNode<Gump> node = UIManager.Gumps.First; node != null; node = node.Next)
             {
-                _.OptionsUpdated();
+                if (node.Value is GridContainer gc && !gc.IsDisposed)
+                {
+                    gc.OptionsUpdated();
+                }
             }
         }
 
@@ -790,7 +793,7 @@ namespace ClassicUO.Game.UI.Gumps
 
         public static void ClearInstance()
         {
-            GridSaveSystem.Instance.Clear();
+            GridSaveSystem.ReleaseInstance();
         }
 
         public class GridItem : Control
@@ -1338,9 +1341,18 @@ namespace ClassicUO.Game.UI.Gumps
 
             public void AddLockedItemSlot(uint serial, int specificSlot)
             {
-                if (ItemPositions.Values.Contains(serial)) //Is this item already locked? Lets remove it from lock status for now
+                int removeSlot = -1;
+                foreach (KeyValuePair<int, uint> kv in ItemPositions)
                 {
-                    int removeSlot = ItemPositions.First((x) => x.Value == serial).Key;
+                    if (kv.Value == serial)
+                    {
+                        removeSlot = kv.Key;
+                        break;
+                    }
+                }
+
+                if (removeSlot >= 0)
+                {
                     ItemPositions.Remove(removeSlot);
                 }
 
@@ -1517,22 +1529,30 @@ namespace ClassicUO.Game.UI.Gumps
 
                     contents.Add(item);
                 }
-                return contents.OrderBy((x) => x.Graphic).ThenBy((x) => x.Hue).ToList();
+
+                contents.Sort(
+                    static (a, b) =>
+                    {
+                        int g = a.Graphic.CompareTo(b.Graphic);
+                        return g != 0 ? g : a.Hue.CompareTo(b.Hue);
+                    }
+                );
+                return contents;
             }
 
             public int hcount = 0;
+            private int _highlightRevision;
 
             public void ApplyHighlightProperties()
             {
                 if (ProfileManager.CurrentProfile.GridHighlight_CorpseOnly && !container.IsCorpse)
                     return;
                 hcount++;
-                Task.Factory.StartNew(() =>
+                int revision = System.Threading.Interlocked.Increment(ref _highlightRevision);
+                _ = Task.Run(async () =>
                 {
-                    var tcount = hcount;
-                    System.Threading.Thread.Sleep(1000);
-
-                    if (tcount != hcount) { return; } //Another call has already been made
+                    await Task.Delay(350).ConfigureAwait(false);
+                    if (revision != System.Threading.Volatile.Read(ref _highlightRevision)) { return; }
                     List<GridHighlightData> highlightConfigs = new List<GridHighlightData>();
                     for (int propIndex = 0; propIndex < ProfileManager.CurrentProfile.GridHighlight_PropNames.Count; propIndex++)
                     {
@@ -1881,7 +1901,7 @@ namespace ClassicUO.Game.UI.Gumps
             ///          * 60 = ~2 month
             /// </summary>
             private const long TIME_CUTOFF = ((60 * 60) * 24) * 60;
-            private string gridSavePath = Path.Combine(ProfileManager.ProfilePath, "GridContainers.xml");
+            private string gridSavePath;
             private XDocument saveDocument;
             private XElement rootElement;
             private bool enabled = false;
@@ -1897,10 +1917,31 @@ namespace ClassicUO.Game.UI.Gumps
                 }
             }
 
+            public static void ReleaseInstance()
+            {
+                instance = null;
+            }
+
             private GridSaveSystem()
             {
+                void EnsureEmptyRoot()
+                {
+                    saveDocument = new XDocument(new XElement("grid_gumps"));
+                    rootElement = saveDocument.Root;
+                }
+
+                if (string.IsNullOrEmpty(ProfileManager.ProfilePath))
+                {
+                    EnsureEmptyRoot();
+                    enabled = false;
+                    return;
+                }
+
+                gridSavePath = Path.Combine(ProfileManager.ProfilePath, "GridContainers.xml");
+
                 if (!SaveFileCheck())
                 {
+                    EnsureEmptyRoot();
                     enabled = false;
                     return;
                 }
@@ -2106,6 +2147,11 @@ namespace ClassicUO.Game.UI.Gumps
 
             private bool SaveFileCheck()
             {
+                if (string.IsNullOrEmpty(gridSavePath))
+                {
+                    return false;
+                }
+
                 try
                 {
                     if (!File.Exists(gridSavePath))
@@ -2149,11 +2195,6 @@ namespace ClassicUO.Game.UI.Gumps
                     return false;
                 }
                 return true;
-            }
-
-            public void Clear()
-            {
-                instance = null;
             }
         }
     }

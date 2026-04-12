@@ -17,16 +17,16 @@ dotnet restore
 
 # Build for different platforms
 echo "Building for Windows x64..."
-dotnet publish src/ClassicUO.Client/ClassicUO.Client.csproj -c Release -r win-x64 --self-contained true -o bin/Release/win-x64
+dotnet publish src/ClassicUO.Client/ClassicUO.Client.csproj -c Release -f net10.0 -r win-x64 --self-contained true -o bin/Release/win-x64
 
 echo "Building for Linux x64..."
-dotnet publish src/ClassicUO.Client/ClassicUO.Client.csproj -c Release -r linux-x64 --self-contained true -o bin/Release/linux-x64
+dotnet publish src/ClassicUO.Client/ClassicUO.Client.csproj -c Release -f net10.0 -r linux-x64 --self-contained true -o bin/Release/linux-x64
 
 echo "Building for macOS x64..."
-dotnet publish src/ClassicUO.Client/ClassicUO.Client.csproj -c Release -r osx-x64 --self-contained true -o bin/Release/osx-x64
+dotnet publish src/ClassicUO.Client/ClassicUO.Client.csproj -c Release -f net10.0 -r osx-x64 --self-contained true -o bin/Release/osx-x64
 
 echo "Building for macOS ARM64..."
-dotnet publish src/ClassicUO.Client/ClassicUO.Client.csproj -c Release -r osx-arm64 --self-contained true -o bin/Release/osx-arm64
+dotnet publish src/ClassicUO.Client/ClassicUO.Client.csproj -c Release -f net10.0 -r osx-arm64 --self-contained true -o bin/Release/osx-arm64
 
 echo "Build completed successfully!"
 echo "Executables are available in:"

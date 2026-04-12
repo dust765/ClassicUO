@@ -31,6 +31,7 @@
 #endregion
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -132,6 +133,7 @@ namespace ClassicUO.Network
 
         private Assembly _managedPluginAssembly;
         private bool _classicAssistMacroGumpSafetyApplied;
+        private readonly object _invokeLock = new object();
         private readonly Dictionary<IntPtr, GraphicsResource> _resources =
             new Dictionary<IntPtr, GraphicsResource>();
 
@@ -501,7 +503,7 @@ namespace ClassicUO.Network
         {
             if (index >= 0 && index < ArtLoader.MAX_STATIC_DATA_INDEX_COUNT)
             {
-                ref StaticTiles st = ref TileDataLoader.Instance.StaticData[index];
+                ref StaticTiles st = ref UOFileManager.Current.TileData.StaticData[index];
 
                 flags = (ulong)st.Flags;
                 weight = st.Weight;
@@ -527,7 +529,7 @@ namespace ClassicUO.Network
         {
             if (index >= 0 && index < ArtLoader.MAX_STATIC_DATA_INDEX_COUNT)
             {
-                ref LandTiles st = ref TileDataLoader.Instance.LandData[index];
+                ref LandTiles st = ref UOFileManager.Current.TileData.LandData[index];
 
                 flags = (ulong)st.Flags;
                 textid = st.TexID;
@@ -541,25 +543,25 @@ namespace ClassicUO.Network
 
         private static bool GetCliloc(int cliloc, string args, bool capitalize, out string buffer)
         {
-            buffer = ClilocLoader.Instance.Translate(cliloc, args, capitalize);
+            buffer = UOFileManager.Current.Clilocs.Translate(cliloc, args, capitalize);
 
             return buffer != null;
         }
 
         private static void GetStaticImage(ushort g, ref CUO_API.ArtInfo info)
         {
-            //ArtLoader.Instance.TryGetEntryInfo(g, out long address, out long size, out long compressedsize);
+            //UOFileManager.Current.Arts.TryGetEntryInfo(g, out long address, out long size, out long compressedsize);
             //info.Address = address;
             //info.Size = size;
             //info.CompressedSize = compressedsize;
         }
 
-        private static bool RequestMove(int dir, bool run)
+        internal static bool RequestMove(int dir, bool run)
         {
             return World.Player.Walk((Direction)dir, run);
         }
 
-        private static bool GetPlayerPosition(out int x, out int y, out int z)
+        internal static bool GetPlayerPosition(out int x, out int y, out int z)
         {
             if (World.Player != null)
             {
@@ -577,13 +579,18 @@ namespace ClassicUO.Network
 
         internal static void Tick()
         {
+            Client.PluginHost?.Tick();
+
             foreach (Plugin t in Plugins)
             {
-                t.TryApplyClassicAssistMacroGumpSafety();
-
-                if (t._tick != null)
+                lock (t._invokeLock)
                 {
-                    t._tick();
+                    t.TryApplyClassicAssistMacroGumpSafety();
+
+                    if (t._tick != null)
+                    {
+                        t._tick();
+                    }
                 }
             }
         }
@@ -591,32 +598,89 @@ namespace ClassicUO.Network
         internal static bool ProcessRecvPacket(byte[] data, ref int length)
         {
             bool result = true;
+            try
+            {
+                result = Client.PluginHost?.PacketIn(new ArraySegment<byte>(data, 0, length)) ?? true;
+            }
+            catch (Exception e)
+            {
+                Log.Error($"PluginHost recv: {e.Message}");
+            }
 
             foreach (Plugin plugin in Plugins)
             {
-                if (plugin._onRecv_new != null)
+                lock (plugin._invokeLock)
                 {
-                    byte[] tmp = new byte[length];
-                    Array.Copy(data, tmp, length);
-
-                    if (!plugin._onRecv_new(tmp, ref length))
+                    try
                     {
-                        result = false;
+                        if (plugin._onRecv_new != null)
+                        {
+                            byte[] rented = ArrayPool<byte>.Shared.Rent(length);
+                            try
+                            {
+                                Array.Copy(data, 0, rented, 0, length);
+
+                                if (!plugin._onRecv_new(rented, ref length))
+                                {
+                                    result = false;
+                                }
+
+                                if (length < 0)
+                                {
+                                    length = 0;
+                                }
+
+                                int copyLen = Math.Min(Math.Min(length, rented.Length), data.Length);
+                                Array.Copy(rented, 0, data, 0, copyLen);
+                                length = copyLen;
+                            }
+                            finally
+                            {
+                                ArrayPool<byte>.Shared.Return(rented);
+                            }
+                        }
+                        else if (plugin._onRecv != null)
+                        {
+                            byte[] rented = ArrayPool<byte>.Shared.Rent(length);
+                            byte[] tmp = rented;
+                            try
+                            {
+                                Array.Copy(data, 0, rented, 0, length);
+
+                                if (!plugin._onRecv(ref tmp, ref length))
+                                {
+                                    result = false;
+                                }
+
+                                if (length < 0)
+                                {
+                                    length = 0;
+                                }
+
+                                if (tmp == null)
+                                {
+                                    length = 0;
+                                }
+                                else
+                                {
+                                    int copyLen = Math.Min(Math.Min(length, tmp.Length), data.Length);
+                                    Array.Copy(tmp, 0, data, 0, copyLen);
+                                    length = copyLen;
+                                }
+                            }
+                            finally
+                            {
+                                if (ReferenceEquals(tmp, rented))
+                                {
+                                    ArrayPool<byte>.Shared.Return(rented);
+                                }
+                            }
+                        }
                     }
-
-                    Array.Copy(tmp, data, length);
-                }
-                else if (plugin._onRecv != null)
-                {
-                    byte[] tmp = new byte[length];
-                    Array.Copy(data, tmp, length);
-
-                    if (!plugin._onRecv(ref tmp, ref length))
+                    catch (Exception e)
                     {
-                        result = false;
+                        Log.Error($"Plugin recv ({plugin?.GetType().Name}): {e.Message}");
                     }
-
-                    Array.Copy(tmp, data, length);
                 }
             }
 
@@ -625,35 +689,89 @@ namespace ClassicUO.Network
 
         internal static bool ProcessSendPacket(ref Span<byte> message)
         {
-            bool result = true;
+            bool result = Client.PluginHost?.PacketOut(message) ?? true;
 
             foreach (Plugin plugin in Plugins)
             {
-                if (plugin._onSend_new != null)
+                lock (plugin._invokeLock)
                 {
-                    var tmp = message.ToArray();
-                    var length = tmp.Length;
-
-                    if (!plugin._onSend_new(tmp, ref length))
+                    if (plugin._onSend_new != null)
                     {
-                        result = false;
+                        int workingLen = message.Length;
+                        if (workingLen == 0)
+                        {
+                            continue;
+                        }
+
+                        byte[] rented = ArrayPool<byte>.Shared.Rent(workingLen);
+                        try
+                        {
+                            message.CopyTo(rented.AsSpan(0, workingLen));
+                            int length = workingLen;
+
+                            if (!plugin._onSend_new(rented, ref length))
+                            {
+                                result = false;
+                            }
+
+                            if (length < 0)
+                            {
+                                length = 0;
+                            }
+
+                            int outLen = Math.Min(Math.Min(length, rented.Length), message.Length);
+                            message = message.Slice(0, outLen);
+                            rented.AsSpan(0, outLen).CopyTo(message);
+                        }
+                        finally
+                        {
+                            ArrayPool<byte>.Shared.Return(rented);
+                        }
                     }
-
-                    message = message.Slice(0, length);
-                    tmp.AsSpan(0, length).CopyTo(message);
-                }
-                else if (plugin._onSend != null)
-                {
-                    var tmp = message.ToArray();
-                    var length = tmp.Length;
-
-                    if (!plugin._onSend(ref tmp, ref length))
+                    else if (plugin._onSend != null)
                     {
-                        result = false;
-                    }
+                        int workingLen = message.Length;
+                        if (workingLen == 0)
+                        {
+                            continue;
+                        }
 
-                    message = message.Slice(0, length);
-                    tmp.AsSpan(0, length).CopyTo(message);
+                        byte[] rented = ArrayPool<byte>.Shared.Rent(workingLen);
+                        byte[] tmp = rented;
+                        try
+                        {
+                            message.CopyTo(rented.AsSpan(0, workingLen));
+                            int length = workingLen;
+
+                            if (!plugin._onSend(ref tmp, ref length))
+                            {
+                                result = false;
+                            }
+
+                            if (length < 0)
+                            {
+                                length = 0;
+                            }
+
+                            if (tmp == null)
+                            {
+                                message = message.Slice(0, 0);
+                            }
+                            else
+                            {
+                                int outLen = Math.Min(Math.Min(length, tmp.Length), message.Length);
+                                message = message.Slice(0, outLen);
+                                tmp.AsSpan(0, outLen).CopyTo(message);
+                            }
+                        }
+                        finally
+                        {
+                            if (ReferenceEquals(tmp, rented))
+                            {
+                                ArrayPool<byte>.Shared.Return(rented);
+                            }
+                        }
+                    }
                 }
             }
 
@@ -662,6 +780,8 @@ namespace ClassicUO.Network
 
         internal static void OnClosing()
         {
+            Client.PluginHost?.Closing();
+
             for (int i = 0; i < Plugins.Count; i++)
             {
                 if (Plugins[i]._onClientClose != null)
@@ -675,6 +795,8 @@ namespace ClassicUO.Network
 
         internal static void OnFocusGained()
         {
+            Client.PluginHost?.FocusGained();
+
             foreach (Plugin t in Plugins)
             {
                 if (t._onFocusGained != null)
@@ -686,6 +808,8 @@ namespace ClassicUO.Network
 
         internal static void OnFocusLost()
         {
+            Client.PluginHost?.FocusLost();
+
             foreach (Plugin t in Plugins)
             {
                 if (t._onFocusLost != null)
@@ -697,6 +821,8 @@ namespace ClassicUO.Network
 
         internal static void OnConnected()
         {
+            Client.PluginHost?.Connected();
+
             foreach (Plugin t in Plugins)
             {
                 if (t._onConnected != null)
@@ -708,6 +834,8 @@ namespace ClassicUO.Network
 
         internal static void OnDisconnected()
         {
+            Client.PluginHost?.Disconnected();
+
             foreach (Plugin t in Plugins)
             {
                 if (t._onDisconnected != null)
@@ -724,7 +852,8 @@ namespace ClassicUO.Network
                 return true;
             }
 
-            bool result = true;
+            var hostResult = Client.PluginHost?.Hotkey(key, mod, ispressed);
+            bool result = hostResult ?? true;
 
             foreach (Plugin plugin in Plugins)
             {
@@ -746,24 +875,41 @@ namespace ClassicUO.Network
 
         internal static void ProcessMouse(int button, int wheel)
         {
+            Client.PluginHost?.Mouse(button, wheel);
+
             foreach (Plugin plugin in Plugins)
             {
-                plugin._onMouse?.Invoke(button, wheel);
+                lock (plugin._invokeLock)
+                {
+                    plugin._onMouse?.Invoke(button, wheel);
+                }
             }
         }
 
         internal static void ProcessDrawCmdList(GraphicsDevice device)
         {
+            IntPtr cmdList = IntPtr.Zero;
+            int len = 0;
+            Client.PluginHost?.GetCommandList(out cmdList, out len);
+
+            if (Client.PluginHost != null && len != 0 && cmdList != IntPtr.Zero)
+            {
+                HandleCmdList(device, cmdList, len, Client.PluginHost.GfxResources);
+            }
+
             foreach (Plugin plugin in Plugins)
             {
-                if (plugin._draw_cmd_list != null)
+                lock (plugin._invokeLock)
                 {
-                    int cmd_count = 0;
-                    plugin._draw_cmd_list.Invoke(out IntPtr cmdlist, ref cmd_count);
-
-                    if (cmd_count != 0 && cmdlist != IntPtr.Zero)
+                    if (plugin._draw_cmd_list != null)
                     {
-                        plugin.HandleCmdList(device, cmdlist, cmd_count, plugin._resources);
+                        len = 0;
+                        plugin._draw_cmd_list.Invoke(out cmdList, ref len);
+
+                        if (len != 0 && cmdList != IntPtr.Zero)
+                        {
+                            HandleCmdList(device, cmdList, len, plugin._resources);
+                        }
                     }
                 }
             }
@@ -771,13 +917,16 @@ namespace ClassicUO.Network
 
         internal static int ProcessWndProc(SDL.SDL_Event* e)
         {
-            int result = 0;
+            int result = Client.PluginHost?.SdlEvent(e) ?? 0;
 
             foreach (Plugin plugin in Plugins)
             {
-                if (plugin._on_wnd_proc != null)
+                lock (plugin._invokeLock)
                 {
-                    result |= plugin._on_wnd_proc(e);
+                    if (plugin._on_wnd_proc != null)
+                    {
+                        result |= plugin._on_wnd_proc(e);
+                    }
                 }
             }
 
@@ -786,16 +935,18 @@ namespace ClassicUO.Network
 
         internal static void UpdatePlayerPosition(int x, int y, int z)
         {
+            Client.PluginHost?.UpdatePlayerPosition(x, y, z);
+
             foreach (Plugin plugin in Plugins)
             {
                 try
                 {
-                    // TODO: need fixed on razor side
-                    // if you quick entry (0.5-1 sec after start, without razor window loaded) - breaks CUO.
-                    // With this fix - the razor does not work, but client does not crashed.
                     if (plugin._onUpdatePlayerPosition != null)
                     {
-                        plugin._onUpdatePlayerPosition(x, y, z);
+                        lock (plugin._invokeLock)
+                        {
+                            plugin._onUpdatePlayerPosition(x, y, z);
+                        }
                     }
                 }
                 catch
@@ -822,7 +973,7 @@ namespace ClassicUO.Network
             return true;
         }
 
-        private static bool OnPluginRecv_new(IntPtr buffer, ref int length)
+        internal static bool OnPluginRecv_new(IntPtr buffer, ref int length)
         {
             if (buffer != IntPtr.Zero && length > 0)
             {
@@ -835,7 +986,7 @@ namespace ClassicUO.Network
             return true;
         }
 
-        private static bool OnPluginSend_new(IntPtr buffer, ref int length)
+        internal static bool OnPluginSend_new(IntPtr buffer, ref int length)
         {
             if (buffer != IntPtr.Zero && length > 0)
             {
@@ -870,7 +1021,7 @@ namespace ClassicUO.Network
             return DeleteFile(fileName + ":Zone.Identifier");
         }
 
-        private void HandleCmdList(
+        private static void HandleCmdList(
             GraphicsDevice device,
             IntPtr ptr,
             int length,

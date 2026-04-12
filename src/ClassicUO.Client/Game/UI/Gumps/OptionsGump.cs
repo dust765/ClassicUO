@@ -33,7 +33,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using ClassicUO.Configuration;
 // ## BEGIN - END ## // UI/GUMPS
 using ClassicUO.Dust765.Dust765;
@@ -45,6 +44,7 @@ using ClassicUO.Game.Managers;
 using ClassicUO.Game.Scenes;
 using ClassicUO.Game.UI.Gumps.Login;
 using ClassicUO.Dust765.Options;
+using ClassicUO.Dust765.UI.Gumps;
 using ClassicUO.Game.UI.Controls;
 using ClassicUO.Input;
 using ClassicUO.Assets;
@@ -68,11 +68,14 @@ namespace ClassicUO.Game.UI.Gumps
         private static int HEIGHT => LoginLayoutHelper.OptionsHeight;
         private const int TEXTBOX_HEIGHT = 25;
         private const int OptionsTabStartY = 10;
+        private readonly List<HealthBarGump> _optionsHealthBarMigrateScratch = new List<HealthBarGump>(32);
+        private readonly List<HealthBarGumpCustom> _optionsHealthBarCustomMigrateScratch = new List<HealthBarGumpCustom>(32);
+        private readonly List<PaperDollGump> _optionsPaperdollRefreshScratch = new List<PaperDollGump>(8);
         private const int OptionsSearchRowHeight = 26;
         private const int OptionsSearchToContentGap = 12;
         private static int OptionsScrollY =>
             OptionsTabStartY + OptionsSearchRowHeight + OptionsSearchToContentGap;
-        private static int OptionsScrollHeight => HEIGHT - 60 - OptionsScrollY;
+        private static int OptionsScrollHeight => HEIGHT - 47 - OptionsScrollY;
         private static readonly string[] WINDOW_TITLE_STYLE_LABELS =
         {
             "Like CUO (native)",
@@ -94,7 +97,7 @@ namespace ClassicUO.Game.UI.Gumps
 
         // containers
         private HSliderBar _containersScale;
-        private ModernColorPicker.HueDisplay _altGridContainerBackgroundHue, _gridBorderHue;
+        private HueDisplay _altGridContainerBackgroundHue, _gridBorderHue;
         private Combobox _cotType;
         private DataBox _databox;
         private HSliderBar _delay_before_display_tooltip, _tooltip_zoom, _tooltip_background_opacity;
@@ -150,7 +153,7 @@ namespace ClassicUO.Game.UI.Gumps
                          _chatAdditionalButtonsCheckbox,
                          _chatShiftEnterCheckbox,
                          _enableCaveBorder;
-        private Checkbox _holdShiftForContext, _holdShiftToSplitStack, _reduceFPSWhenInactive, _sallosEasyGrab, _partyInviteGump, _objectsFading, _textFading, _holdAltToMoveGumps;
+        private Checkbox _holdShiftForContext, _holdShiftToSplitStack, _reduceFPSWhenInactive, _enableVSync, _sallosEasyGrab, _partyInviteGump, _objectsFading, _textFading, _holdAltToMoveGumps;
         private Combobox _hpComboBox, _healtbarType, _fieldsType, _hpComboBoxShowWhen;
 
         // infobar
@@ -158,20 +161,21 @@ namespace ClassicUO.Game.UI.Gumps
         private Combobox _infoBarHighlightType;
 
         // combat & spells
-        private ModernColorPicker.HueDisplay _innocentColorPickerBox, _friendColorPickerBox, _crimialColorPickerBox, _canAttackColorPickerBox, _enemyColorPickerBox, _murdererColorPickerBox, _neutralColorPickerBox, _beneficColorPickerBox, _harmfulColorPickerBox, _improvedBuffBarHue,
+        private HueDisplay _innocentColorPickerBox, _friendColorPickerBox, _crimialColorPickerBox, _canAttackColorPickerBox, _enemyColorPickerBox, _murdererColorPickerBox, _neutralColorPickerBox, _beneficColorPickerBox, _harmfulColorPickerBox, _improvedBuffBarHue,
             _damageHueSelf, _damageHuePet, _damageHueAlly, _damageHueLastAttack, _damageHueOther;
         private HSliderBar _lightBar;
         private Checkbox _buffBarTime, _uiButtonsSingleClick, _queryBeforAttackCheckbox, _queryBeforeBeneficialCheckbox, _spellColoringCheckbox, _spellFormatCheckbox, _enableFastSpellsAssign, _enableImprovedBuffGump;
 
         // macro
         private MacroControl _macroControl;
+        private ScrollArea _options765ScrollHost;
         private Checkbox _overrideAllFonts;
         private Combobox _overrideAllFontsIsUnicodeCheckbox;
         private Combobox _overrideContainerLocationSetting;
-        private ModernColorPicker.HueDisplay _poisonColorPickerBox, _paralyzedColorPickerBox, _invulnerableColorPickerBox;
+        private HueDisplay _poisonColorPickerBox, _paralyzedColorPickerBox, _invulnerableColorPickerBox;
         private NiceButton _randomizeColorsButton;
         private Checkbox _restorezoomCheckbox, _zoomCheckbox;
-        private InputField _rows, _columns, _highlightAmount, _abbreviatedAmount;
+        private InputField _highlightAmount, _abbreviatedAmount;
 
         // speech
         private Checkbox _scaleSpeechDelay, _saveJournalCheckBox;
@@ -188,15 +192,15 @@ namespace ClassicUO.Game.UI.Gumps
         private HSliderBar _sliderZoom;
         private HSliderBar _soundsVolume, _musicVolume, _loginMusicVolume;
         private HSliderBar _hiddenBodyAlpha;
-        private ModernColorPicker.HueDisplay _hiddenBodyHue;
-        private ModernColorPicker.HueDisplay _speechColorPickerBox, _emoteColorPickerBox, _yellColorPickerBox, _whisperColorPickerBox, _partyMessageColorPickerBox, _guildMessageColorPickerBox, _allyMessageColorPickerBox, _chatMessageColorPickerBox, _partyAuraColorPickerBox;
+        private HueDisplay _hiddenBodyHue;
+        private HueDisplay _speechColorPickerBox, _emoteColorPickerBox, _yellColorPickerBox, _whisperColorPickerBox, _partyMessageColorPickerBox, _guildMessageColorPickerBox, _allyMessageColorPickerBox, _chatMessageColorPickerBox, _partyAuraColorPickerBox;
         private InputField _spellFormatBox;
-        private ModernColorPicker.HueDisplay _tooltip_font_hue;
+        private HueDisplay _tooltip_font_hue;
         private FontSelector _tooltip_font_selector;
         private HSliderBar _dragSelectStartX, _dragSelectStartY;
         private Checkbox _dragSelectAsAnchor, _namePlateHealthBar, _disableSystemChat, _journalMessagesOnlyInJournalBox, _namePlateShowAtFullHealth;
         private HSliderBar _journalOpacity, _namePlateOpacity, _namePlateHealthBarOpacity;
-        private ModernColorPicker.HueDisplay _journalBackgroundColor;
+        private HueDisplay _journalBackgroundColor;
         private Combobox _journalStyle;
         private NameOverheadAssignControl _nameOverheadControl;
 
@@ -206,7 +210,7 @@ namespace ClassicUO.Game.UI.Gumps
         private Checkbox _use_smooth_boat_movement;
         private HSliderBar _terrainShadowLevel;
 
-        private Checkbox _use_tooltip, _enableTooltipOverride;
+        private Checkbox _use_tooltip;
         private Checkbox _useStandardSkillsGump, _showMobileNameIncoming, _showCorpseNameIncoming;
         private Checkbox _showStatsMessage, _showSkillsMessage;
         private HSliderBar _showSkillsMessageDelta;
@@ -218,15 +222,15 @@ namespace ClassicUO.Game.UI.Gumps
         private Checkbox _titleBarStatsModeProgressBar;
         // ## BEGIN - END ## // ART / HUE CHANGES
         private Checkbox _colorStealth, _colorEnergyBolt, _colorGold, _colorTreeTile, _colorBlockerTile, _enlargeJewelryPaperdoll;
-        private ModernColorPicker.HueDisplay _stealthColorPickerBox, _energyBoltColorPickerBox, _goldColorPickerBox, _treeTileColorPickerBox, _blockerTileColorPickerBox;
+        private HueDisplay _stealthColorPickerBox, _energyBoltColorPickerBox, _goldColorPickerBox, _treeTileColorPickerBox, _blockerTileColorPickerBox;
         private Combobox _goldType, _treeType, _blockerType, _stealthNeonType, _energyBoltNeonType, _energyBoltArtType, _moongateHueStyle;
         private Checkbox _moongateRecolor, _scaleMonstersEnabled;
-        private ModernColorPicker.HueDisplay _moongateCustomHuePicker;
+        private HueDisplay _moongateCustomHuePicker;
         // ## BEGIN - END ## // ART / HUE CHANGES
         // ## BEGIN - END ## // VISUAL HELPERS
         private Checkbox _highlightTileRange, _highlightTileRangeSpell, _ownAuraByHP, _previewFields;
         private HSliderBar _highlightTileRangeRange, _highlightTileRangeRangeSpell;
-        private ModernColorPicker.HueDisplay _highlightTileRangeColorPickerBox, _highlightTileRangeColorPickerBoxSpell, _highlightLastTargetTypeColorPickerBox, _highlighFriendsGuildTypeHueColorPickerBox, _highlightLastTargetTypeColorPickerBoxPoison, _highlightLastTargetTypeColorPickerBoxPara, _highlightLastTargetTypeColorPickerBoxStunned, _highlightLastTargetTypeColorPickerBoxMortalled, _highlightGlowingWeaponsTypeColorPickerBoxHue, _hueImpassableViewColorPickerBox;
+        private HueDisplay _highlightTileRangeColorPickerBox, _highlightTileRangeColorPickerBoxSpell, _highlightLastTargetTypeColorPickerBox, _highlighFriendsGuildTypeHueColorPickerBox, _highlightLastTargetTypeColorPickerBoxPoison, _highlightLastTargetTypeColorPickerBoxPara, _highlightLastTargetTypeColorPickerBoxStunned, _highlightLastTargetTypeColorPickerBoxMortalled, _highlightGlowingWeaponsTypeColorPickerBoxHue, _hueImpassableViewColorPickerBox;
         private Combobox _glowingWeaponsType, _highlightLastTargetType, _highlighFriendsGuildType, _highlightLastTargetTypePoison, _highlightLastTargetTypePara, _highlightLastTargetTypeStunned, _highlightLastTargetTypeMortalled;
         // ## BEGIN - END ## // VISUAL HELPERS
         // ## BEGIN - END ## // HEALTHBAR
@@ -257,6 +261,7 @@ namespace ClassicUO.Game.UI.Gumps
         // ## BEGIN - END ## // UI/GUMPS
         private Checkbox _bandageGump, _bandageUpDownToggle, _uccEnableLTBar;
         private InputField _bandageGumpOffsetX, _bandageGumpOffsetY;
+        private InputField _movementTurnDelay, _movementTurnDelayFast, _movementWalkingDelay, _movementPlayerWalkingDelay;
         // ## BEGIN - END ## // UI/GUMPS
         // ## BEGIN - END ## // LINES
         private Checkbox _uccEnableLines;
@@ -283,7 +288,7 @@ namespace ClassicUO.Game.UI.Gumps
         // ## BEGIN - END ## // AUTOMATIONS
         private Checkbox _autoWorldmapMarker;
         private Checkbox _autoRangeDisplayAlways;
-        private ModernColorPicker.HueDisplay _autoRangeDisplayHue;
+        private HueDisplay _autoRangeDisplayHue;
         // ## BEGIN - END ## // AUTOMATIONS
         // ## BEGIN - END ## // OUTLANDS
         /*
@@ -301,7 +306,7 @@ namespace ClassicUO.Game.UI.Gumps
         private Checkbox _useRazorEnhStatusGump;
         // ## BEGIN - END ## // STATUSGUMP
         // ## BEGIN - END ## // ONCASTINGGUMP
-        private Checkbox _onCastingGump, _onCastingGump_hidden, _onCastingUnderPlayerBar;
+        private Checkbox _onCastingGump, _onCastingGump_hidden, _onCastingHarmfulHueOnPlayer;
         // ## BEGIN - END ## // ONCASTINGGUMP
         // ## BEGIN - END ## // MISC3 SHOWALLLAYERS
         private Checkbox _showAllLayers, _showAllLayersPaperdoll, _colorPaperdollByDurability;
@@ -319,11 +324,12 @@ namespace ClassicUO.Game.UI.Gumps
         // ## BEGIN - END ## // TABGRID // PKRION
         // ## BEGIN - END ## // BASICSETUP
 
-        private Checkbox _leftAlignToolTips, _namePlateHealthOnlyWarmode, _enableHealthIndicator, _spellIconDisplayHotkey, _enableAlphaScrollWheel, _useModernShop, _forceCenterAlignMobileTooltips, _openHealthBarForLastAttack;
+        private Checkbox _namePlateHealthOnlyWarmode, _namePlateCustomChrome, _namePlateHealthBarMatchStrip, _namePlateFullPlateWidthScalesWithHp, _showHpLineInNoh, _enableHealthIndicator, _spellIconDisplayHotkey, _enableAlphaScrollWheel, _useModernShop, _useExpandedColorPickerPalette, _openHealthBarForLastAttack;
+        private HueDisplay _namePlateCustomBgHue, _namePlateCustomBorderHuePicker;
         private Checkbox _hideJournalBorder, _hideJournalTimestamp, _gridHideBorder, _skillProgressBarOnChange, _uselastCooldownPosition, _closeHPBarWhenAnchored, _enableNearbyItemGump;
         private HotkeyBox _nearbyItemGumpHotkeyBox;
-        private InputField _healthIndicatorPercentage, _healthIndicatorWidth, _tooltipHeaderFormat, _skillProgressBarFormat;
-        private ModernColorPicker.HueDisplay _mainWindowHuePicker, _spellIconHotkeyHue, _tooltipBGHue;
+        private InputField _healthIndicatorPercentage, _healthIndicatorWidth, _skillProgressBarFormat;
+        private HueDisplay _mainWindowHuePicker, _spellIconHotkeyHue;
         private HSliderBar _spellIconScale, _overheadTextWidth, _gridHightlightLineSize, _maxJournalEntries;
         private HSliderBar _healthLineSizeMultiplier, _regularPlayerAlpha, _nameplateBorderOpacity;
 
@@ -332,7 +338,7 @@ namespace ClassicUO.Game.UI.Gumps
         #endregion
 
 
-        private Profile _currentProfile = ProfileManager.CurrentProfile;
+        private Profile _currentProfile;
         private OptionsGumpLanguage _lang = Language.Instance.GetOptionsGumpLanguage;
         private Dust765Language _langDust = Language.Instance.GetDust765;
         private InputField _optionsSearchField;
@@ -345,6 +351,8 @@ namespace ClassicUO.Game.UI.Gumps
 
         public OptionsGump() : base(0, 0)
         {
+            _currentProfile = ProfileManager.CurrentProfile;
+
             Add
             (
                 new AlphaBlendControl(0.95f)
@@ -560,8 +568,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
 
             // ## BEGIN - END ## // BASICSETUP
-            Add(new NiceButton(10, tabY + 30 * i++, 140, 25, ButtonAction.SwitchPage, "Dust") { ButtonParameter = 16 });
-            Add(new NiceButton(10, tabY + 30 * i++, 140, 25, ButtonAction.SwitchPage, "765") { ButtonParameter = 17 });
+            Add(new NiceButton(10, tabY + 30 * i++, 140, 25, ButtonAction.SwitchPage, "Dust765") { ButtonParameter = 16 });
             Add(new NiceButton(10, tabY + 30 * i++, 140, 25, ButtonAction.SwitchPage, "Mods") { ButtonParameter = 18 });
             // ## BEGIN - END ## // BASICSETUP
 
@@ -628,55 +635,6 @@ namespace ClassicUO.Game.UI.Gumps
                     ButtonParameter = 8789
                 }
             );
-
-            int offsetX = 60;
-            int offsetY = 60;
-
-            int bottomLineY = HEIGHT - 50;
-
-            Add
-            (
-                new Line
-                (
-                    160,
-                    bottomLineY,
-                    WIDTH - 160,
-                    1,
-                    Color.Gray.PackedValue
-                )
-            );
-
-            const int BTN_WIDTH = 90;
-            const int BTN_HEIGHT = 20;
-            int btnY = HEIGHT - BTN_HEIGHT - 15;
-
-            var cancelBtn = new GothicStyleButton(154 + offsetX, btnY, BTN_WIDTH, BTN_HEIGHT, "Cancel");
-            cancelBtn.BaseColor = new Color(130, 55, 55);
-            cancelBtn.HighlightColor = new Color(165, 90, 90);
-            cancelBtn.ShadowColor = new Color(90, 35, 35);
-            cancelBtn.OnClick += () => OnButtonClick((int)Buttons.Cancel);
-            Add(cancelBtn);
-
-            var applyBtn = new GothicStyleButton(248 + offsetX, btnY, BTN_WIDTH, BTN_HEIGHT, "Apply");
-            applyBtn.BaseColor = new Color(40, 115, 40);
-            applyBtn.HighlightColor = new Color(70, 155, 70);
-            applyBtn.ShadowColor = new Color(25, 75, 25);
-            applyBtn.OnClick += () => OnButtonClick((int)Buttons.Apply);
-            Add(applyBtn);
-
-            var defaultBtn = new GothicStyleButton(346 + offsetX, btnY, BTN_WIDTH, BTN_HEIGHT, "Default");
-            defaultBtn.BaseColor = new Color(100, 100, 100);
-            defaultBtn.HighlightColor = new Color(155, 155, 155);
-            defaultBtn.ShadowColor = new Color(60, 60, 60);
-            defaultBtn.OnClick += () => OnButtonClick((int)Buttons.Default);
-            Add(defaultBtn);
-
-            var okBtn = new GothicStyleButton(443 + offsetX, btnY, BTN_WIDTH, BTN_HEIGHT, "Okay");
-            okBtn.BaseColor = new Color(165, 130, 50);
-            okBtn.HighlightColor = new Color(210, 175, 90);
-            okBtn.ShadowColor = new Color(115, 90, 30);
-            okBtn.OnClick += () => OnButtonClick((int)Buttons.Ok);
-            Add(okBtn);
 
             Width = WIDTH;
             Height = HEIGHT;
@@ -751,6 +709,57 @@ namespace ClassicUO.Game.UI.Gumps
             _optionsSearchSubmitBtn.ShadowColor = new Color(60, 60, 60);
             _optionsSearchSubmitBtn.OnClick += RunOptionsSearch;
             Add(_optionsSearchSubmitBtn, 0);
+
+            AddOptionsFooterChrome();
+        }
+
+        private void AddOptionsFooterChrome()
+        {
+            const int offsetX = 60;
+            int offsetY = 60;
+            int bottomLineY = HEIGHT - 42;
+
+            Add(
+                new Line(
+                    160,
+                    bottomLineY,
+                    WIDTH - 160,
+                    1,
+                    Color.Gray.PackedValue
+                )
+            );
+
+            const int BTN_WIDTH = 90;
+            const int BTN_HEIGHT = 20;
+            int btnY = HEIGHT - BTN_HEIGHT - 15;
+
+            var cancelBtn = new GothicStyleButton(154 + offsetX, btnY, BTN_WIDTH, BTN_HEIGHT, "Cancel");
+            cancelBtn.BaseColor = new Color(130, 55, 55);
+            cancelBtn.HighlightColor = new Color(165, 90, 90);
+            cancelBtn.ShadowColor = new Color(90, 35, 35);
+            cancelBtn.OnClick += () => OnButtonClick((int)Buttons.Cancel);
+            Add(cancelBtn);
+
+            var applyBtn = new GothicStyleButton(248 + offsetX, btnY, BTN_WIDTH, BTN_HEIGHT, "Apply");
+            applyBtn.BaseColor = new Color(40, 115, 40);
+            applyBtn.HighlightColor = new Color(70, 155, 70);
+            applyBtn.ShadowColor = new Color(25, 75, 25);
+            applyBtn.OnClick += () => OnButtonClick((int)Buttons.Apply);
+            Add(applyBtn);
+
+            var defaultBtn = new GothicStyleButton(346 + offsetX, btnY, BTN_WIDTH, BTN_HEIGHT, "Default");
+            defaultBtn.BaseColor = new Color(100, 100, 100);
+            defaultBtn.HighlightColor = new Color(155, 155, 155);
+            defaultBtn.ShadowColor = new Color(60, 60, 60);
+            defaultBtn.OnClick += () => OnButtonClick((int)Buttons.Default);
+            Add(defaultBtn);
+
+            var okBtn = new GothicStyleButton(443 + offsetX, btnY, BTN_WIDTH, BTN_HEIGHT, "Okay");
+            okBtn.BaseColor = new Color(165, 130, 50);
+            okBtn.HighlightColor = new Color(210, 175, 90);
+            okBtn.ShadowColor = new Color(115, 90, 30);
+            okBtn.OnClick += () => OnButtonClick((int)Buttons.Ok);
+            Add(okBtn);
         }
 
         private void ClearOptionsSearch()
@@ -949,7 +958,7 @@ namespace ClassicUO.Game.UI.Gumps
                 if (_logoTexture2D == null || _logoTexture2D.IsDisposed)
                 {
                     string logoPath = Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Client", "logodust.png");
-                    _logoTexture2D = PNGLoader.Instance.GetImageTexture(logoPath);
+                    _logoTexture2D = UOFileManager.Current.Png.GetImageTexture(logoPath);
 
                     if (_logoTexture2D == null || _logoTexture2D.IsDisposed)
                     {
@@ -1930,7 +1939,7 @@ namespace ClassicUO.Game.UI.Gumps
                 OptionsScrollHeight,
                 true
             );
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
 
             int startX = 5;
             int startY = 5;
@@ -2001,7 +2010,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
 
             startX = 5;
-            startY += _loginMusic.Bounds.Bottom + 2;
+            startY += _loginMusic.Bounds.Bottom + 6;
 
             _footStepsSound = AddCheckBox
             (
@@ -2012,7 +2021,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _footStepsSound.Height + 2;
+            startY += _footStepsSound.Height + 6;
 
             _combatMusic = AddCheckBox
             (
@@ -2023,7 +2032,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _combatMusic.Height + 2;
+            startY += _combatMusic.Height + 6;
 
             _musicInBackground = AddCheckBox
             (
@@ -2034,7 +2043,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _musicInBackground.Height + 2;
+            startY += _musicInBackground.Height + 6;
 
             Add(rightArea, PAGE);
         }
@@ -2081,7 +2090,18 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _reduceFPSWhenInactive.Height + 2;
+            startY += _reduceFPSWhenInactive.Height + 6;
+
+            _enableVSync = AddCheckBox
+            (
+                rightArea,
+                Language.Instance?.GetOptionsGumpLanguage?.GetVideo?.EnableVSync ?? "Enable VSync (limits FPS to monitor refresh)",
+                _currentProfile.EnableVSync,
+                startX,
+                startY
+            );
+
+            startY += _enableVSync.Height + 6;
 
             startX = 5;
             startY += 20;
@@ -2454,7 +2474,7 @@ namespace ClassicUO.Game.UI.Gumps
             const int PAGE = 4;
 
             ScrollArea rightArea = new ScrollArea(165, OptionsScrollY, WIDTH - 185, OptionsScrollHeight, true);
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
 
             int startX = 5;
             int startY = 5;
@@ -2519,10 +2539,10 @@ namespace ClassicUO.Game.UI.Gumps
 
                         _macroControl?.Dispose();
 
-                        _macroControl = new MacroControl(name)
+                        _macroControl = new MacroControl(name, availableHeight: HEIGHT - 47 - (OptionsScrollY + 15))
                         {
                             X = 350,
-                            Y = 20
+                            Y = OptionsScrollY + 15
                         };
 
                         manager.PushToBack(_macroControl.Macro);
@@ -2536,7 +2556,7 @@ namespace ClassicUO.Game.UI.Gumps
                                 return;
                             }
 
-                            UIManager.Gumps.OfType<MacroButtonGump>().FirstOrDefault(s => s.TheMacro == _macroControl.Macro)?.Dispose();
+                            UIManager.DisposeMacroButtonGumpForMacro(_macroControl.Macro);
 
                             MacroButtonGump macroButtonGump = new MacroButtonGump(_macroControl.Macro, Mouse.Position.X, Mouse.Position.Y);
 
@@ -2555,7 +2575,7 @@ namespace ClassicUO.Game.UI.Gumps
                             _macroControl = new MacroControl(name)
                             {
                                 X = 350,
-                                Y = 20
+                                Y = OptionsScrollY
                             };
 
                             Add(_macroControl, PAGE);
@@ -2571,7 +2591,16 @@ namespace ClassicUO.Game.UI.Gumps
 
             delButton.MouseUp += (ss, ee) =>
             {
-                NiceButton nb = databox.FindControls<NiceButton>().SingleOrDefault(a => a.IsSelected);
+                NiceButton nb = null;
+
+                foreach (NiceButton b in databox.FindControls<NiceButton>())
+                {
+                    if (b.IsSelected)
+                    {
+                        nb = b;
+                        break;
+                    }
+                }
 
                 if (nb != null)
                 {
@@ -2587,7 +2616,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                             if (_macroControl != null)
                             {
-                                UIManager.Gumps.OfType<MacroButtonGump>().FirstOrDefault(s => s.TheMacro == _macroControl.Macro)?.Dispose();
+                                UIManager.DisposeMacroButtonGumpForMacro(_macroControl.Macro);
 
                                 Client.Game.GetScene<GameScene>().Macros.Remove(_macroControl.Macro);
 
@@ -2646,7 +2675,7 @@ namespace ClassicUO.Game.UI.Gumps
                         return;
                     }
 
-                    UIManager.Gumps.OfType<MacroButtonGump>().FirstOrDefault(s => s.TheMacro == m)?.Dispose();
+                    UIManager.DisposeMacroButtonGumpForMacro(m);
 
                     MacroButtonGump macroButtonGump = new MacroButtonGump(m, Mouse.Position.X, Mouse.Position.Y);
 
@@ -2671,10 +2700,10 @@ namespace ClassicUO.Game.UI.Gumps
 
                     _macroControl?.Dispose();
 
-                    _macroControl = new MacroControl(m.Name)
+                    _macroControl = new MacroControl(m.Name, availableHeight: HEIGHT - 47 - (OptionsScrollY + 15))
                     {
                         X = 350,
-                        Y = 20
+                        Y = OptionsScrollY + 15
                     };
 
                     Add(_macroControl, PAGE);
@@ -2689,8 +2718,6 @@ namespace ClassicUO.Game.UI.Gumps
         private void BuildTooltip()
         {
             const int PAGE = 5;
-            const int ROW = 28;
-            const int INDENT = 45;
 
             ScrollArea rightArea = new ScrollArea
             (
@@ -2700,82 +2727,58 @@ namespace ClassicUO.Game.UI.Gumps
                 OptionsScrollHeight,
                 true
             );
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
 
             int startX = 5;
             int startY = 5;
 
             _use_tooltip = AddCheckBox(rightArea, ResGumps.UseTooltip, _currentProfile.UseTooltip, startX, startY);
-            startY += ROW;
 
-            startX = INDENT;
+            startY += _use_tooltip.Height + 2;
+
+            startX += 40;
+
             Label text = AddLabel(rightArea, ResGumps.DelayBeforeDisplay, startX, startY);
             startX += text.Width + 5;
+
             _delay_before_display_tooltip = AddHSlider(rightArea, 0, 1000, _currentProfile.TooltipDelayBeforeDisplay, startX, startY, 200);
-            startX = INDENT;
-            startY += ROW;
+
+            startX = 5 + 40;
+            startY += text.Height + 2;
 
             text = AddLabel(rightArea, ResGumps.TooltipZoom, startX, startY);
             startX += text.Width + 5;
+
             _tooltip_zoom = AddHSlider(rightArea, 100, 200, _currentProfile.TooltipDisplayZoom, startX, startY, 200);
-            startX = INDENT;
-            startY += ROW;
+
+            startX = 5 + 40;
+            startY += text.Height + 2;
 
             text = AddLabel(rightArea, ResGumps.TooltipBackgroundOpacity, startX, startY);
             startX += text.Width + 5;
+
             _tooltip_background_opacity = AddHSlider(rightArea, 0, 100, _currentProfile.TooltipBackgroundOpacity, startX, startY, 200);
-            startX = INDENT;
-            startY += ROW;
+
+            startX = 5 + 40;
+            startY += text.Height + 2;
 
             _tooltip_font_hue = AddHueDisplay(rightArea, startX, startY, _currentProfile.TooltipTextHue, ResGumps.TooltipFontHue);
-            startY += ROW;
-            startX = INDENT;
+
+            startY += _tooltip_font_hue.Height + 2;
+
+            startY += 15;
 
             text = AddLabel(rightArea, ResGumps.TooltipFont, startX, startY);
-            startY += text.Height + 4;
+            startY += text.Height + 2;
             startX += 40;
-            _tooltip_font_selector = new FontSelector(7, _currentProfile.TooltipFont, ResGumps.TooltipFontSelect) { X = startX, Y = startY };
-            rightArea.Add(_tooltip_font_selector);
-            startY += 180;
-            startX = INDENT;
 
-            _leftAlignToolTips = AddCheckBox(rightArea, "Align tooltips to the left side", _currentProfile.LeftAlignToolTips, startX, startY);
-            startY += ROW;
-
-            _forceCenterAlignMobileTooltips = AddCheckBox(rightArea, "Center align mobile name tooltips", _currentProfile.ForceCenterAlignTooltipMobiles, startX, startY);
-            startY += ROW;
-
-            text = AddLabel(rightArea, "Tooltip background hue", startX, startY);
-            startY += text.Height + 4;
-            rightArea.Add(_tooltipBGHue = new ModernColorPicker.HueDisplay(_currentProfile.ToolTipBGHue, null, true) { X = startX, Y = startY });
-            startY += ROW;
-
-            text = AddLabel(rightArea, "Tooltip header format (Item name)", startX, startY);
-            startY += text.Height + 4;
-            _tooltipHeaderFormat = AddInputField(null, startX, startY, 250, TEXTBOX_HEIGHT, null, 0, false, false, 50000);
-            _tooltipHeaderFormat.SetText(_currentProfile.TooltipHeaderFormat);
-            rightArea.Add(_tooltipHeaderFormat);
-            startY += ROW;
-
-            _enableTooltipOverride = AddCheckBox(rightArea, "Enable tooltip override (custom text per item)", _currentProfile.EnableTooltipOverride, startX, startY);
-            startY += ROW;
-
-            var ttipOverrideBtn = new NiceButton(startX, startY, 250, TEXTBOX_HEIGHT, ButtonAction.Activate, "Open tooltip override settings") { IsSelectable = false };
-            ttipOverrideBtn.SetTooltip("Warning: This is an advanced feature.");
-            ttipOverrideBtn.MouseUp += (s, e) => { UIManager.GetGump<ClassicUO.Dust765.UI.Gumps.ToolTipOverideMenu>()?.Dispose(); UIManager.Add(new ClassicUO.Dust765.UI.Gumps.ToolTipOverideMenu()); };
-            rightArea.Add(ttipOverrideBtn);
-
-            void SetTooltipOptionsEnabled(bool enabled)
+            _tooltip_font_selector = new FontSelector(7, _currentProfile.TooltipFont, ResGumps.TooltipFontSelect)
             {
-                for (int i = 2; i < rightArea.Children.Count; i++)
-                {
-                    var c = rightArea.Children[i];
-                    c.AcceptMouseInput = enabled;
-                    c.Alpha = enabled ? 1f : 0.5f;
-                }
-            }
-            SetTooltipOptionsEnabled(_use_tooltip.IsChecked);
-            _use_tooltip.ValueChanged += (s, e) => SetTooltipOptionsEnabled(_use_tooltip.IsChecked);
+                X = startX,
+                Y = startY
+            };
+
+            rightArea.Add(_tooltip_font_selector);
 
             Add(rightArea, PAGE);
         }
@@ -2792,7 +2795,7 @@ namespace ClassicUO.Game.UI.Gumps
                 OptionsScrollHeight,
                 true
             );
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
 
             int startX = 5;
             int startY = 5;
@@ -2822,7 +2825,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
 
             startX = 5;
-            startY += _overrideAllFonts.Height + 2;
+            startY += _overrideAllFonts.Height + 6;
 
             _forceUnicodeJournal = AddCheckBox
             (
@@ -2833,11 +2836,11 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _forceUnicodeJournal.Height + 2;
+            startY += _forceUnicodeJournal.Height + 6;
 
             Label text = AddLabel(rightArea, ResGumps.SpeechFont, startX, startY);
             startX += 40;
-            startY += text.Height + 2;
+            startY += text.Height + 6;
 
             _fontSelectorChat = new FontSelector(20, _currentProfile.ChatFont, ResGumps.ThatSClassicUO)
             {
@@ -2862,7 +2865,7 @@ namespace ClassicUO.Game.UI.Gumps
                 OptionsScrollHeight,
                 true
             );
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
 
             int startX = 5;
             int startY = 5;
@@ -2890,7 +2893,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
 
             startX = 5;
-            startY += _scaleSpeechDelay.Height + 2;
+            startY += _scaleSpeechDelay.Height + 6;
 
             _saveJournalCheckBox = AddCheckBox
             (
@@ -2901,7 +2904,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _saveJournalCheckBox.Height + 2;
+            startY += _saveJournalCheckBox.Height + 6;
 
             if (!_currentProfile.SaveJournalToFile)
             {
@@ -2918,7 +2921,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
 
             startX += 40;
-            startY += _chatAfterEnter.Height + 2;
+            startY += _chatAfterEnter.Height + 6;
 
             _chatAdditionalButtonsCheckbox = AddCheckBox
             (
@@ -2929,7 +2932,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _chatAdditionalButtonsCheckbox.Height + 2;
+            startY += _chatAdditionalButtonsCheckbox.Height + 6;
 
             _chatShiftEnterCheckbox = AddCheckBox
             (
@@ -2940,7 +2943,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _chatShiftEnterCheckbox.Height + 2;
+            startY += _chatShiftEnterCheckbox.Height + 6;
             startX = 5;
 
             _hideChatGradient = AddCheckBox
@@ -2952,7 +2955,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _hideChatGradient.Height + 2;
+            startY += _hideChatGradient.Height + 6;
 
             _ignoreGuildMessages = AddCheckBox
             (
@@ -2963,7 +2966,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _ignoreGuildMessages.Height + 2;
+            startY += _ignoreGuildMessages.Height + 6;
 
             _ignoreAllianceMessages = AddCheckBox
             (
@@ -3031,7 +3034,7 @@ namespace ClassicUO.Game.UI.Gumps
                 ResGumps.EmoteColor
             );
 
-            startY += _emoteColorPickerBox.Height + 2;
+            startY += _emoteColorPickerBox.Height + 6;
             startX = 5;
 
             _yellColorPickerBox = AddHueDisplay
@@ -3054,7 +3057,7 @@ namespace ClassicUO.Game.UI.Gumps
                 ResGumps.WhisperColor
             );
 
-            startY += _whisperColorPickerBox.Height + 2;
+            startY += _whisperColorPickerBox.Height + 6;
             startX = 5;
 
             _partyMessageColorPickerBox = AddHueDisplay
@@ -3077,7 +3080,7 @@ namespace ClassicUO.Game.UI.Gumps
                 ResGumps.GuildMessageColor
             );
 
-            startY += _guildMessageColorPickerBox.Height + 2;
+            startY += _guildMessageColorPickerBox.Height + 6;
             startX = 5;
 
             _allyMessageColorPickerBox = AddHueDisplay
@@ -3100,7 +3103,7 @@ namespace ClassicUO.Game.UI.Gumps
                 ResGumps.ChatMessageColor
             );
 
-            startY += _chatMessageColorPickerBox.Height + 2;
+            startY += _chatMessageColorPickerBox.Height + 6;
             startX = 5;
 
             Add(rightArea, PAGE);
@@ -3118,7 +3121,7 @@ namespace ClassicUO.Game.UI.Gumps
                 OptionsScrollHeight,
                 true
             );
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
 
             int startX = 5;
             int startY = 5;
@@ -3132,7 +3135,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _holdDownKeyTab.Height + 2;
+            startY += _holdDownKeyTab.Height + 6;
 
             _queryBeforAttackCheckbox = AddCheckBox
             (
@@ -3143,7 +3146,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _queryBeforAttackCheckbox.Height + 2;
+            startY += _queryBeforAttackCheckbox.Height + 6;
 
             _queryBeforeBeneficialCheckbox = AddCheckBox
             (
@@ -3154,7 +3157,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _queryBeforeBeneficialCheckbox.Height + 2;
+            startY += _queryBeforeBeneficialCheckbox.Height + 6;
 
             _spellFormatCheckbox = AddCheckBox
             (
@@ -3165,7 +3168,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _spellFormatCheckbox.Height + 2;
+            startY += _spellFormatCheckbox.Height + 6;
 
             _spellColoringCheckbox = AddCheckBox
             (
@@ -3176,7 +3179,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _spellColoringCheckbox.Height + 2;
+            startY += _spellColoringCheckbox.Height + 6;
 
             _uiButtonsSingleClick = AddCheckBox
             (
@@ -3187,7 +3190,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _uiButtonsSingleClick.Height + 2;
+            startY += _uiButtonsSingleClick.Height + 6;
 
             _buffBarTime = AddCheckBox
             (
@@ -3198,7 +3201,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _buffBarTime.Height + 2;
+            startY += _buffBarTime.Height + 6;
 
             _enableFastSpellsAssign = AddCheckBox
             (
@@ -3222,7 +3225,7 @@ namespace ClassicUO.Game.UI.Gumps
                 ResGumps.InnocentColor
             );
 
-            startY += _innocentColorPickerBox.Height + 2;
+            startY += _innocentColorPickerBox.Height + 6;
 
             _friendColorPickerBox = AddHueDisplay
             (
@@ -3233,7 +3236,7 @@ namespace ClassicUO.Game.UI.Gumps
                 ResGumps.FriendColor
             );
 
-            startY += _innocentColorPickerBox.Height + 2;
+            startY += _innocentColorPickerBox.Height + 6;
 
             _crimialColorPickerBox = AddHueDisplay
             (
@@ -3244,7 +3247,7 @@ namespace ClassicUO.Game.UI.Gumps
                 ResGumps.CriminalColor
             );
 
-            startY += _innocentColorPickerBox.Height + 2;
+            startY += _innocentColorPickerBox.Height + 6;
 
             _canAttackColorPickerBox = AddHueDisplay
             (
@@ -3255,7 +3258,7 @@ namespace ClassicUO.Game.UI.Gumps
                 ResGumps.CanAttackColor
             );
 
-            startY += _innocentColorPickerBox.Height + 2;
+            startY += _innocentColorPickerBox.Height + 6;
 
             _murdererColorPickerBox = AddHueDisplay
             (
@@ -3266,7 +3269,7 @@ namespace ClassicUO.Game.UI.Gumps
                 ResGumps.MurdererColor
             );
 
-            startY += _innocentColorPickerBox.Height + 2;
+            startY += _innocentColorPickerBox.Height + 6;
 
             _enemyColorPickerBox = AddHueDisplay
             (
@@ -3277,7 +3280,7 @@ namespace ClassicUO.Game.UI.Gumps
                 ResGumps.EnemyColor
             );
 
-            startY += _innocentColorPickerBox.Height + 2;
+            startY += _innocentColorPickerBox.Height + 6;
 
             startY = initialY;
             startX += 200;
@@ -3291,7 +3294,7 @@ namespace ClassicUO.Game.UI.Gumps
                 ResGumps.BeneficSpellHue
             );
 
-            startY += _beneficColorPickerBox.Height + 2;
+            startY += _beneficColorPickerBox.Height + 6;
 
             _harmfulColorPickerBox = AddHueDisplay
             (
@@ -3302,7 +3305,7 @@ namespace ClassicUO.Game.UI.Gumps
                 ResGumps.HarmfulSpellHue
             );
 
-            startY += _harmfulColorPickerBox.Height + 2;
+            startY += _harmfulColorPickerBox.Height + 6;
 
             _neutralColorPickerBox = AddHueDisplay
             (
@@ -3313,7 +3316,7 @@ namespace ClassicUO.Game.UI.Gumps
                 ResGumps.NeutralSpellHue
             );
 
-            startY += _neutralColorPickerBox.Height + 2;
+            startY += _neutralColorPickerBox.Height + 6;
 
             startX = 5;
             startY += (_neutralColorPickerBox.Height + 2) * 4;
@@ -3335,7 +3338,7 @@ namespace ClassicUO.Game.UI.Gumps
             _spellFormatBox.SetText(_currentProfile.SpellDisplayFormat);
 
             startX = 5;
-            startY += (_spellFormatBox.Height * 2) + 2;
+            startY += (_spellFormatBox.Height * 2) + 6;
             Add(rightArea, PAGE);
         }
 
@@ -3366,7 +3369,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
 
             startX += 40;
-            startY += _enableCounters.Height + 2;
+            startY += _enableCounters.Height + 6;
 
             _highlightOnUse = AddCheckBox
             (
@@ -3377,7 +3380,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _highlightOnUse.Height + 2;
+            startY += _highlightOnUse.Height + 6;
 
             _enableAbbreviatedAmount = AddCheckBox
             (
@@ -3407,7 +3410,7 @@ namespace ClassicUO.Game.UI.Gumps
 
             startX = 5;
             startX += 40;
-            startY += _enableAbbreviatedAmount.Height + 2;
+            startY += _enableAbbreviatedAmount.Height + 6;
 
             _highlightOnAmount = AddCheckBox
             (
@@ -3440,12 +3443,12 @@ namespace ClassicUO.Game.UI.Gumps
             startX += 40;
             startY += _highlightAmount.Height + 2 + 5;
 
-            startY += 40;
+            startY += 20;
 
             Label text = AddLabel(rightArea, ResGumps.CounterLayout, startX, startY);
 
             startX += 40;
-            startY += text.Height + 2;
+            startY += text.Height + 6;
             text = AddLabel(rightArea, ResGumps.CellSize, startX, startY);
 
             int initialX = startX;
@@ -3462,45 +3465,10 @@ namespace ClassicUO.Game.UI.Gumps
                 80
             );
 
-
             startX = initialX;
             startY += text.Height + 2 + 15;
 
-            _rows = AddInputField
-            (
-                rightArea,
-                startX,
-                startY,
-                50,
-                30,
-                ResGumps.Counter_Rows,
-                50,
-                false,
-                true,
-                30
-            );
-
-            _rows.SetText(_currentProfile.CounterBarRows.ToString());
-
-
-            startX += _rows.Width + 5 + 100;
-
-            _columns = AddInputField
-            (
-                rightArea,
-                startX,
-                startY,
-                50,
-                30,
-                ResGumps.Counter_Columns,
-                50,
-                false,
-                true,
-                30
-            );
-
-            _columns.SetText(_currentProfile.CounterBarColumns.ToString());
-
+            AddLabel(rightArea, "Resize the counter bar window to fit more slots; drop items to add counters.", startX, startY);
 
             Add(rightArea, PAGE);
         }
@@ -3517,7 +3485,7 @@ namespace ClassicUO.Game.UI.Gumps
                 OptionsScrollHeight,
                 true
             );
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
 
             int startX = 5;
             int startY = 5;
@@ -3532,7 +3500,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
 
             startX += 40;
-            startY += _disableDefaultHotkeys.Height + 2;
+            startY += _disableDefaultHotkeys.Height + 6;
 
             _disableArrowBtn = AddCheckBox
             (
@@ -3543,7 +3511,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _disableArrowBtn.Height + 2;
+            startY += _disableArrowBtn.Height + 6;
 
             _disableTabBtn = AddCheckBox
             (
@@ -3554,7 +3522,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _disableTabBtn.Height + 2;
+            startY += _disableTabBtn.Height + 6;
 
             _disableCtrlQWBtn = AddCheckBox
             (
@@ -3565,7 +3533,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _disableCtrlQWBtn.Height + 2;
+            startY += _disableCtrlQWBtn.Height + 6;
 
             _disableAutoMove = AddCheckBox
             (
@@ -3576,7 +3544,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _disableAutoMove.Height + 2;
+            startY += _disableAutoMove.Height + 6;
 
             Add(rightArea, PAGE);
         }
@@ -3608,7 +3576,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
 
             startX += 40;
-            startY += _showInfoBar.Height + 2;
+            startY += _showInfoBar.Height + 6;
 
             _showHPInTitleBar = AddCheckBox
             (
@@ -3620,7 +3588,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
 
             startX += 40;
-            startY += _showHPInTitleBar.Height + 2;
+            startY += _showHPInTitleBar.Height + 6;
 
             Label text = AddLabel(rightArea, ResGumps.DataHighlightType, startX, startY);
 
@@ -3681,7 +3649,7 @@ namespace ClassicUO.Game.UI.Gumps
             text = AddLabel(rightArea, ResGumps.Data, startX, startY);
 
             startX = 5;
-            startY += text.Height + 2;
+            startY += text.Height + 6;
 
             rightArea.Add
             (
@@ -3786,7 +3754,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
 
             startX = 5;
-            startY += _containersScale.Height + 2;
+            startY += _containersScale.Height + 6;
 
             _containerScaleItems = AddCheckBox
             (
@@ -3796,7 +3764,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startX,
                 startY
             );
-            startY += _containerScaleItems.Height + 2;
+            startY += _containerScaleItems.Height + 6;
 
             _useLargeContianersGumps = AddCheckBox
             (
@@ -3810,7 +3778,7 @@ namespace ClassicUO.Game.UI.Gumps
 
             if (_useLargeContianersGumps.IsVisible)
             {
-                startY += _useLargeContianersGumps.Height + 2;
+                startY += _useLargeContianersGumps.Height + 6;
             }
 
             _containerDoubleClickToLoot = AddCheckBox
@@ -3822,7 +3790,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _containerDoubleClickToLoot.Height + 2;
+            startY += _containerDoubleClickToLoot.Height + 6;
 
             _relativeDragAnDropItems = AddCheckBox
             (
@@ -3833,7 +3801,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _relativeDragAnDropItems.Height + 2;
+            startY += _relativeDragAnDropItems.Height + 6;
 
             _highlightContainersWhenMouseIsOver = AddCheckBox
             (
@@ -3844,7 +3812,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _highlightContainersWhenMouseIsOver.Height + 2;
+            startY += _highlightContainersWhenMouseIsOver.Height + 6;
 
             _hueContainerGumps = AddCheckBox
             (
@@ -3855,7 +3823,7 @@ namespace ClassicUO.Game.UI.Gumps
                 startY
             );
 
-            startY += _hueContainerGumps.Height + 2;
+            startY += _hueContainerGumps.Height + 6;
 
             _overrideContainerLocation = AddCheckBox
             (
@@ -3904,7 +3872,7 @@ namespace ClassicUO.Game.UI.Gumps
             rightArea.Add(button);
 
             startX = 5;
-            startY += button.Height + 2;
+            startY += button.Height + 6;
 
             Add(rightArea, PAGE);
         }
@@ -3912,106 +3880,99 @@ namespace ClassicUO.Game.UI.Gumps
         private void BuildNameOverhead()
         {
             const int PAGE = 13;
+            const int listLeft = 165;
+            const int listW = 150;
+            const int dividerX = listLeft + listW + 5;
+            const int panelX = dividerX + 10;
             int top = OptionsScrollY;
-            int nameListTop = top + 54;
-            int bottomSeparatorY = HEIGHT - 51;
-            const int nameOverheadDividerX = 322;
-            int nameListW = nameOverheadDividerX - 165;
+            int bottomSep = HEIGHT - 90;
 
-            ScrollArea rightArea = new ScrollArea
-            (
-                165,
-                nameListTop,
-                nameListW,
-                bottomSeparatorY - nameListTop,
-                true
-            );
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
-            rightArea.UpdateScrollbarPosition();
+            Add(new Line(listLeft, top + 52 + 25 + 2, listW, 1, Color.Gray.PackedValue), PAGE);
 
-            Add
-            (
-                new Line
-                (
-                    165,
-                    nameListTop - 2,
-                    WIDTH - 165,
-                    1,
-                    Color.Gray.PackedValue
-                ),
+            Add(
+                new Line(dividerX, top + 21, 1, bottomSep - top - 21, Color.Gray.PackedValue),
                 PAGE
             );
 
-            Add
-            (
-                new Line
-                (
-                    nameOverheadDividerX,
-                    top + 21,
-                    1,
-                    bottomSeparatorY - top - 21,
-                    Color.Gray.PackedValue
-                ),
-                PAGE
-            );
-
-            NiceButton addButton = new NiceButton
-            (
-                165,
-                OptionsScrollY,
+            NiceButton addButton = new NiceButton(
+                listLeft,
+                top,
                 130,
                 20,
                 ButtonAction.Activate,
-                "New entry"
+                "New"
             )
-            { IsSelectable = false, ButtonParameter = (int)Buttons.NewNameOverheadEntry };
+            {
+                IsSelectable = false,
+                ButtonParameter = (int)Buttons.NewNameOverheadEntry
+            };
 
             Add(addButton, PAGE);
 
-            NiceButton delButton = new NiceButton
-            (
-                165,
-                OptionsScrollY + 32,
+            NiceButton delButton = new NiceButton(
+                listLeft,
+                top + 32,
                 130,
                 20,
                 ButtonAction.Activate,
-                "Delete entry"
+                "Delete"
             )
-            { IsSelectable = false, ButtonParameter = (int)Buttons.DeleteOverheadEntry };
+            {
+                IsSelectable = false,
+                ButtonParameter = (int)Buttons.DeleteOverheadEntry
+            };
 
             Add(delButton, PAGE);
 
+            int bottomPanelMin = 8;
+            int listScrollH = Math.Clamp(bottomSep - (top + 52 + 25 + 4) - bottomPanelMin, 100, 520);
+            int listScrollTop = top + 52 + 25 + 4;
+
+            ScrollArea listScroll = new ScrollArea(listLeft, listScrollTop, listW, listScrollH, true)
+            {
+                ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView
+            };
+            listScroll.UpdateScrollbarPosition();
 
             int startX = 5;
             int startY = 5;
 
             DataBox databox = new DataBox(startX, startY, 1, 1);
             databox.WantUpdateSize = true;
-            rightArea.Add(databox);
+            listScroll.Add(databox);
 
+            void PlaceAssignControl(NameOverheadOption option)
+            {
+                _nameOverheadControl?.Dispose();
+                _nameOverheadControl = new NameOverheadAssignControl(option)
+                {
+                    X = panelX,
+                    Y = top + 10
+                };
+                Add(_nameOverheadControl, PAGE);
+            }
 
             addButton.MouseUp += (sender, e) =>
             {
-                EntryDialog dialog = new
-                (
+                EntryDialog dialog = new(
                     250,
                     150,
-                    "Name overhead entry name",
+                    "Preset name",
                     name =>
                     {
                         if (string.IsNullOrWhiteSpace(name))
                         {
                             return;
                         }
+
                         if (NameOverHeadManager.FindOption(name) != null)
                         {
                             return;
                         }
+
                         NiceButton nb;
-                        databox.Add
-                        (
-                            nb = new NiceButton
-                            (
+                        databox.Add(
+                            nb = new NiceButton(
                                 0,
                                 0,
                                 130,
@@ -4020,29 +3981,17 @@ namespace ClassicUO.Game.UI.Gumps
                                 name
                             )
                             {
-                                ButtonParameter = (int)Buttons.Last + 1 + rightArea.Children.Count
+                                ButtonParameter = (int)Buttons.Last + 1 + databox.Children.Count
                             }
                         );
                         databox.ReArrangeChildren();
                         nb.IsSelected = true;
-                        _nameOverheadControl?.Dispose();
                         var option = new NameOverheadOption(name);
                         NameOverHeadManager.AddOption(option);
-                        _nameOverheadControl = new NameOverheadAssignControl(option)
-                        {
-                            X = nameOverheadDividerX + 10,
-                            Y = OptionsScrollY + 10
-                        };
-                        Add(_nameOverheadControl, PAGE);
+                        PlaceAssignControl(option);
                         nb.MouseUp += (sss, eee) =>
                         {
-                            _nameOverheadControl?.Dispose();
-                            _nameOverheadControl = new NameOverheadAssignControl(option)
-                            {
-                                X = nameOverheadDividerX + 10,
-                                Y = OptionsScrollY + 10
-                            };
-                            Add(_nameOverheadControl, PAGE);
+                            PlaceAssignControl(option);
                         };
                     }
                 )
@@ -4054,11 +4003,20 @@ namespace ClassicUO.Game.UI.Gumps
 
             delButton.MouseUp += (ss, ee) =>
             {
-                NiceButton nb = databox.FindControls<NiceButton>().SingleOrDefault(a => a.IsSelected);
+                NiceButton nb = null;
+
+                foreach (NiceButton b in databox.FindControls<NiceButton>())
+                {
+                    if (b.IsSelected)
+                    {
+                        nb = b;
+                        break;
+                    }
+                }
+
                 if (nb != null)
                 {
-                    QuestionGump dialog = new QuestionGump
-                    (
+                    QuestionGump dialog = new QuestionGump(
                         ResGumps.MacroDeleteConfirmation,
                         b =>
                         {
@@ -4066,11 +4024,13 @@ namespace ClassicUO.Game.UI.Gumps
                             {
                                 return;
                             }
+
                             if (_nameOverheadControl != null)
                             {
                                 NameOverHeadManager.RemoveOption(_nameOverheadControl.Option);
                                 _nameOverheadControl.Dispose();
                             }
+
                             nb.Dispose();
                             databox.ReArrangeChildren();
                         }
@@ -4079,15 +4039,14 @@ namespace ClassicUO.Game.UI.Gumps
                 }
             };
 
+            NiceButton firstNb = null;
 
             foreach (var option in NameOverHeadManager.GetAllOptions())
             {
                 NiceButton nb;
 
-                databox.Add
-                (
-                    nb = new NiceButton
-                    (
+                databox.Add(
+                    nb = new NiceButton(
                         0,
                         0,
                         130,
@@ -4096,34 +4055,36 @@ namespace ClassicUO.Game.UI.Gumps
                         option.Name
                     )
                     {
-                        ButtonParameter = (int)Buttons.Last + 1 + rightArea.Children.Count,
+                        ButtonParameter = (int)Buttons.Last + 1 + databox.Children.Count,
                         Tag = option
                     }
                 );
 
-                nb.IsSelected = true;
+                firstNb ??= nb;
 
                 nb.MouseUp += (sss, eee) =>
                 {
                     NiceButton mupNiceButton = (NiceButton)sss;
-                    var option = mupNiceButton.Tag as NameOverheadOption;
-                    if (option == null)
+                    var opt = mupNiceButton.Tag as NameOverheadOption;
+                    if (opt == null)
                     {
                         return;
                     }
-                    _nameOverheadControl?.Dispose();
-                    _nameOverheadControl = new NameOverheadAssignControl(option)
-                    {
-                        X = nameOverheadDividerX + 10,
-                        Y = OptionsScrollY + 10
-                    };
-                    Add(_nameOverheadControl, PAGE);
+
+                    PlaceAssignControl(opt);
                 };
             }
 
             databox.ReArrangeChildren();
 
-            Add(rightArea, PAGE);
+            var allOpts = NameOverHeadManager.GetAllOptions();
+            if (allOpts != null && allOpts.Count > 0 && firstNb != null)
+            {
+                firstNb.IsSelected = true;
+                PlaceAssignControl(allOpts[0]);
+            }
+
+            Add(listScroll, PAGE);
         }
 
         private void BuildMods()
@@ -4147,11 +4108,11 @@ namespace ClassicUO.Game.UI.Gumps
             SettingsSection section = AddSettingsSection(box, "UI GUMPS");
 
             section.Add(_uccEnableLTBar = AddCheckBox(null, "Enable UCC - LastTarget Bar", _currentProfile.UOClassicCombatLTBar, startX, startY));
-            startY += _uccEnableLTBar.Height + 2;
+            startY += _uccEnableLTBar.Height + 6;
             section.Add(AddLabel(null, "(Doubleklick to lock in place)", startX, startY));
 
             section.Add(_bandageGump = AddCheckBox(null, "Show gump when using bandages", _currentProfile.BandageGump, startX, startY));
-            startY += _highlightContainersWhenMouseIsOver.Height + 2;
+            startY += _highlightContainersWhenMouseIsOver.Height + 6;
 
             section.Add(AddLabel(null, "Bandage Timer Offset: ", startX, startY));
 
@@ -4171,7 +4132,7 @@ namespace ClassicUO.Game.UI.Gumps
                 )
             );
             _bandageGumpOffsetX.SetText(_currentProfile.BandageGumpOffset.X.ToString());
-            startY += _bandageGumpOffsetX.Height + 2;
+            startY += _bandageGumpOffsetX.Height + 6;
             section.AddRight(AddLabel(null, "X", 0, 0), 2);
 
             section.Add
@@ -4191,23 +4152,94 @@ namespace ClassicUO.Game.UI.Gumps
             );
             _bandageGumpOffsetY.SetText(_currentProfile.BandageGumpOffset.Y.ToString());
 
-            startY += _bandageGumpOffsetY.Height + 2;
+            startY += _bandageGumpOffsetY.Height + 6;
             section.AddRight(AddLabel(null, "Y", 0, 0), 2);
 
             section.Add(_bandageUpDownToggle = AddCheckBox(null, "count up or down", _currentProfile.BandageGumpUpDownToggle, startX, startY));
-            startY += _bandageGumpOffsetY.Height + 2;
+            startY += _bandageGumpOffsetY.Height + 6;
             // ## BEGIN - END ## // UI/GUMPS
             // ## BEGIN - END ## // ONCASTINGGUMP
             section.Add(_onCastingGump = AddCheckBox(null, "OnCasting gump (anti-rubberbanding) on mouse", _currentProfile.OnCastingGump, startX, startY));
-            startY += _highlightContainersWhenMouseIsOver.Height + 2;
+            startY += _highlightContainersWhenMouseIsOver.Height + 6;
             section.Add(_onCastingGump_hidden = AddCheckBox(null, "hide the gump", _currentProfile.OnCastingGump_hidden, startX, startY));
-            startY += _highlightContainersWhenMouseIsOver.Height + 2;
-            section.Add(_onCastingUnderPlayerBar = AddCheckBox(null, "show cast bar under player (4px)", _currentProfile.OnCastingUnderPlayerBar, startX, startY));
-            startY += _highlightContainersWhenMouseIsOver.Height + 2;
+            startY += _highlightContainersWhenMouseIsOver.Height + 6;
+            section.Add(_onCastingHarmfulHueOnPlayer = AddCheckBox(null, "paint player harmful (red) while casting", _currentProfile.OnCastingHarmfulHueOnPlayer, startX, startY));
+            startY += _highlightContainersWhenMouseIsOver.Height + 6;
+            section.Add(AddLabel(null, "Movement turn delay (ms)", startX, startY));
+            section.Add
+            (
+                _movementTurnDelay = AddInputField
+                (
+                    null,
+                    startX, startY,
+                    60,
+                    TEXTBOX_HEIGHT,
+                    null,
+                    80,
+                    false,
+                    true,
+                    1000
+                )
+            );
+            _movementTurnDelay.SetText(_currentProfile.MovementTurnDelay.ToString());
+
+            section.Add(AddLabel(null, "Movement fast turn delay (ms)", startX, startY));
+            section.Add
+            (
+                _movementTurnDelayFast = AddInputField
+                (
+                    null,
+                    startX, startY,
+                    60,
+                    TEXTBOX_HEIGHT,
+                    null,
+                    80,
+                    false,
+                    true,
+                    1000
+                )
+            );
+            _movementTurnDelayFast.SetText(_currentProfile.MovementTurnDelayFast.ToString());
+
+            section.Add(AddLabel(null, "Movement walking delay (ms)", startX, startY));
+            section.Add
+            (
+                _movementWalkingDelay = AddInputField
+                (
+                    null,
+                    startX, startY,
+                    60,
+                    TEXTBOX_HEIGHT,
+                    null,
+                    80,
+                    false,
+                    true,
+                    1000
+                )
+            );
+            _movementWalkingDelay.SetText(_currentProfile.MovementWalkingDelay.ToString());
+
+            section.Add(AddLabel(null, "Movement player walking delay (ms)", startX, startY));
+            section.Add
+            (
+                _movementPlayerWalkingDelay = AddInputField
+                (
+                    null,
+                    startX, startY,
+                    60,
+                    TEXTBOX_HEIGHT,
+                    null,
+                    80,
+                    false,
+                    true,
+                    1000
+                )
+            );
+            _movementPlayerWalkingDelay.SetText(_currentProfile.MovementPlayerWalkingDelay.ToString());
             // ## BEGIN - END ## // ONCASTINGGUMP
             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
             section.Add(_visualResponseManager = AddCheckBox(null, "Visual response manager ON / OFF", _currentProfile.VisualResponseManager, startX, startY));
-            startY += _visualResponseManager.Height + 2;
+            startY += _visualResponseManager.Height + 6;
             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
             // ## BEGIN - END ## // LINES
             SettingsSection section3 = AddSettingsSection(box, "LINES UI");
@@ -4216,7 +4248,7 @@ namespace ClassicUO.Game.UI.Gumps
             startY = section.Bounds.Bottom + 40;
 
             section3.Add(_uccEnableLines = AddCheckBox(null, "Enable UCC - Lines", _currentProfile.UOClassicCombatLines, startX, startY));
-            startY += _uccEnableLines.Height + 2;
+            startY += _uccEnableLines.Height + 6;
             // ## BEGIN - END ## // LINES
             // ## BEGIN - END ## // AUTOLOOT
             SettingsSection section4 = AddSettingsSection(box, "AUTOLOOT UI");
@@ -4225,11 +4257,11 @@ namespace ClassicUO.Game.UI.Gumps
             startY = section3.Bounds.Bottom + 40;
 
             section4.Add(_uccEnableAL = AddCheckBox(null, "Enable UCC - AL", _currentProfile.UOClassicCombatAL, startX, startY));
-            startY += _uccEnableAL.Height + 2;
+            startY += _uccEnableAL.Height + 6;
             section4.Add(_uccEnableGridLootColoring = AddCheckBox(null, "Enable GridLootColoring", _currentProfile.UOClassicCombatAL_EnableGridLootColoring, startX, startY));
-            startY += _uccEnableGridLootColoring.Height + 2;
+            startY += _uccEnableGridLootColoring.Height + 6;
             section4.Add(_uccBEnableLootAboveID = AddCheckBox(null, "Enable LootAboveID", _currentProfile.UOClassicCombatAL_EnableLootAboveID, startX, startY));
-            startY += _uccBEnableLootAboveID.Height + 2;
+            startY += _uccBEnableLootAboveID.Height + 6;
 
             SettingsSection section6 = AddSettingsSection(box, "COOLDOWN UI");
             section6.Y = section4.Bounds.Bottom + 40;
@@ -4237,21 +4269,21 @@ namespace ClassicUO.Game.UI.Gumps
             startY = section4.Bounds.Bottom + 40;
 
             section6.Add(_uccEnableBuffbar = AddCheckBox(null, "Enable UCC - Buffbar", _currentProfile.UOClassicCombatBuffbar, startX, startY));
-            startY += _uccEnableBuffbar.Height + 2;
+            startY += _uccEnableBuffbar.Height + 6;
 
             section6.Add(_uccEnableSelf = AddCheckBox(null, "Enable UCC - Self", _currentProfile.UOClassicCombatSelf, startX, startY));
-            startY += _uccEnableSelf.Height + 2;
+            startY += _uccEnableSelf.Height + 6;
 
             section6.Add(AddLabel(null, "DISABLE / ENABLE BUFFBAR ON CHANGES BELOW", startX, startY));
 
             section6.Add(_uccSwing = AddCheckBox(null, "Show Swing Line", _currentProfile.UOClassicCombatBuffbar_SwingEnabled, startX, startY));
-            startY += _uccSwing.Height + 2;
+            startY += _uccSwing.Height + 6;
             section6.Add(_uccDoD = AddCheckBox(null, "Show Do Disarm Line", _currentProfile.UOClassicCombatBuffbar_DoDEnabled, startX, startY));
-            startY += _uccDoD.Height + 2;
+            startY += _uccDoD.Height + 6;
             section6.Add(_uccGotD = AddCheckBox(null, "Show Got Disarmed Line", _currentProfile.UOClassicCombatBuffbar_GotDEnabled, startX, startY));
-            startY += _uccGotD.Height + 2;
+            startY += _uccGotD.Height + 6;
             section6.Add(_uccLocked = AddCheckBox(null, "Lock in place", _currentProfile.UOClassicCombatBuffbar_Locked, startX, startY));
-            startY += _uccLocked.Height + 2;
+            startY += _uccLocked.Height + 6;
             // ## BEGIN - END ## // BUFFBAR/UCCSETTINGS
             // ## BEGIN - END ## // BUFFBAR/UCCSETTINGS
             SettingsSection section7 = AddSettingsSection(box, "BUFFBAR AND SELF SETTINGS");
@@ -4342,7 +4374,7 @@ namespace ClassicUO.Game.UI.Gumps
             _uccBandiesHPTreshold.SetText(_currentProfile.UOClassicCombatSelf_BandiesHPTreshold.ToString());
 
             section10.Add(_uccBandiesPoison = AddCheckBox(null, "Bandies when poisoned", _currentProfile.UOClassicCombatSelf_BandiesPoison, startX, startY));
-            startY += _uccBandiesPoison.Height + 2;
+            startY += _uccBandiesPoison.Height + 6;
 
             section10.Add(AddLabel(null, "Curepot HP treshold (diffhits >= ): ", startX, startY));
 
@@ -4427,10 +4459,10 @@ namespace ClassicUO.Game.UI.Gumps
             _uccAutoRearmAfterDisarmedCooldown.SetText(_currentProfile.UOClassicCombatSelf_AutoRearmAfterDisarmedCooldown.ToString());
 
             section11.Add(_uccClilocTrigger = AddCheckBox(null, "Use Cliloc Triggers (up time on cliloc and uoc hotkey)", _currentProfile.UOClassicCombatSelf_ClilocTriggers, startX, startY));
-            startY += _uccClilocTrigger.Height + 2;
+            startY += _uccClilocTrigger.Height + 6;
 
             section11.Add(_uccMacroTrigger = AddCheckBox(null, "Use Macro Triggers (change uoc hotkey to disarm / pot / rearm by ucc)", _currentProfile.UOClassicCombatSelf_MacroTriggers, startX, startY));
-            startY += _uccMacroTrigger.Height + 2;
+            startY += _uccMacroTrigger.Height + 6;
 
             section11.Add(AddLabel(null, "Strength Pot Cooldown (ms)", startX, startY));
             section11.Add
@@ -4514,7 +4546,7 @@ namespace ClassicUO.Game.UI.Gumps
             startY = section11.Bounds.Bottom + 40;
 
             section12.Add(_enableTabGridGump = AddCheckBox(null, ResGumps.enableTabGridGump, _currentProfile.TabGridGumpEnabled, startX, startY));
-            startY += _enableTabGridGump.Height + 2;
+            startY += _enableTabGridGump.Height + 6;
 
             section12.Add(AddLabel(null, "Grid Rows", startX, startY));
             section12.AddRight
@@ -4613,8 +4645,8 @@ namespace ClassicUO.Game.UI.Gumps
             rightArea.Add(_coolDowns);
 
             #region Cooldown conditions
-            SettingsSection conditions = new SettingsSection("Condition", rightArea.Width + 10);
-            conditions.Y = _coolDowns.Y + _coolDowns.Height + 5;
+            SettingsSection conditions = new SettingsSection("Condition", rightArea.Width);
+            conditions.Y = _coolDowns.Y + _coolDowns.Height + 16;
 
             {
                 NiceButton _button;
@@ -4647,7 +4679,7 @@ namespace ClassicUO.Game.UI.Gumps
         {
             const int PAGE = 8788;
             ScrollArea rightArea = new ScrollArea(165, OptionsScrollY, WIDTH - 185, OptionsScrollHeight, true);
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
 
             SettingsSection gridSection = new SettingsSection("Grid Containers", rightArea.Width);
 
@@ -4700,7 +4732,7 @@ namespace ClassicUO.Game.UI.Gumps
                 gridSection.PushIndent();
                 gridSection.Add
                     (
-                     _gridBorderHue = new ModernColorPicker.HueDisplay(_currentProfile.GridBorderHue, null, true)
+                     _gridBorderHue = new HueDisplay(_currentProfile.GridBorderHue, null, true)
                     );
                 gridSection.AddRight(AddLabel(null, "Border hue", 0, 0));
                 gridSection.PopIndent();
@@ -4718,7 +4750,7 @@ namespace ClassicUO.Game.UI.Gumps
                     ));
 
                 gridSection.PushIndent();
-                gridSection.Add(_altGridContainerBackgroundHue = new ModernColorPicker.HueDisplay(_currentProfile.AltGridContainerBackgroundHue, null, true));
+                gridSection.Add(_altGridContainerBackgroundHue = new HueDisplay(_currentProfile.AltGridContainerBackgroundHue, null, true));
                 gridSection.AddRight(AddLabel(null, "Background hue", 0, 0));
                 gridSection.PopIndent();
 
@@ -4821,7 +4853,13 @@ namespace ClassicUO.Game.UI.Gumps
 
         public Combobox GenerateFontSelector(byte selectedFont)
         {
-            var fontLabels = Enumerable.Range(0, 20).Select(i => $"Font {i}").ToArray();
+            string[] fontLabels = new string[20];
+
+            for (int fi = 0; fi < 20; fi++)
+            {
+                fontLabels[fi] = $"Font {fi}";
+            }
+
             int idx = Math.Max(0, Math.Min(19, (int)selectedFont));
             return AddCombobox(null, fontLabels, idx, 0, 0, 200);
         }
@@ -4857,7 +4895,7 @@ namespace ClassicUO.Game.UI.Gumps
             _hueLabel.Y = 1;
             main.Add(_hueLabel);
 
-            var _hueSelector = new ModernColorPicker.HueDisplay(data.hue, null, true) { X = _hueLabel.X + _hueLabel.Width + 2, Y = 1 };
+            var _hueSelector = new HueDisplay(data.hue, null, true) { X = _hueLabel.X + _hueLabel.Width + 2, Y = 1 };
             main.Add(_hueSelector);
 
             InputField _name = AddInputField(null, _hueSelector.X + _hueSelector.Width + 10, 1, 100, TEXTBOX_HEIGHT);
@@ -4918,7 +4956,7 @@ namespace ClassicUO.Game.UI.Gumps
             const int PAGE = 8789;
 
             ScrollArea rightArea = new ScrollArea(165, OptionsScrollY, WIDTH - 185, OptionsScrollHeight, true);
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
 
             int startX = 5;
             int startY = 5;
@@ -5013,10 +5051,10 @@ namespace ClassicUO.Game.UI.Gumps
             SettingsSection section = AddSettingsSection(box, _langDust.ArtHueChanges);
 
             section.Add(_colorStealth = AddCheckBox(null, _langDust.ColorStealth, _currentProfile.ColorStealth, startX, startY));
-            startY += _colorStealth.Height + 2;
+            startY += _colorStealth.Height + 6;
 
             section.Add(_stealthColorPickerBox = AddHueDisplay(null, startX, startY, _currentProfile.StealthHue, ""));
-            startY += _stealthColorPickerBox.Height + 2;
+            startY += _stealthColorPickerBox.Height + 6;
 
             section.AddRight(AddLabel(null, _langDust.StealthColor, 0, 0), 2);
 
@@ -5024,13 +5062,13 @@ namespace ClassicUO.Game.UI.Gumps
 
             int mode = _currentProfile.StealthNeonType;
             section.AddRight(_stealthNeonType = AddCombobox(null, new[] { _langDust.Off, _langDust.White, _langDust.Pink, _langDust.Ice, _langDust.Fire }, mode, startX, startY, 100));
-            startY += _stealthNeonType.Height + 2;
+            startY += _stealthNeonType.Height + 6;
 
             section.Add(_colorEnergyBolt = AddCheckBox(null, _langDust.ColorEnergyBolt, _currentProfile.ColorEnergyBolt, startX, startY));
-            startY += _colorEnergyBolt.Height + 2;
+            startY += _colorEnergyBolt.Height + 6;
 
             section.Add(_energyBoltColorPickerBox = AddHueDisplay(null, startX, startY, _currentProfile.EnergyBoltHue, ""));
-            startY += _energyBoltColorPickerBox.Height + 2;
+            startY += _energyBoltColorPickerBox.Height + 6;
 
             section.AddRight(AddLabel(null, _langDust.ColorEnergyBoltLabel, 0, 0), 2);
 
@@ -5038,25 +5076,25 @@ namespace ClassicUO.Game.UI.Gumps
 
             mode = _currentProfile.EnergyBoltNeonType;
             section.AddRight(_energyBoltNeonType = AddCombobox(null, new[] { _langDust.Off, _langDust.White, _langDust.Pink, _langDust.Ice, _langDust.Fire }, mode, startX, startY, 100));
-            startY += _energyBoltNeonType.Height + 2;
+            startY += _energyBoltNeonType.Height + 6;
 
             section.Add(AddLabel(null, _langDust.ChangeEnergyBoltArtTo, startX, startY));
 
             mode = _currentProfile.EnergyBoltArtType;
             section.AddRight(_energyBoltArtType = AddCombobox(null, new[] { _langDust.Normal, _langDust.Explo, _langDust.Bagball }, mode, startX, startY, 100));
-            startY += _energyBoltArtType.Height + 2;
+            startY += _energyBoltArtType.Height + 6;
 
             section.Add(AddLabel(null, _langDust.ChangeGoldArtTo, startX, startY));
 
             mode = _currentProfile.GoldType;
             section.AddRight(_goldType = AddCombobox(null, new[] { _langDust.Normal, _langDust.Cannonball, _langDust.PrevCoin }, mode, startX, startY, 100));
-            startY += _goldType.Height + 2;
+            startY += _goldType.Height + 6;
 
             section.Add(_colorGold = AddCheckBox(null, _langDust.ColorCannonballOrPrevCoin, _currentProfile.ColorGold, startX, startY));
-            startY += _colorGold.Height + 2;
+            startY += _colorGold.Height + 6;
 
             section.Add(_goldColorPickerBox = AddHueDisplay(null, startX, startY, _currentProfile.GoldHue, ""));
-            startY += _goldColorPickerBox.Height + 2;
+            startY += _goldColorPickerBox.Height + 6;
 
             section.AddRight(AddLabel(null, _langDust.CannonballOrPrevCoinColor, 0, 0), 2);
 
@@ -5079,19 +5117,19 @@ namespace ClassicUO.Game.UI.Gumps
                     startY
                 )
             );
-            startY += _enlargeJewelryPaperdoll.Height + 2;
+            startY += _enlargeJewelryPaperdoll.Height + 6;
 
             section.Add(AddLabel(null, _langDust.ChangeTreeArtTo, startX, startY));
 
             mode = _currentProfile.TreeType;
             section.AddRight(_treeType = AddCombobox(null, new[] { _langDust.Normal, _langDust.Stump, _langDust.Tile }, mode, startX, startY, 100));
-            startY += _treeType.Height + 2;
+            startY += _treeType.Height + 6;
 
             section.Add(_colorTreeTile = AddCheckBox(null, _langDust.ColorStumpOrTile, _currentProfile.ColorTreeTile, startX, startY));
-            startY += _colorTreeTile.Height + 2;
+            startY += _colorTreeTile.Height + 6;
 
             section.Add(_treeTileColorPickerBox = AddHueDisplay(null, startX, startY, _currentProfile.TreeTileHue, ""));
-            startY += _treeTileColorPickerBox.Height + 2;
+            startY += _treeTileColorPickerBox.Height + 6;
 
             section.AddRight(AddLabel(null, _langDust.StumpOrTileColor, 0, 0), 2);
 
@@ -5099,18 +5137,18 @@ namespace ClassicUO.Game.UI.Gumps
 
             mode = _currentProfile.BlockerType;
             section.AddRight(_blockerType = AddCombobox(null, new[] { _langDust.Normal, _langDust.Stump, _langDust.Tile }, mode, startX, startY, 100));
-            startY += _blockerType.Height + 2;
+            startY += _blockerType.Height + 6;
 
             section.Add(_colorBlockerTile = AddCheckBox(null, _langDust.ColorStumpOrTileBlocker, _currentProfile.ColorBlockerTile, startX, startY));
-            startY += _colorBlockerTile.Height + 2;
+            startY += _colorBlockerTile.Height + 6;
 
             section.Add(_blockerTileColorPickerBox = AddHueDisplay(null, startX, startY, _currentProfile.BlockerTileHue, ""));
-            startY += _blockerTileColorPickerBox.Height + 2;
+            startY += _blockerTileColorPickerBox.Height + 6;
 
             section.AddRight(AddLabel(null, _langDust.StumpOrTileColor, 0, 0), 2);
 
             section.Add(_moongateRecolor = AddCheckBox(null, "Recolor moongates (graphic 0xF6C)", _currentProfile.MoongateRecolorEnabled, startX, startY));
-            startY += _moongateRecolor.Height + 2;
+            startY += _moongateRecolor.Height + 6;
 
             int moongateMode = _currentProfile.MoongateHueStyle - 1;
 
@@ -5124,15 +5162,69 @@ namespace ClassicUO.Game.UI.Gumps
             }
 
             section.Add(_moongateHueStyle = AddCombobox(null, new[] { _langDust.White, _langDust.Pink, _langDust.Ice, _langDust.Fire, _langDust.Custom }, moongateMode, startX, startY, 100));
-            startY += _moongateHueStyle.Height + 2;
+            startY += _moongateHueStyle.Height + 6;
 
             section.Add(_moongateCustomHuePicker = AddHueDisplay(null, startX, startY, _currentProfile.MoongateCustomHue, ""));
-            startY += _moongateCustomHuePicker.Height + 2;
+            startY += _moongateCustomHuePicker.Height + 6;
             section.AddRight(AddLabel(null, "Moongate custom hue", 0, 0), 2);
 
             section.Add(_scaleMonstersEnabled = AddCheckBox(null, "Scale monsters (Ctrl+Shift over monster: +/- to scale)", _currentProfile.ScaleMonstersEnabled, startX, startY));
-            startY += _scaleMonstersEnabled.Height + 2;
+            startY += _scaleMonstersEnabled.Height + 6;
+
+            section.Add(new Label("Overhead / Underfoot", true, HUE_FONT, font: FONT));
+            section.Add(
+                _overheadRange = AddCheckBox(
+                    null,
+                    _langDust.DisplayRangeInOverhead,
+                    _currentProfile.OverheadRange,
+                    0,
+                    0
+                )
+            );
+
+            section.Add(new Label(_langDust.Nameplates, true, HUE_FONT, font: FONT));
+            section.Add(_namePlateHealthBar = AddCheckBox(null, "", _currentProfile.NamePlateHealthBar, 0, 0));
+            section.AddRight(AddLabel(null, _langDust.NameplatesAlsoActAsHealthBars, 0, 0));
+            section.PushIndent();
+            section.Add(AddLabel(null, _langDust.HpOpacity, 0, 0));
+            section.AddRight(
+                _namePlateHealthBarOpacity = AddHSlider(null, 0, 100, _currentProfile.NamePlateHealthBarOpacity, 0, 0, 200)
+            );
+            section.PopIndent();
+
+            section.Add(new Label(_langDust.Mobiles, true, HUE_FONT, font: FONT));
+            section.Add(AddLabel(null, _langDust.OverheadTextWidth, 0, 0));
+            section.AddRight(
+                _overheadTextWidth = AddHSlider(null, 100, 600, _currentProfile.OverheadChatWidth, 0, 0, 200)
+            );
+
+            section.Add(new Label(_langDust.NameplatesExtendedSection, true, HUE_FONT, font: FONT));
+            section.Add(_namePlateShowAtFullHealth = AddCheckBox(null, "", _currentProfile.NamePlateHideAtFullHealth, 0, 0));
+            section.AddRight(new Label(_langDust.HideNameplatesIfFullHealth, true, HUE_FONT, font: FONT));
+            section.PushIndent();
+            section.Add(_namePlateHealthOnlyWarmode = AddCheckBox(null, "", _currentProfile.NamePlateHideAtFullHealthInWarmode, 0, 0));
+            section.AddRight(new Label(_langDust.OnlyInWarmode, true, HUE_FONT, font: FONT));
+            section.PopIndent();
+            section.Add(AddLabel(null, _langDust.BorderOpacity, 0, 0));
+            section.AddRight(_nameplateBorderOpacity = AddHSlider(null, 0, 100, _currentProfile.NamePlateBorderOpacity, 0, 0, 200));
+            section.Add(AddLabel(null, _langDust.BackgroundOpacity, 0, 0));
+            section.AddRight(_namePlateOpacity = AddHSlider(null, 0, 100, _currentProfile.NamePlateOpacity, 0, 0, 200));
+            section.Add(_namePlateCustomChrome = AddCheckBox(null, "", _currentProfile.NamePlateUseCustomChrome, 0, 0));
+            section.AddRight(new Label(_langDust.NamePlateCustomChrome, true, HUE_FONT, font: FONT));
+            section.PushIndent();
+            section.Add(_namePlateCustomBgHue = AddHueDisplay(null, 0, 0, _currentProfile.NamePlateCustomBackgroundHue, ""));
+            section.AddRight(new Label(_langDust.NamePlateCustomBackgroundHue, true, HUE_FONT, font: FONT), 2);
+            section.Add(_namePlateCustomBorderHuePicker = AddHueDisplay(null, 0, 0, _currentProfile.NamePlateCustomBorderHue, ""));
+            section.AddRight(new Label(_langDust.NamePlateCustomBorderHue, true, HUE_FONT, font: FONT), 2);
+            section.PopIndent();
+            section.Add(_namePlateHealthBarMatchStrip = AddCheckBox(null, "", _currentProfile.NamePlateHealthBarMatchStrip, 0, 0));
+            section.AddRight(new Label(_langDust.NamePlateHealthBarMatchStrip, true, HUE_FONT, font: FONT));
+            section.Add(_namePlateFullPlateWidthScalesWithHp = AddCheckBox(null, "", _currentProfile.NamePlateFullPlateWidthScalesWithHp, 0, 0));
+            section.AddRight(new Label(_langDust.NamePlateFullPlateWidthScalesWithHp, true, HUE_FONT, font: FONT));
+            section.Add(_showHpLineInNoh = AddCheckBox(null, "", _currentProfile.ShowHPLineInNOH, 0, 0));
+            section.AddRight(new Label(_langDust.ShowHPLineInNOH, true, HUE_FONT, font: FONT));
             // ## BEGIN - END ## // ART / HUE CHANGES
+
             // ## BEGIN - END ## // TITLE BAR
             SettingsSection sectionTitleBar = AddSettingsSection(box, "Title Bar");
             sectionTitleBar.Y = section.Bounds.Bottom + 80;
@@ -5140,26 +5232,26 @@ namespace ClassicUO.Game.UI.Gumps
 
             sectionTitleBar.Add(AddLabel(null, "Window title style", startX, startY));
             sectionTitleBar.AddRight(_windowTitleStyle = AddCombobox(null, WINDOW_TITLE_STYLE_LABELS, GetWindowTitleStyleIndex(_currentProfile.GetEffectiveWindowTitleStyle()), startX, startY, 180));
-            startY += _windowTitleStyle.Height + 2;
+            startY += _windowTitleStyle.Height + 6;
 
             _windowTitleStyle.OnOptionSelected += (_, _) => ApplyWindowTitleStyleSelection(true);
             if (_windowBorderless != null) _windowBorderless.ValueChanged += (_, _) => SyncWindowTitleStyleFromWindowOptions();
             if (_enableWindowBorderFrame != null) _enableWindowBorderFrame.ValueChanged += (_, _) => SyncWindowTitleStyleFromWindowOptions();
 
             sectionTitleBar.Add(_enableTitleBarStats = AddCheckBox(null, "Enable title bar stats (HP, Mana, Stamina)", _currentProfile.EnableTitleBarStats, startX, startY));
-            startY += _enableTitleBarStats.Height + 2;
+            startY += _enableTitleBarStats.Height + 6;
 
             sectionTitleBar.Add(AddLabel(null, "Display mode (choose one):", startX, startY));
             startY += 20;
 
-            sectionTitleBar.Add(_titleBarStatsModeText = AddCheckBox(null, "Text (HP 85/100, MP 42/50, SP 95/100)", _currentProfile.TitleBarStatsMode == TitleBarStatsMode.Text, startX, startY));
-            startY += _titleBarStatsModeText.Height + 2;
+            sectionTitleBar.Add(_titleBarStatsModeText = AddCheckBox(null, "Text (HP 85/100, MP 42/50, SP 95/100)", _currentProfile.EnableTitleBarStats && _currentProfile.TitleBarStatsMode == TitleBarStatsMode.Text, startX, startY));
+            startY += _titleBarStatsModeText.Height + 6;
 
-            sectionTitleBar.Add(_titleBarStatsModePercent = AddCheckBox(null, "Percent (HP 85%, MP 84%, SP 95%)", _currentProfile.TitleBarStatsMode == TitleBarStatsMode.Percent, startX, startY));
-            startY += _titleBarStatsModePercent.Height + 2;
+            sectionTitleBar.Add(_titleBarStatsModePercent = AddCheckBox(null, "Percent (HP 85%, MP 84%, SP 95%)", _currentProfile.EnableTitleBarStats && _currentProfile.TitleBarStatsMode == TitleBarStatsMode.Percent, startX, startY));
+            startY += _titleBarStatsModePercent.Height + 6;
 
-            sectionTitleBar.Add(_titleBarStatsModeProgressBar = AddCheckBox(null, "Progress Bar (colored bars below each other)", _currentProfile.TitleBarStatsMode == TitleBarStatsMode.ProgressBar, startX, startY));
-            startY += _titleBarStatsModeProgressBar.Height + 2;
+            sectionTitleBar.Add(_titleBarStatsModeProgressBar = AddCheckBox(null, "Progress Bar (colored bars below each other)", _currentProfile.EnableTitleBarStats && _currentProfile.TitleBarStatsMode == TitleBarStatsMode.ProgressBar, startX, startY));
+            startY += _titleBarStatsModeProgressBar.Height + 6;
 
             void UncheckOtherTitleBarModes(Checkbox selected)
             {
@@ -5182,103 +5274,103 @@ namespace ClassicUO.Game.UI.Gumps
             startY = sectionTitleBar.Bounds.Bottom + 40;
 
             section2.Add(_highlightTileRange = AddCheckBox(null, _langDust.HighlightTilesOnRange, _currentProfile.HighlightTileAtRange, startX, startY));
-            startY += _highlightTileRange.Height + 2;
+            startY += _highlightTileRange.Height + 6;
 
             section2.Add(AddLabel(null, _langDust.AtRange, startX, startY));
 
             section2.AddRight(_highlightTileRangeRange = AddHSlider(null, 1, 20, _currentProfile.HighlightTileAtRangeRange, startX, startY, 200));
-            startY += _highlightTileRangeRange.Height + 2;
+            startY += _highlightTileRangeRange.Height + 6;
 
             section2.Add(_highlightTileRangeColorPickerBox = AddHueDisplay(null, startX, startY, _currentProfile.HighlightTileRangeHue, ""));
-            startY += _highlightTileRangeColorPickerBox.Height + 2;
+            startY += _highlightTileRangeColorPickerBox.Height + 6;
             section2.AddRight(AddLabel(null, _langDust.TileColor, 0, 0), 2);
 
             section2.Add(_highlightTileRangeSpell = AddCheckBox(null, _langDust.HighlightTilesOnRangeSpell, _currentProfile.HighlightTileAtRangeSpell, startX, startY));
-            startY += _highlightTileRangeSpell.Height + 2;
+            startY += _highlightTileRangeSpell.Height + 6;
 
             section2.Add(AddLabel(null, _langDust.AtRange, startX, startY));
 
             section2.AddRight(_highlightTileRangeRangeSpell = AddHSlider(null, 1, 20, _currentProfile.HighlightTileAtRangeRangeSpell, startX, startY, 200));
-            startY += _highlightTileRangeRangeSpell.Height + 2;
+            startY += _highlightTileRangeRangeSpell.Height + 6;
 
             section2.Add(_highlightTileRangeColorPickerBoxSpell = AddHueDisplay(null, startX, startY, _currentProfile.HighlightTileRangeHueSpell, ""));
-            startY += _highlightTileRangeColorPickerBoxSpell.Height + 2;
+            startY += _highlightTileRangeColorPickerBoxSpell.Height + 6;
             section2.AddRight(AddLabel(null, _langDust.TileColor, 0, 0), 2);
 
             section2.Add(_previewFields = AddCheckBox(null, _langDust.PreviewFields, _currentProfile.PreviewFields, startX, startY));
-            startY += _previewFields.Height + 2;
+            startY += _previewFields.Height + 6;
 
             section2.Add(_ownAuraByHP = AddCheckBox(null, _langDust.ColorOwnAuraByHP, _currentProfile.OwnAuraByHP, startX, startY));
-            startY += _ownAuraByHP.Height + 2;
+            startY += _ownAuraByHP.Height + 6;
 
             section2.Add(AddLabel(null, _langDust.GlowingWeapons, startX, startY));
 
             mode = _currentProfile.GlowingWeaponsType;
             section2.Add(_glowingWeaponsType = AddCombobox(null, new[] { _langDust.Off, _langDust.White, _langDust.Pink, _langDust.Ice, _langDust.Fire, _langDust.Custom }, mode, startX, startY, 100));
-            startY += _glowingWeaponsType.Height + 2;
+            startY += _glowingWeaponsType.Height + 6;
 
             section2.Add(_highlightGlowingWeaponsTypeColorPickerBoxHue = AddHueDisplay(null, startX, startY, _currentProfile.HighlightGlowingWeaponsTypeHue, ""));
-            startY += _highlightGlowingWeaponsTypeColorPickerBoxHue.Height + 2;
+            startY += _highlightGlowingWeaponsTypeColorPickerBoxHue.Height + 6;
             section2.AddRight(AddLabel(null, _langDust.CustomColorGlowingWeapons, 0, 0), 2);
 
             section2.Add(AddLabel(null, _langDust.HighlightLasttarget, startX, startY));
 
             mode = _currentProfile.HighlightLastTargetType;
             section2.Add(_highlightLastTargetType = AddCombobox(null, new[] { _langDust.Off, _langDust.White, _langDust.Pink, _langDust.Ice, _langDust.Fire, _langDust.Custom }, mode, startX, startY, 100));
-            startY += _highlightLastTargetType.Height + 2;
+            startY += _highlightLastTargetType.Height + 6;
 
             section2.Add(_highlightLastTargetTypeColorPickerBox = AddHueDisplay(null, startX, startY, _currentProfile.HighlightLastTargetTypeHue, ""));
-            startY += _highlightLastTargetTypeColorPickerBox.Height + 2;
+            startY += _highlightLastTargetTypeColorPickerBox.Height + 6;
             section2.AddRight(AddLabel(null, _langDust.CustomColorLastTarget, 0, 0), 2);
 
             section2.Add(AddLabel(null, "Highlight Friends Guild Mobiles:", startX, startY));
 
             mode = _currentProfile.HighlighFriendsGuildType;
             section2.Add(_highlighFriendsGuildType = AddCombobox(null, new[] { _langDust.Off, _langDust.White, _langDust.Pink, _langDust.Ice, _langDust.Fire, _langDust.Custom }, mode, startX, startY, 100));
-            startY += _highlighFriendsGuildType.Height + 2;
+            startY += _highlighFriendsGuildType.Height + 6;
 
             section2.Add(_highlighFriendsGuildTypeHueColorPickerBox = AddHueDisplay(null, startX, startY, _currentProfile.HighlighFriendsGuildTypeHue, ""));
-            startY += _highlighFriendsGuildTypeHueColorPickerBox.Height + 2;
+            startY += _highlighFriendsGuildTypeHueColorPickerBox.Height + 6;
             section2.AddRight(AddLabel(null, "Custom color friends guild", 0, 0), 2);
 
             section2.Add(AddLabel(null, _langDust.HighlightLasttargetPoisoned, startX, startY));
 
             mode = _currentProfile.HighlightLastTargetTypePoison;
             section2.Add(_highlightLastTargetTypePoison = AddCombobox(null, new[] { _langDust.Off, _langDust.White, _langDust.Pink, _langDust.Ice, _langDust.Fire, "Special", _langDust.Custom }, mode, startX, startY, 100));
-            startY += _highlightLastTargetTypePoison.Height + 2;
+            startY += _highlightLastTargetTypePoison.Height + 6;
 
             section2.Add(_highlightLastTargetTypeColorPickerBoxPoison = AddHueDisplay(null, startX, startY, _currentProfile.HighlightLastTargetTypePoisonHue, ""));
-            startY += _highlightLastTargetTypeColorPickerBoxPoison.Height + 2;
+            startY += _highlightLastTargetTypeColorPickerBoxPoison.Height + 6;
             section2.AddRight(AddLabel(null, _langDust.CustomColorPoisoned, 0, 0), 2);
 
             section2.Add(AddLabel(null, _langDust.HighlightLasttargetParalyzed, startX, startY));
 
             mode = _currentProfile.HighlightLastTargetTypePara;
             section2.Add(_highlightLastTargetTypePara = AddCombobox(null, new[] { _langDust.Off, _langDust.White, _langDust.Pink, _langDust.Ice, _langDust.Fire, "Special", _langDust.Custom }, mode, startX, startY, 100));
-            startY += _highlightLastTargetTypePara.Height + 2;
+            startY += _highlightLastTargetTypePara.Height + 6;
 
             section2.Add(_highlightLastTargetTypeColorPickerBoxPara = AddHueDisplay(null, startX, startY, _currentProfile.HighlightLastTargetTypeParaHue, ""));
-            startY += _highlightLastTargetTypeColorPickerBoxPara.Height + 2;
+            startY += _highlightLastTargetTypeColorPickerBoxPara.Height + 6;
             section2.AddRight(AddLabel(null, _langDust.CustomColorParalyzed, 0, 0), 2);
 
             section2.Add(AddLabel(null, "Highlight lasttarget stunned:", startX, startY));
 
             mode = _currentProfile.HighlightLastTargetTypeStunned;
             section2.Add(_highlightLastTargetTypeStunned = AddCombobox(null, new[] { _langDust.Off, _langDust.White, _langDust.Pink, _langDust.Ice, _langDust.Fire, "Special", _langDust.Custom }, mode, startX, startY, 100));
-            startY += _highlightLastTargetTypeStunned.Height + 2;
+            startY += _highlightLastTargetTypeStunned.Height + 6;
 
             section2.Add(_highlightLastTargetTypeColorPickerBoxStunned = AddHueDisplay(null, startX, startY, _currentProfile.HighlightLastTargetTypeStunnedHue, ""));
-            startY += _highlightLastTargetTypeColorPickerBoxStunned.Height + 2;
+            startY += _highlightLastTargetTypeColorPickerBoxStunned.Height + 6;
             section2.AddRight(AddLabel(null, "Custom color stunned", 0, 0), 2);
 
             section2.Add(AddLabel(null, "Highlight lasttarget mortalled (yellow hits):", startX, startY));
 
             mode = _currentProfile.HighlightLastTargetTypeMortalled;
             section2.Add(_highlightLastTargetTypeMortalled = AddCombobox(null, new[] { _langDust.Off, _langDust.White, _langDust.Pink, _langDust.Ice, _langDust.Fire, "Special", _langDust.Custom }, mode, startX, startY, 100));
-            startY += _highlightLastTargetTypeMortalled.Height + 2;
+            startY += _highlightLastTargetTypeMortalled.Height + 6;
 
             section2.Add(_highlightLastTargetTypeColorPickerBoxMortalled = AddHueDisplay(null, startX, startY, _currentProfile.HighlightLastTargetTypeMortalledHue, ""));
-            startY += _highlightLastTargetTypeColorPickerBoxMortalled.Height + 2;
+            startY += _highlightLastTargetTypeColorPickerBoxMortalled.Height + 6;
             section2.AddRight(AddLabel(null, "Custom color mortalled", 0, 0), 2);
             // ## BEGIN - END ## // VISUAL HELPERS
             // ## BEGIN - END ## // HEALTHBAR
@@ -5288,9 +5380,9 @@ namespace ClassicUO.Game.UI.Gumps
             startY = section2.Bounds.Bottom + 40;
 
             section3.Add(_highlightLastTargetHealthBarOutline = AddCheckBox(null, _langDust.HighlightLTHealthbar, _currentProfile.HighlightLastTargetHealthBarOutline, startX, startY));
-            startY += _highlightLastTargetHealthBarOutline.Height + 2;
+            startY += _highlightLastTargetHealthBarOutline.Height + 6;
             section3.Add(_highlightHealthBarByState = AddCheckBox(null, _langDust.HighlightHealthBarByState, _currentProfile.HighlightHealthBarByState, startX, startY));
-            startY += _highlightHealthBarByState.Height + 2;
+            startY += _highlightHealthBarByState.Height + 6;
             // ## BEGIN - END ## // HEALTHBAR
             // ## BEGIN - END ## // CURSOR
             SettingsSection section4 = AddSettingsSection(box, "Cursor");
@@ -5299,7 +5391,7 @@ namespace ClassicUO.Game.UI.Gumps
             startY = section3.Bounds.Bottom + 40;
 
             section4.Add(_spellOnCursor = AddCheckBox(null, _langDust.ShowSpellsOnCursor, _currentProfile.SpellOnCursor, startX, startY));
-            startY += _spellOnCursor.Height + 2;
+            startY += _spellOnCursor.Height + 6;
 
             section4.Add(AddLabel(null, "Spellicon offset: ", startX, startY));
 
@@ -5320,7 +5412,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
             _spellOnCursorOffsetX.SetText(_currentProfile.SpellOnCursorOffset.X.ToString());
             section4.AddRight(AddLabel(null, "X", 0, 0), 2);
-            startY += _spellOnCursorOffsetX.Height + 2;
+            startY += _spellOnCursorOffsetX.Height + 6;
 
             section4.Add
             (
@@ -5339,39 +5431,31 @@ namespace ClassicUO.Game.UI.Gumps
             );
             _spellOnCursorOffsetY.SetText(_currentProfile.SpellOnCursorOffset.Y.ToString());
             section4.AddRight(AddLabel(null, "Y", 0, 0), 2);
-            startY += _spellOnCursorOffsetY.Height + 2;
+            startY += _spellOnCursorOffsetY.Height + 6;
 
             section4.Add(_colorGameCursor = AddCheckBox(null, _langDust.ColorGameCursorWhenTargeting, _currentProfile.ColorGameCursor, startX, startY));
-            startY += _colorGameCursor.Height + 2;
+            startY += _colorGameCursor.Height + 6;
             section4.Add(_showTargetRangeIndicator = AddCheckBox(null, "", _currentProfile.ShowTargetRangeIndicator, 0, 0));
             section4.AddRight(AddLabel(null, Language.Instance?.GetOptionsGumpLanguage?.GetGeneral?.CursorRange ?? "Show target range indicator (shows range circle when targeting)", 0, 0));
-            startY += _showTargetRangeIndicator.Height + 2;
+            startY += _showTargetRangeIndicator.Height + 6;
             // ## BEGIN - END ## // CURSOR
-            // ## BEGIN - END ## // OVERHEAD / UNDERCHAR
-            SettingsSection section5 = AddSettingsSection(box, "Overhead / Underfoot");
-            section5.Y = section4.Bounds.Bottom + 40;
-            startY = section4.Bounds.Bottom + 40;
-
-            section5.Add(_overheadRange = AddCheckBox(null, _langDust.DisplayRangeInOverhead, _currentProfile.OverheadRange, startX, startY));
-            startY += _overheadRange.Height + 2;
-            // ## BEGIN - END ## // OVERHEAD / UNDERCHAR
             // ## BEGIN - END ## // OLDHEALTHLINES
             SettingsSection section6 = AddSettingsSection(box, "Old Health Lines");
-            section6.Y = section5.Bounds.Bottom + 40;
+            section6.Y = section4.Bounds.Bottom + 40;
 
-            startY = section5.Bounds.Bottom + 40;
+            startY = section4.Bounds.Bottom + 40;
 
             section6.Add(_useOldHealthBars = AddCheckBox(null, _langDust.UseOldHealthlines, _currentProfile.UseOldHealthBars, startX, startY));
-            startY += _useOldHealthBars.Height + 2;
+            startY += _useOldHealthBars.Height + 6;
             section6.Add(_multipleUnderlinesSelfParty = AddCheckBox(null, _langDust.DisplayManaStamInUnderline, _currentProfile.MultipleUnderlinesSelfParty, startX, startY));
-            startY += _multipleUnderlinesSelfParty.Height + 2;
+            startY += _multipleUnderlinesSelfParty.Height + 6;
             section6.Add(_multipleUnderlinesSelfPartyBigBars = AddCheckBox(null, _langDust.UseBiggerUnderlines, _currentProfile.MultipleUnderlinesSelfPartyBigBars, startX, startY));
-            startY += _multipleUnderlinesSelfPartyBigBars.Height + 2;
+            startY += _multipleUnderlinesSelfPartyBigBars.Height + 6;
 
             section6.Add(AddLabel(null, _langDust.TransparencyForSelfAndParty, startX, startY));
 
             section6.Add(_multipleUnderlinesSelfPartyTransparency = AddHSlider(null, 1, 10, _currentProfile.MultipleUnderlinesSelfPartyTransparency, startX, startY, 200));
-            startY += _multipleUnderlinesSelfPartyTransparency.Height + 2;
+            startY += _multipleUnderlinesSelfPartyTransparency.Height + 6;
             // ## BEGIN - END ## // OLDHEALTHLINES
             // ## BEGIN - END ## // MISC
             SettingsSection section7 = AddSettingsSection(box, "Misc");
@@ -5380,13 +5464,13 @@ namespace ClassicUO.Game.UI.Gumps
             startY = section6.Bounds.Bottom + 40;
 
             section7.Add(_offscreenTargeting = AddCheckBox(null, _langDust.OffscreenTargeting, true, startX, startY)); //has no effect but feature list
-            startY += _offscreenTargeting.Height + 2;
+            startY += _offscreenTargeting.Height + 6;
 
             section7.Add(_setTargetOut = AddCheckBox(null, _langDust.SetTargetOutRange, true, startX, startY)); //has no effect but feature list
-            startY += _setTargetOut.Height + 2;
+            startY += _setTargetOut.Height + 6;
             
             section7.Add(_SpecialSetLastTargetCliloc = AddCheckBox(null, _langDust.RazorTargetToLasttargetString, _currentProfile.SpecialSetLastTargetCliloc, startX, startY));
-            startY += _SpecialSetLastTargetCliloc.Height + 2;
+            startY += _SpecialSetLastTargetCliloc.Height + 6;
 
             section7.Add
             (
@@ -5406,16 +5490,16 @@ namespace ClassicUO.Game.UI.Gumps
             _SpecialSetLastTargetClilocText.SetText(_currentProfile.SpecialSetLastTargetClilocText.ToString());
 
             section7.Add(_blackOutlineStatics = AddCheckBox(null, _langDust.OutlineStaticsBlack, _currentProfile.BlackOutlineStatics, startX, startY));
-            startY += _blackOutlineStatics.Height + 2;
+            startY += _blackOutlineStatics.Height + 6;
 
             section7.Add(_ignoreStaminaCheck = AddCheckBox(null, _langDust.IgnoreStaminaCheck, _currentProfile.IgnoreStaminaCheck, startX, startY));
-            startY += _ignoreStaminaCheck.Height + 2;
+            startY += _ignoreStaminaCheck.Height + 6;
 
             section7.Add(_blockWoS = AddCheckBox(null, _langDust.BlockWallOfStone, _currentProfile.BlockWoS, startX, startY));
-            startY += _blockWoS.Height + 2;
+            startY += _blockWoS.Height + 6;
 
             section7.Add(_blockWoSFelOnly = AddCheckBox(null, _langDust.BlockWallOfStoneFelOnly, _currentProfile.BlockWoSFelOnly, startX, startY));
-            startY += _blockWoSFelOnly.Height + 2;
+            startY += _blockWoSFelOnly.Height + 6;
 
             section7.Add(AddLabel(null, _langDust.WallOfStoneArt, startX, startY));
             section7.Add
@@ -5434,16 +5518,16 @@ namespace ClassicUO.Game.UI.Gumps
                 )
             );
             _blockWoSArt.SetText(_currentProfile.BlockWoSArt.ToString());
-            startY += _blockWoSArt.Height + 2;
+            startY += _blockWoSArt.Height + 6;
 
             section7.Add(_blockWoSArtForceAoS = AddCheckBox(null, _langDust.ForceWoSToArtAbove, _currentProfile.BlockWoSArtForceAoS, startX, startY));
-            startY += _blockWoSArtForceAoS.Height + 2;
+            startY += _blockWoSArtForceAoS.Height + 6;
 
             section7.Add(_blockEnergyF = AddCheckBox(null, _langDust.BlockEnergyField, _currentProfile.BlockEnergyF, startX, startY));
-            startY += _blockEnergyF.Height + 2;
+            startY += _blockEnergyF.Height + 6;
 
             section7.Add(_blockEnergyFFelOnly = AddCheckBox(null, _langDust.BlockEnergyFieldFelOnly, _currentProfile.BlockEnergyFFelOnly, startX, startY));
-            startY += _blockEnergyFFelOnly.Height + 2;
+            startY += _blockEnergyFFelOnly.Height + 6;
 
             section7.Add(AddLabel(null, _langDust.EnergyFieldArt, startX, startY));
             section7.Add
@@ -5462,10 +5546,10 @@ namespace ClassicUO.Game.UI.Gumps
                 )
             );
             _blockEnergyFArt.SetText(_currentProfile.BlockEnergyFArt.ToString());
-            startY += _blockEnergyFArt.Height + 2;
+            startY += _blockEnergyFArt.Height + 6;
 
             section7.Add(_blockEnergyFArtForceAoS = AddCheckBox(null, _langDust.ForceEnergyFToArtAbove, _currentProfile.BlockEnergyFArtForceAoS, startX, startY));
-            startY += _blockEnergyFArtForceAoS.Height + 2;
+            startY += _blockEnergyFArtForceAoS.Height + 6;
             // ## BEGIN - END ## // MISC
             // ## BEGIN - END ## // MISC2
             SettingsSection section8 = AddSettingsSection(box, "Misc2");
@@ -5474,49 +5558,49 @@ namespace ClassicUO.Game.UI.Gumps
             startY = section7.Bounds.Bottom + 40;
 
             section8.Add(_wireframeView = AddCheckBox(null, _langDust.EnableWireFrameView, _currentProfile.WireFrameView, startX, startY));
-            startY += _wireframeView.Height + 2;
+            startY += _wireframeView.Height + 6;
 
             section8.Add(_hueImpassableView = AddCheckBox(null, _langDust.HueImpassableTiles, _currentProfile.HueImpassableView, startX, startY));
-            startY += _hueImpassableView.Height + 2;
+            startY += _hueImpassableView.Height + 6;
 
             section8.Add(_hueImpassableViewColorPickerBox = AddHueDisplay(null, startX, startY, _currentProfile.HueImpassableViewHue, ""));
-            startY += _hueImpassableViewColorPickerBox.Height + 2;
+            startY += _hueImpassableViewColorPickerBox.Height + 6;
             section8.AddRight(AddLabel(null, _langDust.HueLabel, 0, 0), 2);
 
             section8.Add(_transparentHouses = AddCheckBox(null, _langDust.TransparentHousesAndItems, _currentProfile.TransparentHousesEnabled, startX, startY));
-            startY += _transparentHouses.Height + 2;
+            startY += _transparentHouses.Height + 6;
 
             section8.Add(_transparentHousesZ = AddHSlider(null, 1, 100, _currentProfile.TransparentHousesZ, startX, startY, 200));
-            startY += _transparentHousesZ.Height + 2;
+            startY += _transparentHousesZ.Height + 6;
 
             section8.Add(AddLabel(null, _langDust.Transparency, startX, startY));
             section8.Add(_transparentHousesTransparency = AddHSlider(null, 1, 9, _currentProfile.TransparentHousesTransparency, startX, startY, 200));
-            startY += _transparentHousesTransparency.Height + 2;
+            startY += _transparentHousesTransparency.Height + 6;
 
             section8.Add(_invisibleHouses = AddCheckBox(null, _langDust.InvisibleHousesAndItems, _currentProfile.InvisibleHousesEnabled, startX, startY));
-            startY += _invisibleHouses.Height + 2;
+            startY += _invisibleHouses.Height + 6;
 
             section8.Add(_invisibleHousesZ = AddHSlider(null, 1, 100, _currentProfile.InvisibleHousesZ, startX, startY, 200));
-            startY += _invisibleHousesZ.Height + 2;
+            startY += _invisibleHousesZ.Height + 6;
 
             section8.Add(AddLabel(null, "Dont make Invisible or Transparent below (Z level)", startX, startY));
             section8.Add(_dontRemoveHouseBelowZ = AddHSlider(null, 1, 100, _currentProfile.DontRemoveHouseBelowZ, startX, startY, 200));
-            startY += _dontRemoveHouseBelowZ.Height + 2;
+            startY += _dontRemoveHouseBelowZ.Height + 6;
 
             section8.Add(_drawMobilesWithSurfaceOverhead = AddCheckBox(null, "Draw mobiles with surface overhead", _currentProfile.DrawMobilesWithSurfaceOverhead, startX, startY));
-            startY += _drawMobilesWithSurfaceOverhead.Height + 2;
+            startY += _drawMobilesWithSurfaceOverhead.Height + 6;
 
             section8.Add(_ignoreCoT = AddCheckBox(null, "Enable ignorelist for circle of transparency:", _currentProfile.IgnoreCoTEnabled, startX, startY));
-            startY += _ignoreCoT.Height + 2;
+            startY += _ignoreCoT.Height + 6;
 
             section8.Add(_showDeathOnWorldmap = AddCheckBox(null, "Show death location on world map for 5min:", _currentProfile.ShowDeathOnWorldmap, startX, startY));
-            startY += _showDeathOnWorldmap.Height + 2;
+            startY += _showDeathOnWorldmap.Height + 6;
 
             section8.Add(_autoAvoidMobiles = AddCheckBox(null, _langDust.AutoAvoidObstaculesAndMobiles, _currentProfile.AutoAvoidObstacules, startX, startY));
-            startY += _autoAvoidMobiles.Height + 2;
+            startY += _autoAvoidMobiles.Height + 6;
 
             section8.Add(_forceGargoyleWalk = AddCheckBox(null, "Force gargoyle to walk instead of fly", _currentProfile.ForceGargoyleWalk, startX, startY));
-            startY += _forceGargoyleWalk.Height + 2;
+            startY += _forceGargoyleWalk.Height + 6;
 
             // ## BEGIN - END ## // MISC2
             // ## BEGIN - END ## // STATUSGUMP
@@ -5526,7 +5610,7 @@ namespace ClassicUO.Game.UI.Gumps
             startY = 0;
 
             section10.Add(_useRazorEnhStatusGump = AddCheckBox(null, "Use Razor Enhanced status gump:", _currentProfile.UseRazorEnhStatusGump, startX, startY));
-            startY += _useRazorEnhStatusGump.Height + 2;
+            startY += _useRazorEnhStatusGump.Height + 6;
             // ## BEGIN - END ## // STATUSGUMP
             // ## BEGIN - END ## // MISC3 SHOWALLLAYERS
             SettingsSection section11 = AddSettingsSection(box, "MISC3");
@@ -5535,11 +5619,11 @@ namespace ClassicUO.Game.UI.Gumps
             startY = section10.Bounds.Bottom + 40;
 
             section11.Add(_showAllLayers = AddCheckBox(null, "Show all equipment layers on mobiles ON / OFF", _currentProfile.ShowAllLayers, startX, startY));
-            startY += _showAllLayers.Height + 2;
+            startY += _showAllLayers.Height + 6;
             section11.Add(_showAllLayersPaperdoll = AddCheckBox(null, "Show all equipment layers on paperdoll ON / OFF", _currentProfile.ShowAllLayersPaperdoll, startX, startY));
-            startY += _showAllLayersPaperdoll.Height + 2;
+            startY += _showAllLayersPaperdoll.Height + 6;
             section11.Add(_colorPaperdollByDurability = AddCheckBox(null, "Color paperdoll items by low durability (yellow/red)", _currentProfile.ColorPaperdollByDurability, startX, startY));
-            startY += _colorPaperdollByDurability.Height + 2;
+            startY += _colorPaperdollByDurability.Height + 6;
 
             section11.Add
             (
@@ -5558,11 +5642,11 @@ namespace ClassicUO.Game.UI.Gumps
             );
             _showAllLayersPaperdoll_X.SetText(_currentProfile.ShowAllLayersPaperdoll_X.ToString());
             section11.AddRight(AddLabel(null, "X ( reopen paperdoll after changes )", 0, 0), 2);
-            startY += _showAllLayersPaperdoll_X.Height + 2;
+            startY += _showAllLayersPaperdoll_X.Height + 6;
             // ## BEGIN - END ## // MISC3 SHOWALLLAYERS
             // ## BEGIN - END ## // MISC3 THIEFSUPREME
             section11.Add(_overrideContainerOpenRange = AddCheckBox(null, "Override container open range", _currentProfile.OverrideContainerOpenRange, startX, startY));
-            startY += _overrideContainerOpenRange.Height + 2;
+            startY += _overrideContainerOpenRange.Height + 6;
 
             SettingsSection sectionJournal = AddSettingsSection(box, _langDust.Journal);
             sectionJournal.Y = section11.Bounds.Bottom + 40;
@@ -5582,27 +5666,8 @@ namespace ClassicUO.Game.UI.Gumps
             sectionJournal.Add(AddLabel(null, _langDust.HideTimestamp, 0, 0));
             sectionJournal.Add(_hideJournalTimestamp = AddCheckBox(null, "", _currentProfile.HideJournalTimestamp, 0, 0));
 
-            SettingsSection sectionNameplates = AddSettingsSection(box, _langDust.Nameplates);
-            sectionNameplates.Y = sectionJournal.Bounds.Bottom + 40;
-            sectionNameplates.Add(_namePlateHealthBar = AddCheckBox(null, "", _currentProfile.NamePlateHealthBar, 0, 0));
-            sectionNameplates.AddRight(AddLabel(null, _langDust.NameplatesAlsoActAsHealthBars, 0, 0));
-            sectionNameplates.PushIndent();
-            sectionNameplates.Add(AddLabel(null, _langDust.HpOpacity, 0, 0));
-            sectionNameplates.AddRight(_namePlateHealthBarOpacity = AddHSlider(null, 0, 100, _currentProfile.NamePlateHealthBarOpacity, 0, 0, 200));
-            sectionNameplates.Add(_namePlateShowAtFullHealth = AddCheckBox(null, "", _currentProfile.NamePlateHideAtFullHealth, 0, 0));
-            sectionNameplates.AddRight(new Label(_langDust.HideNameplatesIfFullHealth, true, HUE_FONT, font: FONT));
-            sectionNameplates.PushIndent();
-            sectionNameplates.Add(_namePlateHealthOnlyWarmode = AddCheckBox(null, "", _currentProfile.NamePlateHideAtFullHealthInWarmode, 0, 0));
-            sectionNameplates.AddRight(new Label(_langDust.OnlyInWarmode, true, HUE_FONT, font: FONT));
-            sectionNameplates.PopIndent();
-            sectionNameplates.PopIndent();
-            sectionNameplates.Add(AddLabel(null, _langDust.BorderOpacity, 0, 0));
-            sectionNameplates.AddRight(_nameplateBorderOpacity = AddHSlider(null, 0, 100, _currentProfile.NamePlateBorderOpacity, 0, 0, 200));
-            sectionNameplates.Add(AddLabel(null, _langDust.BackgroundOpacity, 0, 0));
-            sectionNameplates.AddRight(_namePlateOpacity = AddHSlider(null, 0, 100, _currentProfile.NamePlateOpacity, 0, 0, 200));
-
             SettingsSection sectionMobiles = AddSettingsSection(box, _langDust.Mobiles);
-            sectionMobiles.Y = sectionNameplates.Bounds.Bottom + 40;
+            sectionMobiles.Y = sectionJournal.Bounds.Bottom + 40;
             sectionMobiles.Add(_damageHueSelf = AddHueDisplay(null, 0, 0, _currentProfile.DamageHueSelf, ""));
             sectionMobiles.AddRight(new Label(_langDust.DamageToSelf, true, HUE_FONT, font: FONT));
             sectionMobiles.AddRight(_damageHueOther = AddHueDisplay(null, 0, 0, _currentProfile.DamageHueOther, ""));
@@ -5613,8 +5678,6 @@ namespace ClassicUO.Game.UI.Gumps
             sectionMobiles.AddRight(new Label(_langDust.DamageToAllies, true, HUE_FONT, font: FONT));
             sectionMobiles.Add(_damageHueLastAttack = AddHueDisplay(null, 0, 0, _currentProfile.DamageHueLastAttck, ""));
             sectionMobiles.AddRight(new Label(_langDust.DamageToLastAttack, true, HUE_FONT, font: FONT));
-            sectionMobiles.Add(AddLabel(null, _langDust.OverheadTextWidth, 0, 0));
-            sectionMobiles.AddRight(_overheadTextWidth = AddHSlider(null, 100, 600, _currentProfile.OverheadChatWidth, 0, 0, 200));
             sectionMobiles.Add(AddLabel(null, _langDust.BelowMobileHealthBarScale, 0, 0));
             sectionMobiles.AddRight(_healthLineSizeMultiplier = AddHSlider(null, 1, 5, _currentProfile.HealthLineSizeMultiplier, 0, 0, 150));
             sectionMobiles.Add(_openHealthBarForLastAttack = AddCheckBox(null, "", _currentProfile.OpenHealthBarForLastAttack, 0, 0));
@@ -5636,7 +5699,7 @@ namespace ClassicUO.Game.UI.Gumps
             sectionMiscTaz.AddRight(_regularPlayerAlpha = AddHSlider(null, 0, 100, _currentProfile.PlayerConstantAlpha, 0, 0, 200));
             sectionMiscTaz.Add(_enableImprovedBuffGump = AddCheckBox(null, _langDust.EnableImprovedBuffGump, _currentProfile.UseImprovedBuffBar, 0, 0));
             sectionMiscTaz.AddRight(_improvedBuffBarHue = AddHueDisplay(null, 0, 0, _currentProfile.ImprovedBuffBarHue, ""));
-            sectionMiscTaz.Add(_mainWindowHuePicker = new ModernColorPicker.HueDisplay(_currentProfile.MainWindowBackgroundHue, null, true));
+            sectionMiscTaz.Add(_mainWindowHuePicker = new HueDisplay(_currentProfile.MainWindowBackgroundHue, null, true));
             sectionMiscTaz.AddRight(AddLabel(null, _langDust.MainGameWindowBackground, 0, 0));
             sectionMiscTaz.Add(_enableHealthIndicator = AddCheckBox(null, _langDust.EnableHealthIndicatorBorder, _currentProfile.EnableHealthIndicator, 0, 0));
             sectionMiscTaz.PushIndent();
@@ -5653,12 +5716,14 @@ namespace ClassicUO.Game.UI.Gumps
             sectionMiscTaz.AddRight(AddLabel(null, _langDust.DisplayMatchingHotkeysOnSpellIcons, 0, 0));
             sectionMiscTaz.PushIndent();
             sectionMiscTaz.Add(AddLabel(null, _langDust.HotkeyTextHue, 0, 0));
-            sectionMiscTaz.AddRight(_spellIconHotkeyHue = new ModernColorPicker.HueDisplay(_currentProfile.SpellIcon_HotkeyHue, null, true));
+            sectionMiscTaz.AddRight(_spellIconHotkeyHue = new HueDisplay(_currentProfile.SpellIcon_HotkeyHue, null, true));
             sectionMiscTaz.PopIndent();
             sectionMiscTaz.Add(_enableAlphaScrollWheel = AddCheckBox(null, "", _currentProfile.EnableAlphaScrollingOnGumps, 0, 0));
             sectionMiscTaz.AddRight(AddLabel(null, _langDust.EnableGumpOpacityAdjustViaAltScroll, 0, 0));
             sectionMiscTaz.Add(_useModernShop = AddCheckBox(null, "", _currentProfile.UseModernShopGump, 0, 0));
             sectionMiscTaz.AddRight(AddLabel(null, _langDust.EnableAdvancedShopGump, 0, 0));
+            sectionMiscTaz.Add(_useExpandedColorPickerPalette = AddCheckBox(null, "", _currentProfile.UseExpandedColorPickerPalette, 0, 0));
+            sectionMiscTaz.AddRight(AddLabel(null, "Use expanded color picker palette", 0, 0));
             sectionMiscTaz.Add(_skillProgressBarOnChange = AddCheckBox(null, "", _currentProfile.DisplaySkillBarOnChange, 0, 0));
             sectionMiscTaz.AddRight(AddLabel(null, _langDust.DisplaySkillProgressBarOnSkillChanges, 0, 0));
             sectionMiscTaz.Add(AddLabel(null, _langDust.TextFormat, 0, 0));
@@ -5682,7 +5747,44 @@ namespace ClassicUO.Game.UI.Gumps
             }
 
             _nearbyItemGumpHotkeyBox.SetKey((SDL.SDL_Keycode)nk, (SDL.SDL_Keymod)nm);
-            sectionMiscTaz.Add(_nearbyItemGumpHotkeyBox);
+            sectionMiscTaz.AddRight(_nearbyItemGumpHotkeyBox);
+
+            SettingsSection sectionPv = AddSettingsSection(box, _langDust.CombatTrackingSectionTitle);
+            sectionPv.Y = sectionMiscTaz.Bounds.Bottom + 40;
+            NiceButton openCombatTracking = new NiceButton(startX, startY, Math.Min(380, rightArea.Width - 40), 28, ButtonAction.Activate, _langDust.CombatTrackingOpenButton) { IsSelectable = false, DisplayBorder = true };
+            openCombatTracking.MouseUp += (s, e) =>
+            {
+                if (e.Button == MouseButtonType.Left)
+                {
+                    UIManager.GetGump<CombatTrackingModalGump>()?.Dispose();
+                    UIManager.Add(new CombatTrackingModalGump());
+                }
+            };
+            sectionPv.Add(openCombatTracking);
+            Label combatHint = new Label(_langDust.CombatTrackingSectionHint, true, HUE_FONT, rightArea.Width - 50, FONT, FontStyle.None);
+            sectionPv.Add(combatHint);
+
+            SettingsSection section765 = AddSettingsSection(box, _langDust.Options765SectionTitle);
+            section765.Y = sectionPv.Bounds.Bottom + 28;
+            NiceButton openOptions765 = new NiceButton(startX, startY, Math.Min(380, rightArea.Width - 40), 28, ButtonAction.Activate, _langDust.Options765OpenButton) { IsSelectable = false, DisplayBorder = true };
+            openOptions765.MouseUp += (s, e) =>
+            {
+                if (e.Button != MouseButtonType.Left || _options765ScrollHost == null || _options765ScrollHost.IsDisposed)
+                {
+                    return;
+                }
+
+                UIManager.GetGump<Options765ModalGump>()?.Dispose();
+                if (_options765ScrollHost.Parent == this)
+                {
+                    Remove(_options765ScrollHost);
+                }
+
+                UIManager.Add(new Options765ModalGump(this, _options765ScrollHost));
+            };
+            section765.Add(openOptions765);
+            Label options765Hint = new Label(_langDust.Options765SectionHint, true, HUE_FONT, rightArea.Width - 50, FONT, FontStyle.None);
+            section765.Add(options765Hint);
 
             Add(rightArea, PAGE);
         }
@@ -5693,7 +5795,7 @@ namespace ClassicUO.Game.UI.Gumps
             //ScrollArea rightArea = new ScrollArea(190, 20, WIDTH - 210, 420, true);
             // ## BEGIN - END ## // TAZUO
             ScrollArea rightArea = new ScrollArea(165, OptionsScrollY, WIDTH - 185, OptionsScrollHeight, true);
-            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowAlways;
+            rightArea.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
             // ## BEGIN - END ## // TAZUO
 
             int startX = 5;
@@ -5734,7 +5836,7 @@ namespace ClassicUO.Game.UI.Gumps
             section2.Add(AddLabel(null, "LastTargetRC - Range:", startX, startY));
 
             section2.AddRight(_lastTargetRange = AddHSlider(null, 1, 30, _currentProfile.LastTargetRange, startX, startY, 200));
-            startY += _lastTargetRange.Height + 2;
+            startY += _lastTargetRange.Height + 6;
 
             section2.Add(AddLabel(null, "ObjectInfo (macro for -info command)", startX, startY));
             section2.Add(AddLabel(null, "HideX (remove landtile, entity, mobile or item)", startX, startY));
@@ -5753,7 +5855,6 @@ namespace ClassicUO.Game.UI.Gumps
             section3.Add(AddLabel(null, "use macro to run advanced scripts ONCE:", startX, startY));
             section3.Add(AddLabel(null, "OpenCorpsesSafeLoot (opens non blue 0x2006 corpses within 2 tiles)", startX, startY));
             section3.Add(AddLabel(null, "EquipManager (equip an item)", startX, startY));
-            section3.Add(AddLabel(null, "SetMimic_PlayerSerial (set master or custom serial for EquipManager)", startX, startY));
             section3.Add(AddLabel(null, "AutoPot (disarm 2h layer -> \n healpot below 85%, \n pouch if paralyzed, \n cure if poisoned and not full hp, \n refresh if below 23, \n str pot if str below 100, \n agi pot if dex above 89)", startX, startY));
             section3.Add(AddLabel(null, "DefendPartyKey (if ally / party member in 12 tile range and hits < 64: \n if targeting -> target them, else cast gheal \n if own hits < 64: \n if targeting -> target self and use gheal pot, \n else start casting gheal)", startX, startY));
             section3.Add(AddLabel(null, "DefendSelfKey (if own hits < 64, \n if targeting -> target self and use gheal pot, \n else start casting gheal)", startX, startY));
@@ -5777,7 +5878,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
             _pullFriendlyBarsX.SetText(_currentProfile.PullFriendlyBars.X.ToString());
             section3.AddRight(AddLabel(null, "X", 0, 0), 2);
-            startY += _pullFriendlyBarsX.Height + 2;
+            startY += _pullFriendlyBarsX.Height + 6;
 
             section3.Add
             (
@@ -5796,7 +5897,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
             _pullFriendlyBarsY.SetText(_currentProfile.PullFriendlyBars.Y.ToString());
             section3.AddRight(AddLabel(null, "Y", 0, 0), 2);
-            startY += _pullFriendlyBarsY.Height + 2;
+            startY += _pullFriendlyBarsY.Height + 6;
             //
             section3.Add
             (
@@ -5815,7 +5916,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
             _pullFriendlyBarsFinalLocationX.SetText(_currentProfile.PullFriendlyBarsFinalLocation.X.ToString());
             section3.AddRight(AddLabel(null, "X", 0, 0), 2);
-            startY += _pullFriendlyBarsFinalLocationX.Height + 2;
+            startY += _pullFriendlyBarsFinalLocationX.Height + 6;
 
             section3.Add
             (
@@ -5834,7 +5935,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
             _pullFriendlyBarsFinalLocationY.SetText(_currentProfile.PullFriendlyBarsFinalLocation.Y.ToString());
             section3.AddRight(AddLabel(null, "Y", 0, 0), 2);
-            startY += _pullFriendlyBarsFinalLocationY.Height + 2;
+            startY += _pullFriendlyBarsFinalLocationY.Height + 6;
 
             section3.Add(AddLabel(null, "GrabEnemyBars (grab all criminal, enemy, gray, murderer bars)", startX, startY));
             section3.Add
@@ -5854,7 +5955,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
             _pullEnemyBarsX.SetText(_currentProfile.PullEnemyBars.X.ToString());
             section3.AddRight(AddLabel(null, "X", 0, 0), 2);
-            startY += _pullEnemyBarsX.Height + 2;
+            startY += _pullEnemyBarsX.Height + 6;
 
             section3.Add
             (
@@ -5873,7 +5974,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
             _pullEnemyBarsY.SetText(_currentProfile.PullEnemyBars.Y.ToString());
             section3.AddRight(AddLabel(null, "Y", 0, 0), 2);
-            startY += _pullEnemyBarsY.Height + 2;
+            startY += _pullEnemyBarsY.Height + 6;
             //
             section3.Add
             (
@@ -5892,7 +5993,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
             _pullEnemyBarsFinalLocationX.SetText(_currentProfile.PullEnemyBarsFinalLocation.X.ToString());
             section3.AddRight(AddLabel(null, "FX", 0, 0), 2);
-            startY += _pullEnemyBarsFinalLocationX.Height + 2;
+            startY += _pullEnemyBarsFinalLocationX.Height + 6;
 
             section3.Add
             (
@@ -5911,7 +6012,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
             _pullEnemyBarsFinalLocationY.SetText(_currentProfile.PullEnemyBarsFinalLocation.Y.ToString());
             section3.AddRight(AddLabel(null, "FY", 0, 0), 2);
-            startY += _pullEnemyBarsFinalLocationY.Height + 2;
+            startY += _pullEnemyBarsFinalLocationY.Height + 6;
 
             section3.Add(AddLabel(null, "GrabPartyAllyBars (grab all ally and party bars)", startX, startY));
             section3.Add
@@ -5931,7 +6032,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
             _pullPartyAllyBarsX.SetText(_currentProfile.PullPartyAllyBars.X.ToString());
             section3.AddRight(AddLabel(null, "X", 0, 0), 2);
-            startY += _pullPartyAllyBarsX.Height + 2;
+            startY += _pullPartyAllyBarsX.Height + 6;
 
             section3.Add
             (
@@ -5950,7 +6051,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
             _pullPartyAllyBarsY.SetText(_currentProfile.PullPartyAllyBars.Y.ToString());
             section3.AddRight(AddLabel(null, "Y", 0, 0), 2);
-            startY += _pullPartyAllyBarsY.Height + 2;
+            startY += _pullPartyAllyBarsY.Height + 6;
             //
             section3.Add
             (
@@ -5969,7 +6070,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
             _pullPartyAllyBarsFinalLocationX.SetText(_currentProfile.PullPartyAllyBarsFinalLocation.X.ToString());
             section3.AddRight(AddLabel(null, "FX", 0, 0), 2);
-            startY += _pullPartyAllyBarsFinalLocationX.Height + 2;
+            startY += _pullPartyAllyBarsFinalLocationX.Height + 6;
 
             section3.Add
             (
@@ -5988,7 +6089,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
             _pullPartyAllyBarsFinalLocationY.SetText(_currentProfile.PullPartyAllyBarsFinalLocation.Y.ToString());
             section3.AddRight(AddLabel(null, "FY", 0, 0), 2);
-            startY += _pullPartyAllyBarsFinalLocationY.Height + 2;
+            startY += _pullPartyAllyBarsFinalLocationY.Height + 6;
             // ## BEGIN - END ## // ADVMACROS
             // ## BEGIN - END ## // AUTOMATIONS
             SettingsSection section4 = AddSettingsSection(box, "Automations");
@@ -6006,11 +6107,9 @@ namespace ClassicUO.Game.UI.Gumps
             startY = section4.Bounds.Bottom + 40;
 
             section5.Add(AddLabel(null, "write in chat to enable / disable:", startX, startY));
-            section5.Add(AddLabel(null, "-mimic (mimic harmful spells 1:1, on beneficial macro defendSelf/defendParty)", startX, startY));
-            section5.Add(AddLabel(null, "Macro: SetMimic_PlayerSerial (define the player to mimic)", startX, startY));
             section5.Add(AddLabel(null, "-marker X Y (place a dot and line to X Y on world map \n use -marker to remove it)", startX, startY));
             section5.Add(_autoWorldmapMarker = AddCheckBox(null, "Auto add marker for MapGumps (ie. T-Maps)", _currentProfile.AutoWorldmapMarker, startX, startY));
-            startY += _autoWorldmapMarker.Height + 2;
+            startY += _autoWorldmapMarker.Height + 6;
             section5.Add(AddLabel(null, "-df (if GreaterHeal cursor is up and you or a party member \n " +
                                                 "gets hit by EB, Explor or FS \n " +
                                                 "and your or the party members condition is met \n " +
@@ -6022,23 +6121,23 @@ namespace ClassicUO.Game.UI.Gumps
             section5.Add(AddLabel(null, "-autorange (show range depending on archery equipment)", startX, startY));
             section5.Add(AddLabel(null, "(configure range for every ranged weapon in the autorange.txt file!)", startX, startY));
             section5.Add(_autoRangeDisplayAlways = AddCheckBox(null, "always have -autorange ON", _currentProfile.AutoRangeDisplayAlways, startX, startY));
-            startY += _autoRangeDisplayAlways.Height + 2;
+            startY += _autoRangeDisplayAlways.Height + 6;
             section5.Add(_autoRangeDisplayHue = AddHueDisplay(null, startX, startY, _currentProfile.AutoRangeDisplayHue, ""));
-            startY += _autoRangeDisplayHue.Height + 2;
+            startY += _autoRangeDisplayHue.Height + 6;
             section5.AddRight(AddLabel(null, "Hue", 0, 0), 2);
             //
             // ## BEGIN - END ## // AUTOMATIONS
             // ## BEGIN - END ## // OUTLANDS
             /*
             section7.Add(_infernoBridge = AddCheckBox(null, "Solve Inferno bridge (needs relog)", ProfileManager.CurrentProfile.InfernoBridge, startX, startY));
-            startY += _infernoBridge.Height + 2;
+            startY += _infernoBridge.Height + 6;
 
             section5.Add(_overheadSummonTime = AddCheckBox(null, "Overhead summon time (needs HP overhead enabled) or in healthbar", ProfileManager.CurrentProfile.OverheadSummonTime, startX, startY));
-            startY += _overheadSummonTime.Height + 2;
+            startY += _overheadSummonTime.Height + 6;
             section5.Add(_overheadPeaceTime = AddCheckBox(null, "Overhead peacemaking time (needs HP overhead enabled) or in healthbar", ProfileManager.CurrentProfile.OverheadPeaceTime, startX, startY));
-            startY += _overheadPeaceTime.Height + 2;
+            startY += _overheadPeaceTime.Height + 6;
             section5.Add(_mobileHamstrungTime = AddCheckBox(null, "Show hamstrung time on mobile (needs HP lines or HP overhead ernabled) or in healthbar", true, startX, startY)); //has no effect but feature list
-            startY += _mobileHamstrungTime.Height + 2;
+            startY += _mobileHamstrungTime.Height + 6;
 
             section5.Add(AddLabel(null, "Cooldown (ms): ", startX, startY));
 
@@ -6098,9 +6197,9 @@ namespace ClassicUO.Game.UI.Gumps
             _uccHamstringAttemptCooldown.SetText(ProfileManager.CurrentProfile.UOClassicCombatSelf_HamstringAttemptCooldown.ToString());
 
             section3.Add(_uccDoH = AddCheckBox(null, "Show Do Hamstring Line (Outlands)", ProfileManager.CurrentProfile.UOClassicCombatBuffbar_DoHEnabled, startX, startY));
-            startY += _uccDoH.Height + 2;
+            startY += _uccDoH.Height + 6;
             section3.Add(_uccGotH = AddCheckBox(null, "Show Got Hamstung Line (Outlands)", ProfileManager.CurrentProfile.UOClassicCombatBuffbar_GotHEnabled, startX, startY));
-            startY += _uccGotH.Height + 2;
+            startY += _uccGotH.Height + 6;
 
             */
             // ## BEGIN - END ## // OUTLANDS
@@ -6139,7 +6238,7 @@ namespace ClassicUO.Game.UI.Gumps
             );
             _lobbyIP.SetText(_currentProfile.LobbyIP.ToString());
 
-            startY += _lobbyIP.Height + 2;
+            startY += _lobbyIP.Height + 6;
             section6.AddRight(AddLabel(null, "Lobby IP", 0, 0), 2);
 
             section6.Add
@@ -6158,7 +6257,7 @@ namespace ClassicUO.Game.UI.Gumps
                 )
             );
             _lobbyPort.SetText(_currentProfile.LobbyPort.ToString());
-            startY += _lobbyPort.Height + 2;
+            startY += _lobbyPort.Height + 6;
             section6.AddRight(AddLabel(null, "Lobby Port", 0, 0), 2);
 
             section6.Add(AddLabel(null, "Macro: LobbyDisconnect (disconnect)", startX, startY));
@@ -6168,10 +6267,33 @@ namespace ClassicUO.Game.UI.Gumps
             section6.Add(AddLabel(null, "Macro: LobbyDrop (everyone drops spell on target)", startX, startY));
             // ## BEGIN - END ## // LOBBY
 
+            _options765ScrollHost = rightArea;
             Add(rightArea, PAGE);
         }
         // ## BEGIN - END ## // TAZUO
         // ## BEGIN - END ## // BASICSETUP
+
+        internal void RestoreOptions765Scroll(ScrollArea scroll)
+        {
+            if (scroll == null || scroll.IsDisposed)
+            {
+                return;
+            }
+
+            scroll.X = 165;
+            scroll.Y = OptionsScrollY;
+            scroll.Width = WIDTH - 185;
+            scroll.Height = OptionsScrollHeight;
+            scroll.ScrollbarBehaviour = ScrollbarBehaviour.ShowWhenDataExceedFromView;
+            Add(scroll, 17);
+            _options765ScrollHost = scroll;
+        }
+
+        public override void Dispose()
+        {
+            UIManager.GetGump<Options765ModalGump>()?.Dispose();
+            base.Dispose();
+        }
 
         public override void OnButtonClick(int buttonID)
         {
@@ -6335,6 +6457,7 @@ namespace ClassicUO.Game.UI.Gumps
                     break;
 
                 case 3: // video
+                    _enableVSync.IsChecked = false;
                     _windowBorderless.IsChecked = false;
                     if (_windowTitleStyle != null)
                     {
@@ -6435,8 +6558,6 @@ namespace ClassicUO.Game.UI.Gumps
                     _enableCounters.IsChecked = false;
                     _highlightOnUse.IsChecked = false;
                     _enableAbbreviatedAmount.IsChecked = false;
-                    _columns.SetText("1");
-                    _rows.SetText("1");
                     _cellSize.Value = 40;
                     _highlightOnAmount.IsChecked = false;
                     _highlightAmount.SetText("5");
@@ -6520,11 +6641,6 @@ namespace ClassicUO.Game.UI.Gumps
             _currentProfile.DisplaySkillBarOnChange = _skillProgressBarOnChange.IsChecked;
             _currentProfile.SkillBarFormat = _skillProgressBarFormat.Text;
 
-            if (_tooltipHeaderFormat.Text.Length > 0)
-                _currentProfile.TooltipHeaderFormat = _tooltipHeaderFormat.Text;
-
-            _currentProfile.ToolTipBGHue = _tooltipBGHue.Hue;
-
             _currentProfile.OpenHealthBarForLastAttack = _openHealthBarForLastAttack.IsChecked;
             _currentProfile.HealthLineSizeMultiplier = _healthLineSizeMultiplier.Value;
 
@@ -6537,9 +6653,8 @@ namespace ClassicUO.Game.UI.Gumps
             }
             _currentProfile.HideJournalTimestamp = _hideJournalTimestamp.IsChecked;
 
-            _currentProfile.ForceCenterAlignTooltipMobiles = _forceCenterAlignMobileTooltips.IsChecked;
-
             _currentProfile.UseModernShopGump = _useModernShop.IsChecked;
+            _currentProfile.UseExpandedColorPickerPalette = _useExpandedColorPickerPalette.IsChecked;
 
             _currentProfile.OverheadChatWidth = _overheadTextWidth.Value;
 
@@ -6564,8 +6679,6 @@ namespace ClassicUO.Game.UI.Gumps
 
             _currentProfile.NamePlateHideAtFullHealthInWarmode = _namePlateHealthOnlyWarmode.IsChecked;
 
-            _currentProfile.LeftAlignToolTips = _leftAlignToolTips.IsChecked;
-
             _currentProfile.NamePlateHideAtFullHealth = _namePlateShowAtFullHealth.IsChecked;
 
             _currentProfile.DamageHueSelf = _damageHueSelf.Hue;
@@ -6576,9 +6689,12 @@ namespace ClassicUO.Game.UI.Gumps
             if (_currentProfile.EnableGridContainerAnchor != _gridContainerAnchorable.IsChecked)
             {
                 _currentProfile.EnableGridContainerAnchor = _gridContainerAnchorable.IsChecked;
-                foreach (GridContainer _ in UIManager.Gumps.OfType<GridContainer>())
+                for (LinkedListNode<Gump> node = UIManager.Gumps.First; node != null; node = node.Next)
                 {
-                    _.AnchorType = _currentProfile.EnableGridContainerAnchor ? ANCHOR_TYPE.NONE : ANCHOR_TYPE.DISABLED;
+                    if (node.Value is GridContainer gc && !gc.IsDisposed)
+                    {
+                        gc.AnchorType = _currentProfile.EnableGridContainerAnchor ? ANCHOR_TYPE.NONE : ANCHOR_TYPE.DISABLED;
+                    }
                 }
             }
             if (_currentProfile.UseImprovedBuffBar != _enableImprovedBuffGump.IsChecked)
@@ -6586,14 +6702,26 @@ namespace ClassicUO.Game.UI.Gumps
                 _currentProfile.UseImprovedBuffBar = _enableImprovedBuffGump.IsChecked;
                 if (_currentProfile.UseImprovedBuffBar)
                 {
-                    foreach (Gump g in UIManager.Gumps.OfType<BuffGump>())
-                        g.Dispose();
+                    for (LinkedListNode<Gump> node = UIManager.Gumps.Last; node != null; node = node.Previous)
+                    {
+                        if (node.Value is BuffGump bg && !bg.IsDisposed)
+                        {
+                            bg.Dispose();
+                        }
+                    }
+
                     UIManager.Add(new ImprovedBuffGump());
                 }
                 else
                 {
-                    foreach (Gump g in UIManager.Gumps.OfType<ImprovedBuffGump>())
-                        g.Dispose();
+                    for (LinkedListNode<Gump> node = UIManager.Gumps.Last; node != null; node = node.Previous)
+                    {
+                        if (node.Value is ImprovedBuffGump ibg && !ibg.IsDisposed)
+                        {
+                            ibg.Dispose();
+                        }
+                    }
+
                     UIManager.Add(new BuffGump(100, 100));
                 }
             }
@@ -6602,9 +6730,12 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 _currentProfile.Grid_BorderStyle = _gridBorderStyle.SelectedIndex;
                 _currentProfile.Grid_HideBorder = _gridHideBorder.IsChecked;
-                foreach (GridContainer gridContainer in UIManager.Gumps.OfType<GridContainer>())
+                for (LinkedListNode<Gump> node = UIManager.Gumps.First; node != null; node = node.Next)
                 {
-                    gridContainer.BuildBorder();
+                    if (node.Value is GridContainer gridContainer && !gridContainer.IsDisposed)
+                    {
+                        gridContainer.BuildBorder();
+                    }
                 }
             }
 
@@ -6620,6 +6751,12 @@ namespace ClassicUO.Game.UI.Gumps
             _currentProfile.NamePlateOpacity = (byte)_namePlateOpacity.Value;
             _currentProfile.NamePlateBorderOpacity = (byte)_nameplateBorderOpacity.Value;
             _currentProfile.NamePlateHealthBarOpacity = (byte)_namePlateHealthBarOpacity.Value;
+            _currentProfile.NamePlateUseCustomChrome = _namePlateCustomChrome.IsChecked;
+            _currentProfile.NamePlateCustomBackgroundHue = _namePlateCustomBgHue.Hue;
+            _currentProfile.NamePlateCustomBorderHue = _namePlateCustomBorderHuePicker.Hue;
+            _currentProfile.NamePlateHealthBarMatchStrip = _namePlateHealthBarMatchStrip.IsChecked;
+            _currentProfile.NamePlateFullPlateWidthScalesWithHp = _namePlateFullPlateWidthScalesWithHp.IsChecked;
+            _currentProfile.ShowHPLineInNOH = _showHpLineInNoh.IsChecked;
             _currentProfile.GridContainerSearchMode = _gridContainerSearchAlternative.SelectedIndex;
             _currentProfile.GridContainerScaleItems = _gridContainerItemScale.IsChecked;
             _currentProfile.GridEnableContPreview = _gridContainerPreview.IsChecked;
@@ -6635,6 +6772,12 @@ namespace ClassicUO.Game.UI.Gumps
 
             _currentProfile.HighlightGameObjects = _highlightObjects.IsChecked;
             _currentProfile.ReduceFPSWhenInactive = _reduceFPSWhenInactive.IsChecked;
+            bool enableVSync = _enableVSync.IsChecked;
+            if (_currentProfile.EnableVSync != enableVSync)
+            {
+                Client.Game.SetVSync(enableVSync);
+            }
+            _currentProfile.EnableVSync = enableVSync;
             _currentProfile.EnablePathfind = _enablePathfind.IsChecked;
             _currentProfile.UseShiftToPathfind = _useShiftPathfind.IsChecked;
             _currentProfile.AlwaysRun = _alwaysRun.IsChecked;
@@ -6720,18 +6863,24 @@ namespace ClassicUO.Game.UI.Gumps
             if (_currentProfile.AltGridContainerBackgroundHue != _altGridContainerBackgroundHue.Hue)
             {
                 _currentProfile.AltGridContainerBackgroundHue = _altGridContainerBackgroundHue.Hue;
-                foreach (GridContainer _ in UIManager.Gumps.OfType<GridContainer>())
+                for (LinkedListNode<Gump> node = UIManager.Gumps.First; node != null; node = node.Next)
                 {
-                    _.OptionsUpdated();
+                    if (node.Value is GridContainer gc && !gc.IsDisposed)
+                    {
+                        gc.OptionsUpdated();
+                    }
                 }
             }
 
             if (_currentProfile.ContainerOpacity != (byte)_containerOpacity.Value)
             {
                 _currentProfile.ContainerOpacity = (byte)_containerOpacity.Value;
-                foreach (GridContainer _ in UIManager.Gumps.OfType<GridContainer>())
+                for (LinkedListNode<Gump> node = UIManager.Gumps.First; node != null; node = node.Next)
                 {
-                    _.OptionsUpdated();
+                    if (node.Value is GridContainer gc && !gc.IsDisposed)
+                    {
+                        gc.OptionsUpdated();
+                    }
                 }
             }
 
@@ -7018,43 +7167,27 @@ namespace ClassicUO.Game.UI.Gumps
             bool before = _currentProfile.CounterBarEnabled;
             _currentProfile.CounterBarEnabled = _enableCounters.IsChecked;
             _currentProfile.CounterBarCellSize = _cellSize.Value;
-
-            if (!int.TryParse(_rows.Text, out int v))
-            {
-                v = 1;
-                _rows.SetText("1");
-            }
-
-            _currentProfile.CounterBarRows = v;
-
-            if (!int.TryParse(_columns.Text, out v))
-            {
-                v = 1;
-                _columns.SetText("1");
-            }
-            _currentProfile.CounterBarColumns = v;
             _currentProfile.CounterBarHighlightOnUse = _highlightOnUse.IsChecked;
 
-            if (!int.TryParse(_highlightAmount.Text, out v))
+            if (!int.TryParse(_highlightAmount.Text, out int highlightAmt))
             {
-                v = 5;
+                highlightAmt = 5;
                 _highlightAmount.SetText("5");
             }
-            _currentProfile.CounterBarHighlightAmount = v;
+            _currentProfile.CounterBarHighlightAmount = highlightAmt;
 
-            if (!int.TryParse(_abbreviatedAmount.Text, out v))
+            if (!int.TryParse(_abbreviatedAmount.Text, out int abbrevAmt))
             {
-                v = 1000;
+                abbrevAmt = 1000;
                 _abbreviatedAmount.SetText("1000");
             }
-            _currentProfile.CounterBarAbbreviatedAmount = v;
+            _currentProfile.CounterBarAbbreviatedAmount = abbrevAmt;
             _currentProfile.CounterBarHighlightOnAmount = _highlightOnAmount.IsChecked;
             _currentProfile.CounterBarDisplayAbbreviatedAmount = _enableAbbreviatedAmount.IsChecked;
 
             CounterBarGump counterGump = UIManager.GetGump<CounterBarGump>();
 
-            counterGump?.SetLayout(_currentProfile.CounterBarCellSize, _currentProfile.CounterBarRows, _currentProfile.CounterBarColumns);
-
+            counterGump?.SetCellSize(_currentProfile.CounterBarCellSize);
 
             if (before != _currentProfile.CounterBarEnabled)
             {
@@ -7062,17 +7195,7 @@ namespace ClassicUO.Game.UI.Gumps
                 {
                     if (_currentProfile.CounterBarEnabled)
                     {
-                        UIManager.Add
-                        (
-                            new CounterBarGump
-                            (
-                                200,
-                                200,
-                                _currentProfile.CounterBarCellSize,
-                                _currentProfile.CounterBarRows,
-                                _currentProfile.CounterBarColumns
-                            )
-                        );
+                        UIManager.Add(new CounterBarGump(200, 200, _currentProfile.CounterBarCellSize));
                     }
                 }
                 else
@@ -7128,9 +7251,9 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 if (_currentProfile.CustomBarsToggled)
                 {
-                    List<HealthBarGump> hbgstandard = UIManager.Gumps.OfType<HealthBarGump>().ToList();
+                    UIManager.CollectGumps(_optionsHealthBarMigrateScratch);
 
-                    foreach (HealthBarGump healthbar in hbgstandard)
+                    foreach (HealthBarGump healthbar in _optionsHealthBarMigrateScratch)
                     {
                         UIManager.Add(new HealthBarGumpCustom(healthbar.LocalSerial) { X = healthbar.X, Y = healthbar.Y });
 
@@ -7139,9 +7262,9 @@ namespace ClassicUO.Game.UI.Gumps
                 }
                 else
                 {
-                    List<HealthBarGumpCustom> hbgcustom = UIManager.Gumps.OfType<HealthBarGumpCustom>().ToList();
+                    UIManager.CollectGumps(_optionsHealthBarCustomMigrateScratch);
 
-                    foreach (HealthBarGumpCustom customhealthbar in hbgcustom)
+                    foreach (HealthBarGumpCustom customhealthbar in _optionsHealthBarCustomMigrateScratch)
                     {
                         UIManager.Add(new HealthBarGump(customhealthbar.LocalSerial) { X = customhealthbar.X, Y = customhealthbar.Y });
 
@@ -7159,7 +7282,7 @@ namespace ClassicUO.Game.UI.Gumps
             _currentProfile.ShowHPInTitleBar = _showHPInTitleBar?.IsChecked ?? _currentProfile.ShowHPInTitleBar;
             _currentProfile.InfoBarHighlightType = _infoBarHighlightType.SelectedIndex;
             if (World.InGame && World.Player != null)
-                Client.Game.SetWindowTitle(World.Player.Name);
+                Client.Game.SetWindowTitle(World.Player.Name, skipStats: true);
 
             if (_actionBarEnabled != null)
                 _currentProfile.ActionBarEnabled = _actionBarEnabled.IsChecked;
@@ -7226,9 +7349,12 @@ namespace ClassicUO.Game.UI.Gumps
                 UIManager.ContainerScale = containerScale / 100f;
                 _currentProfile.ScaleItemsInsideContainers = _containerScaleItems.IsChecked;
 
-                foreach (ContainerGump resizableGump in UIManager.Gumps.OfType<ContainerGump>())
+                for (LinkedListNode<Gump> node = UIManager.Gumps.First; node != null; node = node.Next)
                 {
-                    resizableGump.RequestUpdateContents();
+                    if (node.Value is ContainerGump resizableGump && !resizableGump.IsDisposed)
+                    {
+                        resizableGump.RequestUpdateContents();
+                    }
                 }
             }
 
@@ -7251,22 +7377,26 @@ namespace ClassicUO.Game.UI.Gumps
 
             // tooltip
             _currentProfile.UseTooltip = _use_tooltip.IsChecked;
-            _currentProfile.EnableTooltipOverride = _enableTooltipOverride.IsChecked;
             _currentProfile.TooltipTextHue = _tooltip_font_hue.Hue;
             _currentProfile.TooltipDelayBeforeDisplay = _delay_before_display_tooltip.Value;
             _currentProfile.TooltipBackgroundOpacity = _tooltip_background_opacity.Value;
             _currentProfile.TooltipDisplayZoom = _tooltip_zoom.Value;
-            _currentProfile.TooltipFont = _tooltip_font_selector.GetSelectedFont();
+            byte tf = _tooltip_font_selector.GetSelectedFont();
+            _currentProfile.TooltipFont = tf;
+            _currentProfile.SelectedToolTipFont = tf;
 
             // ## BEGIN - END ## // BASICSETUP
             // ## BEGIN - END ## // TITLE BAR
             _currentProfile.EnableTitleBarStats = _enableTitleBarStats?.IsChecked ?? _currentProfile.EnableTitleBarStats;
-            if (_titleBarStatsModeProgressBar != null && _titleBarStatsModeProgressBar.IsChecked)
-                _currentProfile.TitleBarStatsMode = TitleBarStatsMode.ProgressBar;
-            else if (_titleBarStatsModePercent != null && _titleBarStatsModePercent.IsChecked)
-                _currentProfile.TitleBarStatsMode = TitleBarStatsMode.Percent;
-            else if (_titleBarStatsModeText != null && _titleBarStatsModeText.IsChecked)
-                _currentProfile.TitleBarStatsMode = TitleBarStatsMode.Text;
+            if (_currentProfile.EnableTitleBarStats)
+            {
+                if (_titleBarStatsModeProgressBar != null && _titleBarStatsModeProgressBar.IsChecked)
+                    _currentProfile.TitleBarStatsMode = TitleBarStatsMode.ProgressBar;
+                else if (_titleBarStatsModePercent != null && _titleBarStatsModePercent.IsChecked)
+                    _currentProfile.TitleBarStatsMode = TitleBarStatsMode.Percent;
+                else
+                    _currentProfile.TitleBarStatsMode = TitleBarStatsMode.Text;
+            }
             if (World.Player != null)
             {
                 if (_currentProfile.EnableTitleBarStats)
@@ -7372,13 +7502,13 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 if (_blockWoS.IsChecked)
                 {
-                    TileDataLoader.Instance.StaticData[0x038A].Flags |= TileFlag.Impassable;
-                    TileDataLoader.Instance.StaticData[_currentProfile.BlockWoSArt].Flags |= TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[0x038A].Flags |= TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[_currentProfile.BlockWoSArt].Flags |= TileFlag.Impassable;
                 }
                 else
                 {
-                    TileDataLoader.Instance.StaticData[0x038A].Flags &= ~TileFlag.Impassable;
-                    TileDataLoader.Instance.StaticData[_currentProfile.BlockWoSArt].Flags &= ~TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[0x038A].Flags &= ~TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[_currentProfile.BlockWoSArt].Flags &= ~TileFlag.Impassable;
                 }
                 _currentProfile.BlockWoS = _blockWoS.IsChecked;
             }
@@ -7386,13 +7516,13 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 if (_blockWoSFelOnly.IsChecked && World.MapIndex == 0)
                 {
-                    TileDataLoader.Instance.StaticData[0x038A].Flags |= TileFlag.Impassable;
-                    TileDataLoader.Instance.StaticData[_currentProfile.BlockWoSArt].Flags |= TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[0x038A].Flags |= TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[_currentProfile.BlockWoSArt].Flags |= TileFlag.Impassable;
                 }
                 else
                 {
-                    TileDataLoader.Instance.StaticData[0x038A].Flags &= ~TileFlag.Impassable;
-                    TileDataLoader.Instance.StaticData[_currentProfile.BlockWoSArt].Flags &= ~TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[0x038A].Flags &= ~TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[_currentProfile.BlockWoSArt].Flags &= ~TileFlag.Impassable;
                 }
                 _currentProfile.BlockWoSFelOnly = _blockWoSFelOnly.IsChecked;
             }
@@ -7405,17 +7535,17 @@ namespace ClassicUO.Game.UI.Gumps
                     for (int i = 0; i < 31; i++)
                     {
                         //0x3946 to 0x3964 / 14662 to 14692
-                        TileDataLoader.Instance.StaticData[0x3946 + i].Flags |= TileFlag.Impassable;
+                        UOFileManager.Current.TileData.StaticData[0x3946 + i].Flags |= TileFlag.Impassable;
                     }
-                    TileDataLoader.Instance.StaticData[_currentProfile.BlockEnergyFArt].Flags |= TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[_currentProfile.BlockEnergyFArt].Flags |= TileFlag.Impassable;
                 }
                 else
                 {
                     for (int i = 0; i < 31; i++)
                     {
-                        TileDataLoader.Instance.StaticData[0x3946 + i].Flags &= ~TileFlag.Impassable;
+                        UOFileManager.Current.TileData.StaticData[0x3946 + i].Flags &= ~TileFlag.Impassable;
                     }
-                    TileDataLoader.Instance.StaticData[_currentProfile.BlockEnergyFArt].Flags &= ~TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[_currentProfile.BlockEnergyFArt].Flags &= ~TileFlag.Impassable;
                 }
                 _currentProfile.BlockEnergyF = _blockEnergyF.IsChecked;
             }
@@ -7425,17 +7555,17 @@ namespace ClassicUO.Game.UI.Gumps
                 {
                     for (int i = 0; i < 31; i++)
                     {
-                        TileDataLoader.Instance.StaticData[0x3946 + i].Flags |= TileFlag.Impassable;
+                        UOFileManager.Current.TileData.StaticData[0x3946 + i].Flags |= TileFlag.Impassable;
                     }
-                    TileDataLoader.Instance.StaticData[_currentProfile.BlockEnergyFArt].Flags |= TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[_currentProfile.BlockEnergyFArt].Flags |= TileFlag.Impassable;
                 }
                 else
                 {
                     for (int i = 0; i < 31; i++)
                     {
-                        TileDataLoader.Instance.StaticData[0x3946 + i].Flags &= ~TileFlag.Impassable;
+                        UOFileManager.Current.TileData.StaticData[0x3946 + i].Flags &= ~TileFlag.Impassable;
                     }
-                    TileDataLoader.Instance.StaticData[_currentProfile.BlockEnergyFArt].Flags &= ~TileFlag.Impassable;
+                    UOFileManager.Current.TileData.StaticData[_currentProfile.BlockEnergyFArt].Flags &= ~TileFlag.Impassable;
                 }
                 _currentProfile.BlockEnergyFFelOnly = _blockEnergyFFelOnly.IsChecked;
             }
@@ -7469,7 +7599,7 @@ namespace ClassicUO.Game.UI.Gumps
             if (_currentProfile.UOClassicCombatLTBar != _uccEnableLTBar.IsChecked)
             {
                 UOClassicCombatLTBar UOClassicCombatLTBar = UIManager.GetGump<UOClassicCombatLTBar>();
-                UIManager.Gumps.OfType<UOClassicCombatLTBar>().ToList().ForEach(g => g.Dispose());
+                UIManager.DisposeAllUOClassicCombatLTBars();
 
                 if (_uccEnableLTBar.IsChecked)
                 {
@@ -7682,7 +7812,23 @@ namespace ClassicUO.Game.UI.Gumps
             // ## BEGIN - END ## // ONCASTINGGUMP
             _currentProfile.OnCastingGump = _onCastingGump.IsChecked;
             _currentProfile.OnCastingGump_hidden = _onCastingGump_hidden.IsChecked;
-            _currentProfile.OnCastingUnderPlayerBar = _onCastingUnderPlayerBar.IsChecked;
+            _currentProfile.OnCastingHarmfulHueOnPlayer = _onCastingHarmfulHueOnPlayer.IsChecked;
+            if (int.TryParse(_movementTurnDelay.Text, out int movementTurnDelay))
+            {
+                _currentProfile.MovementTurnDelay = Math.Clamp(movementTurnDelay, 20, 1000);
+            }
+            if (int.TryParse(_movementTurnDelayFast.Text, out int movementTurnDelayFast))
+            {
+                _currentProfile.MovementTurnDelayFast = Math.Clamp(movementTurnDelayFast, 20, 1000);
+            }
+            if (int.TryParse(_movementWalkingDelay.Text, out int movementWalkingDelay))
+            {
+                _currentProfile.MovementWalkingDelay = Math.Clamp(movementWalkingDelay, 20, 1000);
+            }
+            if (int.TryParse(_movementPlayerWalkingDelay.Text, out int movementPlayerWalkingDelay))
+            {
+                _currentProfile.MovementPlayerWalkingDelay = Math.Clamp(movementPlayerWalkingDelay, 20, 1000);
+            }
             _currentProfile.AutoAvoidObstacules = _autoAvoidMobiles.IsChecked;
             // ## BEGIN - END ## // ONCASTINGGUMP
 
@@ -7692,6 +7838,11 @@ namespace ClassicUO.Game.UI.Gumps
             _currentProfile.ShowAllLayers = _showAllLayers.IsChecked;
             _currentProfile.ShowAllLayersPaperdoll = _showAllLayersPaperdoll.IsChecked;
             _currentProfile.ShowAllLayersPaperdoll_X = int.Parse(_showAllLayersPaperdoll_X.Text);
+            UIManager.CollectGumps(_optionsPaperdollRefreshScratch);
+            foreach (PaperDollGump gump in _optionsPaperdollRefreshScratch)
+            {
+                gump.RequestPaperdollRefresh();
+            }
             _currentProfile.ColorPaperdollByDurability = _colorPaperdollByDurability.IsChecked;
             // ## BEGIN - END ## // MISC3 SHOWALLLAYERS
             // ## BEGIN - END ## // MISC3 THIEFSUPREME
@@ -7791,7 +7942,10 @@ namespace ClassicUO.Game.UI.Gumps
 
                 if (World.Player.OnCasting != null)
                 {
-                    World.Player.OnCasting.IsVisible = GameActions.iscasting && !_currentProfile.OnCastingGump_hidden;
+                    World.Player.OnCasting.IsVisible =
+                        _currentProfile.OnCastingGump
+                        && GameActions.iscasting
+                        && !_currentProfile.OnCastingGump_hidden;
                 }
             }
             else
@@ -7832,36 +7986,41 @@ namespace ClassicUO.Game.UI.Gumps
 
         private void UpdateTitleBarStatsControlsAvailability()
         {
-            if (_windowTitleStyle == null)
-            {
-                return;
-            }
-
-            bool enableStatsToggle = GetWindowTitleStyleFromIndex(_windowTitleStyle.SelectedIndex) != WindowTitleBarStyle.CUO;
-
-            if (_enableTitleBarStats != null)
-            {
-                _enableTitleBarStats.IsEnabled = enableStatsToggle;
-
-                if (!enableStatsToggle)
-                {
-                    _enableTitleBarStats.IsChecked = true;
-                }
-            }
+            bool enabled = _enableTitleBarStats?.IsChecked ?? false;
 
             if (_titleBarStatsModeText != null)
             {
-                _titleBarStatsModeText.IsEnabled = true;
+                _titleBarStatsModeText.IsEnabled = enabled;
+                if (!enabled)
+                {
+                    _titleBarStatsModeText.IsChecked = false;
+                }
             }
 
             if (_titleBarStatsModePercent != null)
             {
-                _titleBarStatsModePercent.IsEnabled = true;
+                _titleBarStatsModePercent.IsEnabled = enabled;
+                if (!enabled)
+                {
+                    _titleBarStatsModePercent.IsChecked = false;
+                }
             }
 
             if (_titleBarStatsModeProgressBar != null)
             {
-                _titleBarStatsModeProgressBar.IsEnabled = true;
+                _titleBarStatsModeProgressBar.IsEnabled = enabled;
+                if (!enabled)
+                {
+                    _titleBarStatsModeProgressBar.IsChecked = false;
+                }
+            }
+
+            if (enabled && _titleBarStatsModeText != null && _titleBarStatsModePercent != null && _titleBarStatsModeProgressBar != null)
+            {
+                if (!_titleBarStatsModeText.IsChecked && !_titleBarStatsModePercent.IsChecked && !_titleBarStatsModeProgressBar.IsChecked)
+                {
+                    _titleBarStatsModeText.IsChecked = true;
+                }
             }
         }
 
@@ -8147,9 +8306,9 @@ namespace ClassicUO.Game.UI.Gumps
             return slider;
         }
 
-        private ModernColorPicker.HueDisplay AddHueDisplay(ScrollArea area, int x, int y, ushort hue, string text)
+        private HueDisplay AddHueDisplay(ScrollArea area, int x, int y, ushort hue, string text)
         {
-            ModernColorPicker.HueDisplay hueDisplay = new ModernColorPicker.HueDisplay(hue, null, true) { X = x, Y = y };
+            HueDisplay hueDisplay = new HueDisplay(hue, null, true) { X = x, Y = y };
 
             area?.Add(hueDisplay);
 
@@ -8259,7 +8418,7 @@ namespace ClassicUO.Game.UI.Gumps
                 Width = width;
                 Height = label.Height + 1;
 
-                _databox = new DataBox(label.X + 10, label.Height + 4, 0, 0);
+                _databox = new DataBox(label.X + 10, label.Height + 8, 0, 0);
 
                 base.Add(_databox);
             }
@@ -8275,7 +8434,7 @@ namespace ClassicUO.Game.UI.Gumps
             }
 
 
-            public void AddRight(Control c, int offset = 15)
+            public void AddRight(Control c, int offset = 20)
             {
                 int i = _databox.Children.Count - 1;
 
@@ -8309,9 +8468,9 @@ namespace ClassicUO.Game.UI.Gumps
                 {
                     if (_databox.Children[i].IsVisible)
                     {
-                        if (bottom == 0 || bottom < _databox.Children[i].Bounds.Bottom + 2)
+                        if (bottom == 0 || bottom < _databox.Children[i].Bounds.Bottom + 6)
                         {
-                            bottom = _databox.Children[i].Bounds.Bottom + 2;
+                            bottom = _databox.Children[i].Bounds.Bottom + 6;
                         }
                         else
                         {
@@ -8326,7 +8485,7 @@ namespace ClassicUO.Game.UI.Gumps
                 _databox.Add(c, page);
                 _databox.WantUpdateSize = true;
 
-                Height += c.Height + 2;
+                Height += c.Height + 6;
             }
         }
 
@@ -8345,7 +8504,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                 for (byte i = 0; i < max_font; i++)
                 {
-                    if (FontsLoader.Instance.UnicodeFontExists(i))
+                    if (UOFileManager.Current.Fonts.UnicodeFontExists(i))
                     {
                         Add
                         (
@@ -8365,7 +8524,29 @@ namespace ClassicUO.Game.UI.Gumps
                             }
                         );
 
-                        y += 25;
+                        y += 30;
+                    }
+                }
+
+                bool anyChecked = false;
+                for (byte i = 0; i < _buttons.Length; i++)
+                {
+                    if (_buttons[i] != null && _buttons[i].IsChecked)
+                    {
+                        anyChecked = true;
+                        break;
+                    }
+                }
+
+                if (!anyChecked)
+                {
+                    for (byte i = 0; i < _buttons.Length; i++)
+                    {
+                        if (_buttons[i] != null)
+                        {
+                            _buttons[i].IsChecked = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -8382,7 +8563,15 @@ namespace ClassicUO.Game.UI.Gumps
                     }
                 }
 
-                return 0xFF;
+                for (byte i = 0; i < _buttons.Length; i++)
+                {
+                    if (_buttons[i] != null)
+                    {
+                        return i;
+                    }
+                }
+
+                return 1;
             }
 
             public void SetSelectedFont(int index)

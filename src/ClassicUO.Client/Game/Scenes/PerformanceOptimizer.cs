@@ -122,6 +122,14 @@ namespace ClassicUO.Game.Scenes
                     profile.ReduceParticleEffects = false;
                     break;
             }
+
+            int textureCacheLimit = profile.GraphicsQuality switch
+            {
+                0 => 128,
+                1 => 320,
+                _ => 512
+            };
+            TextureCacheManager.SetMaxCacheSize(textureCacheLimit);
         }
         
         public static void OptimizeForPerformance()

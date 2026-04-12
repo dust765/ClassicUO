@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -161,7 +161,7 @@ namespace ClassicUO.Game.Data
                     {
                         ushort g = vegetationTiles[i];
 
-                        if (TileDataLoader.Instance.StaticData[g].IsImpassable)
+                        if (UOFileManager.Current.TileData.StaticData[g].IsImpassable)
                         {
                             continue;
                         }
@@ -213,7 +213,7 @@ namespace ClassicUO.Game.Data
                                 break;
                         }
 
-                        if (!TileDataLoader.Instance.StaticData[graphic].IsImpassable)
+                        if (!UOFileManager.Current.TileData.StaticData[graphic].IsImpassable)
                         {
                             writerveg.WriteLine(graphic);
                         }
@@ -287,7 +287,7 @@ namespace ClassicUO.Game.Data
         {
             //foreach (ushort graphic in CaveTiles)
             //{
-            //    ArtTexture texture = ArtLoader.Instance.GetTexture(graphic);
+            //    ArtTexture texture = UOFileManager.Current.Arts.GetTexture(graphic);
 
             //    if (texture != null)
             //    {
@@ -295,14 +295,14 @@ namespace ClassicUO.Game.Data
             //    }
             //}
 
-            //ArtLoader.Instance.CleaUnusedResources(short.MaxValue);
+            //UOFileManager.Current.Arts.CleaUnusedResources(short.MaxValue);
         }
 
         public static void CleanTreeTextures()
         {
             //foreach (ushort graphic in TreeTiles)
             //{
-            //    ArtTexture texture = ArtLoader.Instance.GetTexture(graphic);
+            //    ArtTexture texture = UOFileManager.Current.Arts.GetTexture(graphic);
 
             //    if (texture != null)
             //    {
@@ -310,7 +310,7 @@ namespace ClassicUO.Game.Data
             //    }
             //}
 
-            //ArtLoader.Instance.CleaUnusedResources(short.MaxValue);
+            //UOFileManager.Current.Arts.CleaUnusedResources(short.MaxValue);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

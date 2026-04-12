@@ -86,17 +86,33 @@ namespace ClassicUO.Network
         private List<uint> _customHouseRequests = new List<uint>();
         private readonly OnPacketBufferReader[] _handlers = new OnPacketBufferReader[0x100];
 
+        private static long _recvWallMsForCurrentNetworkChunk;
+
         public static PacketHandlers Handler { get; } = new PacketHandlers();
 
         public void Add(byte id, OnPacketBufferReader handler) => _handlers[id] = handler;
 
-        private byte[] _readingBuffer = new byte[4096];
-        private readonly PacketLogger _packetLogger = new PacketLogger();
+        private const int ReadingBufferInitialSize = 4096;
+        private const int ReadingBufferDoublingCap = 512 * 1024;
+        private const int ReadingBufferShrinkTarget = 65536;
+        private const int ReadingBufferShrinkPacketMax = 4096;
+
+        private byte[] _readingBuffer = new byte[ReadingBufferInitialSize];
         private readonly CircularBuffer _buffer = new CircularBuffer();
         private readonly CircularBuffer _pluginsBuffer = new CircularBuffer();
 
         public int ParsePackets(Span<byte> data, int maxPackets = int.MaxValue)
         {
+            return ParsePackets(data, maxPackets, -1);
+        }
+
+        public int ParsePackets(Span<byte> data, int maxPackets, long recvWallMsForChunk)
+        {
+            if (!data.IsEmpty)
+            {
+                _recvWallMsForCurrentNetworkChunk = recvWallMsForChunk >= 0 ? recvWallMsForChunk : Environment.TickCount64;
+            }
+
             Append(data, false);
 
             int budget = maxPackets <= 0 ? int.MaxValue : maxPackets;
@@ -149,12 +165,31 @@ namespace ClassicUO.Network
 
                     while (packetlength > packetBuffer.Length)
                     {
-                        Array.Resize(ref packetBuffer, packetBuffer.Length * 2);
+                        int cur = packetBuffer.Length;
+                        int next;
+                        if (cur >= ReadingBufferDoublingCap)
+                        {
+                            next = packetlength;
+                        }
+                        else
+                        {
+                            next = cur;
+                            while (next < packetlength && next < ReadingBufferDoublingCap)
+                            {
+                                next = checked(next * 2);
+                            }
+
+                            next = Math.Max(next, packetlength);
+                        }
+
+                        Array.Resize(ref packetBuffer, next);
                     }
 
                     _ = stream.Dequeue(packetBuffer, 0, packetlength);
 
+#if DEBUG
                     PacketLogger.Default?.Log(packetBuffer.AsSpan(0, packetlength), false);
+#endif
 
                     // TODO: the pluging function should allow Span<byte> or unsafe type only.
                     // The current one is a bad style decision.
@@ -164,6 +199,14 @@ namespace ClassicUO.Network
                         AnalyzePacket(packetBuffer.AsSpan(0, packetlength), offset);
 
                         ++packetsCount;
+                    }
+
+                    if (
+                        packetBuffer.Length > ReadingBufferShrinkTarget
+                        && packetlength < ReadingBufferShrinkPacketMax
+                    )
+                    {
+                        Array.Resize(ref packetBuffer, ReadingBufferShrinkTarget);
                     }
 
                     --budget;
@@ -599,7 +642,7 @@ namespace ClassicUO.Network
                     {
                         if (
                             !string.IsNullOrEmpty(World.Player.Name)
-                            && (oldName != World.Player.Name || ProfileManager.CurrentProfile?.ShowHPInTitleBar == true)
+                            && (oldName != World.Player.Name || ProfileManager.CurrentProfile?.ShowHPInTitleBar == true || ProfileManager.CurrentProfile?.EnableTitleBarStats == true)
                         )
                         {
                             Client.Game.SetWindowTitle(World.Player.Name);
@@ -1055,9 +1098,6 @@ namespace ClassicUO.Network
             }
             // ## BEGIN - END ## // AUTOLOOT
             // ## BEGIN - END ## // AUTOMATIONS
-            if (serial == ProfileManager.CurrentProfile.Mimic_PlayerSerial && type == MessageType.Spell && !string.IsNullOrEmpty(text))
-                AutoMimic.SyncByClilocString(serial, text);
-            // ## BEGIN - END ## // AUTOMATIONS
             // ## BEGIN - END ## // VISUAL HELPERS
             if (serial == World.Player.Serial && type == MessageType.Spell && !string.IsNullOrEmpty(text))
                 CombatCollection.SpellCastFromCliloc(text);
@@ -1100,7 +1140,8 @@ namespace ClassicUO.Network
 
             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
             if (
-                ProfileManager.CurrentProfile.VisualResponseManager
+                ProfileManager.CurrentProfile != null
+                && ProfileManager.CurrentProfile.VisualResponseManager
                 && (type == MessageType.System || serial == 0xFFFF_FFFF || serial == 0 || name.ToLower() == "system" && entity == null)
             )
             {
@@ -1962,7 +2003,7 @@ namespace ClassicUO.Network
                     UoAssist.SignalHits();
                     UoAssist.SignalStamina();
                     UoAssist.SignalMana();
-                    if (ProfileManager.CurrentProfile?.ShowHPInTitleBar == true)
+                    if (ProfileManager.CurrentProfile?.ShowHPInTitleBar == true || ProfileManager.CurrentProfile?.EnableTitleBarStats == true)
                         Client.Game.SetWindowTitle(World.Player.Name);
                 }
             }
@@ -2064,22 +2105,22 @@ namespace ClassicUO.Network
             {
                 int count = p.ReadUInt16BE();
 
-                SkillsLoader.Instance.Skills.Clear();
-                SkillsLoader.Instance.SortedSkills.Clear();
+                UOFileManager.Current.Skills.Skills.Clear();
+                UOFileManager.Current.Skills.SortedSkills.Clear();
 
                 for (int i = 0; i < count; i++)
                 {
                     bool haveButton = p.ReadBool();
                     int nameLength = p.ReadUInt8();
 
-                    SkillsLoader.Instance.Skills.Add(
+                    UOFileManager.Current.Skills.Skills.Add(
                         new SkillEntry(i, p.ReadASCII(nameLength), haveButton)
                     );
                 }
 
-                SkillsLoader.Instance.SortedSkills.AddRange(SkillsLoader.Instance.Skills);
+                UOFileManager.Current.Skills.SortedSkills.AddRange(UOFileManager.Current.Skills.Skills);
 
-                SkillsLoader.Instance.SortedSkills.Sort(
+                UOFileManager.Current.Skills.SortedSkills.Sort(
                     (a, b) => string.Compare(a.Name, b.Name, StringComparison.InvariantCulture)
                 );
             }
@@ -2807,7 +2848,7 @@ namespace ClassicUO.Network
 
         private static void Ping(ref StackDataReader p)
         {
-            NetClient.Socket.Statistics.PingReceived(p.ReadUInt8());
+            NetClient.Socket.Statistics.PingReceived(p.ReadUInt8(), _recvWallMsForCurrentNetworkChunk);
         }
 
         private static void BuyList(ref StackDataReader p)
@@ -2902,7 +2943,7 @@ namespace ClassicUO.Network
                     }
                     else if (int.TryParse(name, out int cliloc))
                     {
-                        it.Name = ClilocLoader.Instance.Translate(
+                        it.Name = UOFileManager.Current.Clilocs.Translate(
                             cliloc,
                             $"\t{it.ItemData.Name}: \t{it.Amount}",
                             true
@@ -3539,7 +3580,7 @@ namespace ClassicUO.Network
 
                 if (int.TryParse(name, out int clilocnum))
                 {
-                    name = ClilocLoader.Instance.GetString(clilocnum);
+                    name = UOFileManager.Current.Clilocs.GetString(clilocnum);
                     fromcliloc = true;
                 }
                 else if (string.IsNullOrEmpty(name))
@@ -3548,7 +3589,7 @@ namespace ClassicUO.Network
 
                     if (!success)
                     {
-                        name = TileDataLoader.Instance.StaticData[graphic].Name;
+                        name = UOFileManager.Current.TileData.StaticData[graphic].Name;
                     }
                 }
 
@@ -3604,7 +3645,7 @@ namespace ClassicUO.Network
             if (entity == World.Player)
             {
                 UoAssist.SignalHits();
-                if (ProfileManager.CurrentProfile?.ShowHPInTitleBar == true)
+                if (ProfileManager.CurrentProfile?.ShowHPInTitleBar == true || ProfileManager.CurrentProfile?.EnableTitleBarStats == true)
                     Client.Game.SetWindowTitle(World.Player.Name);
             }
         }
@@ -3887,7 +3928,8 @@ namespace ClassicUO.Network
 
             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
             if (
-                ProfileManager.CurrentProfile.VisualResponseManager
+                ProfileManager.CurrentProfile != null
+                && ProfileManager.CurrentProfile.VisualResponseManager
                 && (type == MessageType.System || serial == 0xFFFF_FFFF || serial == 0 || name.ToLower() == "system" && entity == null)
             )
             {
@@ -3954,7 +3996,7 @@ namespace ClassicUO.Network
             Client.Game.Animations.ConvertBodyIfNeeded(ref gfx);
             var animGroup = Client.Game.Animations.GetAnimType(gfx);
             var animFlags = Client.Game.Animations.GetAnimFlags(gfx);
-            byte group = AnimationsLoader.Instance.GetDeathAction(
+            byte group = UOFileManager.Current.Animations.GetDeathAction(
                 gfx,
                 animFlags,
                 animGroup,
@@ -4422,7 +4464,7 @@ namespace ClassicUO.Network
 
                     if (cliloc > 0)
                     {
-                        str = ClilocLoader.Instance.GetString((int)cliloc, true);
+                        str = UOFileManager.Current.Clilocs.GetString((int)cliloc, true);
 
                         if (!string.IsNullOrEmpty(str))
                         {
@@ -4478,7 +4520,7 @@ namespace ClassicUO.Network
                         }
 
                         short charges = (short)p.ReadUInt16BE();
-                        string attr = ClilocLoader.Instance.GetString((int)next);
+                        string attr = UOFileManager.Current.Clilocs.GetString((int)next);
 
                         if (attr != null)
                         {
@@ -4593,7 +4635,7 @@ namespace ClassicUO.Network
                 //===========================================================================================
                 case 0x18: // enable map patches
 
-                    if (MapLoader.Instance.ApplyPatches(ref p))
+                    if (UOFileManager.Current.Maps.ApplyPatches(ref p))
                     {
                         //List<GameObject> list = new List<GameObject>();
 
@@ -4908,8 +4950,9 @@ namespace ClassicUO.Network
                     byte animID = p.ReadUInt8();
                     byte frameCount = p.ReadUInt8();
 
-                    foreach (Mobile m in World.Mobiles.Values)
+                    foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
                     {
+                        Mobile m = mkv.Value;
                         if ((m.Serial & 0xFFFF) == serial)
                         {
                             m.SetAnimation(animID);
@@ -4960,16 +5003,20 @@ namespace ClassicUO.Network
             {
                 World.Player?.OnCasting?.OnCliloc(cliloc);
             }
+            // ## BEGIN - END ## // ONCASTINGGUMP
 
             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
-            if (ProfileManager.CurrentProfile.VisualResponseManager)
+            if (
+                ProfileManager.CurrentProfile != null
+                && ProfileManager.CurrentProfile.VisualResponseManager
+            )
             {
                 World.VisualResponseManager.OnCliloc(cliloc);
             }
             // ## BEGIN - END ## // VISUALRESPONSEMANAGER
 
             // ## BEGIN - END ## // UI/GUMPS
-            World.Player?.BandageTimer?.OnCliloc(cliloc);
+            World.Player?.BandageTimer.OnCliloc(cliloc);
             // ## BEGIN - END ## // UI/GUMPS
             // ## BEGIN - END ## // AUTOLOOT
             Item item = World.Items.Get(serial);
@@ -5010,7 +5057,7 @@ namespace ClassicUO.Network
                 }
             }
 
-            string text = ClilocLoader.Instance.Translate((int)cliloc, arguments);
+            string text = UOFileManager.Current.Clilocs.Translate((int)cliloc, arguments);
 
             if (text == null)
             {
@@ -5034,7 +5081,7 @@ namespace ClassicUO.Network
                 type = MessageType.System;
             }
 
-            if (!FontsLoader.Instance.UnicodeFontExists((byte)font))
+            if (!UOFileManager.Current.Fonts.UnicodeFontExists((byte)font))
             {
                 font = 0;
             }
@@ -5179,7 +5226,7 @@ namespace ClassicUO.Network
                     argument = p.ReadUnicodeLE(length / 2);
                 }
 
-                string str = ClilocLoader.Instance.Translate(cliloc, argument, true);
+                string str = UOFileManager.Current.Clilocs.Translate(cliloc, argument, true);
 
                 if (str == null)
                 {
@@ -5774,7 +5821,7 @@ namespace ClassicUO.Network
                         ushort arg_length = p.ReadUInt16BE();
                         var str = p.ReadUnicodeLE(2);
                         var args = str + p.ReadUnicodeLE();
-                        string title = ClilocLoader.Instance.Translate(
+                        string title = UOFileManager.Current.Clilocs.Translate(
                             (int)titleCliloc,
                             args,
                             true
@@ -5788,7 +5835,7 @@ namespace ClassicUO.Network
                         {
                             description =
                                 "\n"
-                                + ClilocLoader.Instance.Translate(
+                                + UOFileManager.Current.Clilocs.Translate(
                                     (int)descriptionCliloc,
                                     String.IsNullOrEmpty(args_2) ? args : args_2,
                                     true
@@ -5806,7 +5853,7 @@ namespace ClassicUO.Network
 
                         if (wtfCliloc != 0)
                         {
-                            wtf = ClilocLoader.Instance.Translate(
+                            wtf = UOFileManager.Current.Clilocs.Translate(
                                 (int)wtfCliloc,
                                 String.IsNullOrEmpty(args_3) ? args : args_3,
                                 true
@@ -6771,15 +6818,14 @@ namespace ClassicUO.Network
 
                 World.Player.Walker.ResendPacketResync = false;
                 World.Player.CloseRangedGumps();
+                bool teleported = World.Player.X != x || World.Player.Y != y;
                 World.Player.SetInWorldTile(x, y, z);
-                World.Player.UpdateAbilities();
-                // ## BEGIN - END ## // ONCASTINGGUMP
-                if (ProfileManager.CurrentProfile.OnCastingGump) {
-                    GameActions.iscasting = false;
-                    World.Player.OnCasting?.Stop();
+                if (teleported && World.Map != null)
+                {
+                    World.Player.Walker.TeleportFreezeUntil = Time.Ticks + 250;
+                    World.Map.PreloadChunksAround(x, y, 4, int.MaxValue);
                 }
-                // ## BEGIN - END ## // ONCASTINGGUMP
-
+                World.Player.UpdateAbilities();
             }
         }
 
@@ -7018,43 +7064,43 @@ namespace ClassicUO.Network
                         switch (pic.Graphic)
                         {
                             case 0x69:
-                                s = ClilocLoader.Instance.GetString(1051000 + 2);
+                                s = UOFileManager.Current.Clilocs.GetString(1051000 + 2);
 
                                 break;
 
                             case 0x6A:
-                                s = ClilocLoader.Instance.GetString(1051000 + 7);
+                                s = UOFileManager.Current.Clilocs.GetString(1051000 + 7);
 
                                 break;
 
                             case 0x6B:
-                                s = ClilocLoader.Instance.GetString(1051000 + 5);
+                                s = UOFileManager.Current.Clilocs.GetString(1051000 + 5);
 
                                 break;
 
                             case 0x6D:
-                                s = ClilocLoader.Instance.GetString(1051000 + 6);
+                                s = UOFileManager.Current.Clilocs.GetString(1051000 + 6);
 
                                 break;
 
                             case 0x6E:
-                                s = ClilocLoader.Instance.GetString(1051000 + 1);
+                                s = UOFileManager.Current.Clilocs.GetString(1051000 + 1);
 
                                 break;
 
                             case 0x6F:
-                                s = ClilocLoader.Instance.GetString(1051000 + 3);
+                                s = UOFileManager.Current.Clilocs.GetString(1051000 + 3);
 
                                 break;
 
                             case 0x70:
-                                s = ClilocLoader.Instance.GetString(1051000 + 4);
+                                s = UOFileManager.Current.Clilocs.GetString(1051000 + 4);
 
                                 break;
 
                             case 0x6C:
                             default:
-                                s = ClilocLoader.Instance.GetString(1051000);
+                                s = UOFileManager.Current.Clilocs.GetString(1051000);
 
                                 break;
                         }
@@ -7098,7 +7144,7 @@ namespace ClassicUO.Network
                             int.Parse(gparams[6]) == 1,
                             int.Parse(gparams[7]) != 0,
                             gparams[6] != "0" && gparams[7] == "2",
-                            ClilocLoader.Instance.GetString(int.Parse(gparams[5].Replace("#", ""))),
+                            UOFileManager.Current.Clilocs.GetString(int.Parse(gparams[5].Replace("#", ""))),
                             0,
                             true
                         )
@@ -7132,7 +7178,7 @@ namespace ClassicUO.Network
                             int.Parse(gparams[6]) == 1,
                             int.Parse(gparams[7]) != 0,
                             gparams[6] != "0" && gparams[7] == "2",
-                            ClilocLoader.Instance.GetString(int.Parse(gparams[5].Replace("#", ""))),
+                            UOFileManager.Current.Clilocs.GetString(int.Parse(gparams[5].Replace("#", ""))),
                             color,
                             true
                         )
@@ -7176,10 +7222,10 @@ namespace ClassicUO.Network
                             int.Parse(gparams[6]) != 0,
                             gparams[5] != "0" && gparams[6] == "2",
                             sb == null
-                                ? ClilocLoader.Instance.GetString(
+                                ? UOFileManager.Current.Clilocs.GetString(
                                     int.Parse(gparams[8].Replace("#", ""))
                                 )
-                                : ClilocLoader.Instance.Translate(
+                                : UOFileManager.Current.Clilocs.Translate(
                                     int.Parse(gparams[8].Replace("#", "")),
                                     sb.ToString().Trim('@').Replace('@', '\t')
                                 ),
@@ -7294,14 +7340,14 @@ namespace ClassicUO.Network
 
                         if (args.Length == 0)
                         {
-                            text = ClilocLoader.Instance.GetString(int.Parse(gparams[1]));
+                            text = UOFileManager.Current.Clilocs.GetString(int.Parse(gparams[1]));
                             Log.Error(
                                 $"String '{args}' too short, something wrong with gump tooltip: {text}"
                             );
                         }
                         else
                         {
-                            text = ClilocLoader.Instance.Translate(
+                            text = UOFileManager.Current.Clilocs.Translate(
                                 int.Parse(gparams[1]),
                                 args,
                                 false
@@ -7310,7 +7356,7 @@ namespace ClassicUO.Network
                     }
                     else
                     {
-                        text = ClilocLoader.Instance.GetString(int.Parse(gparams[1]));
+                        text = UOFileManager.Current.Clilocs.GetString(int.Parse(gparams[1]));
                     }
 
                     Control last =

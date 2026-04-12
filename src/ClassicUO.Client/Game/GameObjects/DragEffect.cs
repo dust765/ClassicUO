@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -138,7 +138,7 @@ namespace ClassicUO.Game.GameObjects
                 depth
             );
 
-            ref StaticTiles data = ref TileDataLoader.Instance.StaticData[Graphic];
+            ref StaticTiles data = ref UOFileManager.Current.TileData.StaticData[Graphic];
 
             if (data.IsLight && Source != null)
             {

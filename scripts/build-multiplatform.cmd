@@ -49,7 +49,7 @@ dotnet build "%PROJECT_PATH%" -c "%CONFIG%" -p:Platform=%PLATFORM% -o "%OUTPUT_D
 
 echo Publishing self-contained...
 set PUBLISH_DIR=%OUTPUT_BASE%\publish-windows-%PLATFORM%
-dotnet publish "%PROJECT_PATH%" -c "%CONFIG%" -p:Platform=%PLATFORM% -r "%RUNTIME%" --self-contained true -o "%PUBLISH_DIR%"
+dotnet publish "%PROJECT_PATH%" -c "%CONFIG%" -f net10.0 -p:Platform=%PLATFORM% -r "%RUNTIME%" --self-contained true -o "%PUBLISH_DIR%"
 
 echo Build completed successfully!
 echo Executable location: %PUBLISH_DIR%\ClassicUO.exe

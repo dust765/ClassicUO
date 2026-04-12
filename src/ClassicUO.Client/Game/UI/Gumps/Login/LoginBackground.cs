@@ -33,7 +33,6 @@
 using ClassicUO.Assets;
 using ClassicUO.Game.UI.Controls;
 using ClassicUO.Utility;
-using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -41,10 +40,9 @@ namespace ClassicUO.Game.UI.Gumps.Login
 {
     internal class LoginBackground : Gump
     {
-        private Texture2D LoginBackgroundImg = PNGLoader.Instance.GetImageTexture(Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Client", "loginbg.png"));
-       
         public LoginBackground() : base(0, 0)
         {
+            Texture2D LoginBackgroundImg = UOFileManager.Current.Png.GetDataClientImage(CUOEnviroment.ExecutablePath, "loginbg.png");
             Add(new FixedSizeBackgroundControl(LoginBackgroundImg));
 
             Add(new Button(0, 0x1589, 0x158B, 0x158A)

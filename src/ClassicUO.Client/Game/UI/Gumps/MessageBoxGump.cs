@@ -180,7 +180,7 @@ namespace ClassicUO.Game.UI.Gumps
         private readonly Action<string> _action;
         private readonly StbTextBox _textBox;
 
-        public EntryDialog(int w, int h, string message, Action<string> action) : base(0, 0)
+        public EntryDialog(int w, int h, string message, Action<string> action, string initialText = null) : base(0, 0)
         {
             CanMove = false;
             CanCloseWithRightClick = false;
@@ -253,6 +253,11 @@ namespace ClassicUO.Game.UI.Gumps
             };
 
             Add(_textBox);
+
+            if (!string.IsNullOrEmpty(initialText))
+            {
+                _textBox.SetText(initialText);
+            }
 
             X = (Client.Game.Window.ClientBounds.Width - Width) >> 1;
             Y = (Client.Game.Window.ClientBounds.Height - Height) >> 1;

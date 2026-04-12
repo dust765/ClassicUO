@@ -58,6 +58,10 @@ namespace ClassicUO.Game.UI.Gumps
         private bool _hasBarsBelow;
         private bool _otherPlayerSingleHpBar;
         private bool _lastNamePlateHealthBar;
+        private bool _lastNamePlateHealthBarMatchStrip;
+        private bool _lastNamePlateFullPlateWidthScalesWithHp;
+        private bool _lastShowHpLineInNoh;
+        private bool _lastNamePlateUseCustomChrome;
         private UOLabel _text;
         private Texture2D _borderColor = SolidColorTextureCache.GetTexture(Color.Black);
         private Vector2 _textDrawOffset = Vector2.Zero;
@@ -103,7 +107,9 @@ namespace ClassicUO.Game.UI.Gumps
             int nameH = g._text != null ? g._text.Height : 18;
             if (g._otherPlayerSingleHpBar)
             {
-                int pull = 36;
+                int pull = ProfileManager.CurrentProfile?.NamePlateHealthBarMatchStrip == true
+                    ? Math.Max(36, (g._text?.Height ?? 18) + 24)
+                    : 36;
                 int target = h - pull;
                 int floor = Math.Max(10, nameH - 6);
                 return Math.Max(floor, target);
@@ -193,7 +199,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                     if (string.IsNullOrEmpty(item.ItemData.Name))
                     {
-                        t += ClilocLoader.Instance.GetString(1020000 + item.Graphic, true, t);
+                        t += UOFileManager.Current.Clilocs.GetString(1020000 + item.Graphic, true, t);
                     }
                     else
                     {
@@ -234,22 +240,44 @@ namespace ClassicUO.Game.UI.Gumps
 
                 _text.Text = t;
 
-                int baseHeight = _text.Height;
-                bool isSelfOrParty = entity is Mobile mob && (mob.Equals(World.Player) || World.Party.Contains(mob.Serial));
-                bool hasOtherBarBelow = entity is Mobile m2 && !m2.Equals(World.Player) && !World.Party.Contains(m2.Serial)
-                    && m2.NotorietyFlag != NotorietyFlag.Invulnerable
-                    && ProfileManager.CurrentProfile.NamePlateHealthBar;
-                bool hasSelfBarsBelow = isSelfOrParty && ProfileManager.CurrentProfile.NamePlateHealthBar;
-                int barExtra = hasOtherBarBelow ? 8 : hasSelfBarsBelow ? 20 : 0;
-                _hasBarsBelow = hasOtherBarBelow || hasSelfBarsBelow;
-                _otherPlayerSingleHpBar = hasOtherBarBelow;
-                Width = _background.Width = _text.Width + 4;
-                Height = _background.Height = baseHeight + barExtra;
+                int textLineH = _text.Height;
+                Mobile mobEnt = entity as Mobile;
+                bool isMobile = mobEnt != null;
+                bool skipInvulnHpBar = isMobile
+                    && mobEnt.NotorietyFlag == NotorietyFlag.Invulnerable
+                    && !mobEnt.Equals(World.Player)
+                    && !World.Party.Contains(mobEnt.Serial);
+                bool fullPlateHp = isMobile && FullPlateNameplateHpActive(mobEnt);
+                bool isSelf = isMobile && mobEnt.Equals(World.Player);
+                int nameBlockHeight = textLineH;
+                bool hasHpBarBelow = isMobile
+                    && ProfileManager.CurrentProfile.NamePlateHealthBar
+                    && !skipInvulnHpBar
+                    && !fullPlateHp;
+                int hpInner = NameplateStripBarInnerHeight(textLineH);
+                int barExtra = hasHpBarBelow ? hpInner + 4 : 0;
+                _hasBarsBelow = hasHpBarBelow;
+                _otherPlayerSingleHpBar = hasHpBarBelow;
+                int textPlateW = _text.Width + 4;
+                Width = _background.Width = textPlateW;
+                Height = _background.Height = nameBlockHeight + barExtra;
                 CurrentHeight = Height;
-                _textDrawOffset.X = (Width - _text.Width - 4) >> 1;
-                _textDrawOffset.Y = hasOtherBarBelow || hasSelfBarsBelow ? 0 : (Height - _text.Height) >> 1;
+                _textDrawOffset.X = Math.Max(0, (Width - _text.Width - 4) >> 1);
+                if (hasHpBarBelow)
+                {
+                    int gapBelowBar = isSelf ? 2 : 4;
+                    _textDrawOffset.Y = hpInner + gapBelowBar;
+                }
+                else
+                {
+                    _textDrawOffset.Y = (Height - _text.Height) >> 1;
+                }
                 WantUpdateSize = false;
                 _lastNamePlateHealthBar = ProfileManager.CurrentProfile.NamePlateHealthBar;
+                _lastNamePlateHealthBarMatchStrip = ProfileManager.CurrentProfile.NamePlateHealthBarMatchStrip;
+                _lastNamePlateFullPlateWidthScalesWithHp = ProfileManager.CurrentProfile.NamePlateFullPlateWidthScalesWithHp;
+                _lastShowHpLineInNoh = ProfileManager.CurrentProfile.ShowHPLineInNOH;
+                _lastNamePlateUseCustomChrome = ProfileManager.CurrentProfile.NamePlateUseCustomChrome;
 
                 return true;
             }
@@ -273,7 +301,8 @@ namespace ClassicUO.Game.UI.Gumps
                 _background = new AlphaBlendControl(ProfileManager.CurrentProfile.NamePlateOpacity / 100f)
                 {
                     WantUpdateSize = false,
-                    Hue = entity is Mobile m ? Notoriety.GetHue(m.NotorietyFlag) : Notoriety.GetHue(NotorietyFlag.Gray)
+                    Hue = NamePlateBackgroundHue(entity),
+                    BaseColor = Color.White
                 }
             );
         }
@@ -593,24 +622,35 @@ namespace ClassicUO.Game.UI.Gumps
                     _background.Alpha = ProfileManager.CurrentProfile.NamePlateOpacity / 100f;
                 }
 
+                Profile p = ProfileManager.CurrentProfile;
+
                 if (entity.Serial == TargetManager.LastTargetInfo.Serial && !entity.Equals(World.Player))
                 {
-                    if (!_isLastTarget) //Only set this if it was not already last target
+                    if (!_isLastTarget)
                     {
                         _borderColor = SolidColorTextureCache.GetTexture(Color.Red);
-                        _background.Hue = (ushort)(_text.Hue = entity is Mobile m
-                            ? Notoriety.GetHue(m.NotorietyFlag)
-                            : (ushort)0x0481);
                         _isLastTarget = true;
                     }
                 }
                 else if (_isLastTarget)
                 {
                     _borderColor = SolidColorTextureCache.GetTexture(Color.Black);
-                    _background.Hue = (ushort)(_text.Hue = entity is Mobile m
-                        ? Notoriety.GetHue(m.NotorietyFlag)
-                        : (ushort)0x0481);
                     _isLastTarget = false;
+                }
+
+                if (entity is Mobile mobUp && p != null)
+                {
+                    ushort notoHue = Notoriety.GetHue(mobUp.NotorietyFlag);
+                    _text.Hue = notoHue;
+                    bool lastTargetSerial = mobUp.Serial == TargetManager.LastTargetInfo.Serial && !mobUp.Equals(World.Player);
+                    if (lastTargetSerial)
+                    {
+                        _background.Hue = notoHue;
+                    }
+                    else
+                    {
+                        _background.Hue = p.NamePlateUseCustomChrome ? p.NamePlateCustomBackgroundHue : notoHue;
+                    }
                 }
 
                 if (_needsNameUpdate)
@@ -618,16 +658,79 @@ namespace ClassicUO.Game.UI.Gumps
                     SetName();
                 }
 
-                if (entity is Mobile && ProfileManager.CurrentProfile != null)
+                if (entity is Mobile mCh && p != null)
                 {
-                    bool curBar = ProfileManager.CurrentProfile.NamePlateHealthBar;
-                    if (curBar != _lastNamePlateHealthBar)
+                    bool curBar = p.NamePlateHealthBar;
+                    bool curStrip = p.NamePlateHealthBarMatchStrip;
+                    bool curFullW = p.NamePlateFullPlateWidthScalesWithHp;
+                    bool curNoh = p.ShowHPLineInNOH;
+                    bool curCustom = p.NamePlateUseCustomChrome;
+                    bool needLayout = curBar != _lastNamePlateHealthBar
+                        || curStrip != _lastNamePlateHealthBarMatchStrip
+                        || curFullW != _lastNamePlateFullPlateWidthScalesWithHp
+                        || curNoh != _lastShowHpLineInNoh
+                        || curCustom != _lastNamePlateUseCustomChrome;
+                    if (needLayout)
                     {
                         _lastNamePlateHealthBar = curBar;
+                        _lastNamePlateHealthBarMatchStrip = curStrip;
+                        _lastNamePlateFullPlateWidthScalesWithHp = curFullW;
+                        _lastShowHpLineInNoh = curNoh;
+                        _lastNamePlateUseCustomChrome = curCustom;
                         SetName();
                     }
                 }
             }
+        }
+
+        private static ushort NamePlateBackgroundHue(Entity entity)
+        {
+            Profile p = ProfileManager.CurrentProfile;
+            if (p != null && entity is Mobile && p.NamePlateUseCustomChrome)
+            {
+                return p.NamePlateCustomBackgroundHue;
+            }
+
+            return entity is Mobile m ? Notoriety.GetHue(m.NotorietyFlag) : Notoriety.GetHue(NotorietyFlag.Gray);
+        }
+
+        private static int HealthBarInnerHeight(int nameTextHeight)
+        {
+            Profile p = ProfileManager.CurrentProfile;
+            if (p == null || !p.NamePlateHealthBarMatchStrip)
+            {
+                return 4;
+            }
+
+            return Math.Max(4, nameTextHeight);
+        }
+
+        private static int NameplateStripBarInnerHeight(int nameTextHeight)
+        {
+            return Math.Max(6, HealthBarInnerHeight(nameTextHeight));
+        }
+
+        private static bool FullPlateNameplateHpActive(Mobile mob)
+        {
+            if (mob == null)
+            {
+                return false;
+            }
+
+            Profile p = ProfileManager.CurrentProfile;
+            if (p == null || !p.ShowHPLineInNOH)
+            {
+                return false;
+            }
+
+            if (mob.NotorietyFlag == NotorietyFlag.Invulnerable
+                && !mob.Equals(World.Player)
+                && !World.Party.Contains(mob.Serial))
+            {
+                return false;
+            }
+
+            return true;
         }
 
         public override bool Draw(UltimaBatcher2D batcher, int x, int y)
@@ -763,8 +866,6 @@ namespace ClassicUO.Game.UI.Gumps
                     + (bounds.Height >> 1);
             }
 
-            Vector3 hueVector = ShaderHueTranslator.GetHueVector(0);
-
             Point p = Client.Game.Scene.Camera.WorldToScreen(new Point(x, y));
             x = p.X - (Width >> 1);
             y = p.Y - (Height);// >> 1);
@@ -786,7 +887,35 @@ namespace ClassicUO.Game.UI.Gumps
             X = x;
             Y = y;
 
-            hueVector.Z = ProfileManager.CurrentProfile.NamePlateBorderOpacity / 100f;
+            Profile prof = ProfileManager.CurrentProfile;
+
+            Vector3 hueVector;
+            Mobile mBorder = _isMobile ? World.Mobiles.Get(LocalSerial) : null;
+            if (_isLastTarget && _isMobile)
+            {
+                hueVector = ShaderHueTranslator.GetHueVector(0, false, prof != null ? prof.NamePlateBorderOpacity / 100f : 0.5f, true);
+            }
+            else if (prof != null && prof.NamePlateUseCustomChrome && _isMobile)
+            {
+                hueVector = ShaderHueTranslator.GetHueVector(
+                    prof.NamePlateCustomBorderHue,
+                    false,
+                    prof.NamePlateBorderOpacity / 100f,
+                    true);
+            }
+            else if (mBorder != null && prof != null)
+            {
+                hueVector = ShaderHueTranslator.GetHueVector(
+                    Notoriety.GetHue(mBorder.NotorietyFlag),
+                    false,
+                    prof.NamePlateBorderOpacity / 100f,
+                    true);
+            }
+            else
+            {
+                hueVector = ShaderHueTranslator.GetHueVector(0);
+                hueVector.Z = prof != null ? prof.NamePlateBorderOpacity / 100f : 0.5f;
+            }
 
             batcher.DrawRectangle
             (
@@ -800,20 +929,26 @@ namespace ClassicUO.Game.UI.Gumps
 
             base.Draw(batcher, x, y);
 
-            if (ProfileManager.CurrentProfile.NamePlateHealthBar && _isMobile)
+            if (_isMobile && prof != null && prof.ShowHPLineInNOH)
+            {
+                Mobile mPlate = World.Mobiles.Get(LocalSerial);
+                if (mPlate != null && FullPlateNameplateHpActive(mPlate))
+                {
+                    DrawFullPlateHpOverBackground(batcher, mPlate, x, y);
+                }
+            }
+
+            if (ProfileManager.CurrentProfile.NamePlateHealthBar && _isMobile && !ProfileManager.CurrentProfile.ShowHPLineInNOH)
             {
                 Mobile m = World.Mobiles.Get(LocalSerial);
-                var isPlayer = m is PlayerMobile;
-                var isInParty = World.Party.Contains(m.Serial);
-                var _alpha = ProfileManager.CurrentProfile.NamePlateHealthBarOpacity / 100f;
-
-                if (isPlayer || isInParty)
+                if (m != null)
                 {
-                    DrawSelfBarsBelowName(batcher, m, x, y, _alpha);
-                }
-                else if (m.NotorietyFlag != NotorietyFlag.Invulnerable)
-                {
-                    DrawHpBarBelowName(batcher, m, x, y, _alpha);
+                    bool isPlayer = m is PlayerMobile;
+                    bool isInParty = World.Party.Contains(m.Serial);
+                    if (m.NotorietyFlag != NotorietyFlag.Invulnerable || isPlayer || isInParty)
+                    {
+                        DrawHpBarAboveName(batcher, m, x, y, ProfileManager.CurrentProfile.NamePlateHealthBarOpacity / 100f);
+                    }
                 }
             }
 
@@ -848,32 +983,106 @@ namespace ClassicUO.Game.UI.Gumps
             int fillW = Math.Max(1, (int)((barWidth - 4) * fillFraction));
             batcher.Draw(SolidColorTextureCache.GetTexture(barColor), new Vector2(x + 2, barY + 1), new Rectangle(0, 0, fillW, DIST_BAR_HEIGHT), alpha);
         }
-        private const int BAR_GAP = 2;
-        private const int HP_BAR_HEIGHT = 4;
-
-        private void DrawSelfBarsBelowName(UltimaBatcher2D batcher, Mobile m, int x, int y, float alpha)
+        private static int NohHpFillWidth(int hitsMax, int hits, int barPixels)
         {
-            int barWidth = Width;
-            int startY = y + Height - (HP_BAR_HEIGHT * 3 + BAR_GAP * 2 + 2);
-            Vector3 barHue = ShaderHueTranslator.GetHueVector(0, false, alpha, true);
-            Vector3 borderHue = ShaderHueTranslator.GetHueVector(0, false, 0.9f, true);
+            if (hitsMax <= 0 || barPixels <= 0)
+            {
+                return 0;
+            }
 
-            double hpPercent = (double)m.Hits / m.HitsMax;
-            Color hpColor = hpPercent > 0.6 ? Color.Green : hpPercent > 0.3 ? Color.Yellow : Color.Red;
-            DrawColoredBar(batcher, x, startY, barWidth, SolidColorTextureCache.GetTexture(hpColor), hpColor, barHue, borderHue, hpPercent);
+            long w = (long)hits * barPixels / hitsMax;
+            if (w < 0)
+            {
+                return 0;
+            }
 
-            startY += HP_BAR_HEIGHT + BAR_GAP;
-            double mpPercent = (double)m.Mana / m.ManaMax;
-            Color manaColor = Color.Blue;
-            DrawColoredBar(batcher, x, startY, barWidth, SolidColorTextureCache.GetTexture(manaColor), manaColor, barHue, borderHue, mpPercent);
+            if (w > barPixels)
+            {
+                return barPixels;
+            }
 
-            startY += HP_BAR_HEIGHT + BAR_GAP;
-            double spPercent = (double)m.Stamina / m.StaminaMax;
-            Color staminaColor = Color.Red;
-            DrawColoredBar(batcher, x, startY, barWidth, SolidColorTextureCache.GetTexture(staminaColor), staminaColor, barHue, borderHue, spPercent);
+            return (int)w;
         }
 
-        private void DrawColoredBar(UltimaBatcher2D batcher, int x, int barY, int barWidth, Texture2D texture, Color barColor, Vector3 barHue, Vector3 borderHue, double percent)
+        private static ushort NameplateHueForHpOverlay(Mobile m)
+        {
+            if (m.Serial == TargetManager.LastTargetInfo.Serial && !m.Equals(World.Player))
+            {
+                return Notoriety.GetHue(m.NotorietyFlag);
+            }
+
+            Profile p = ProfileManager.CurrentProfile;
+            if (p != null && p.NamePlateUseCustomChrome)
+            {
+                return p.NamePlateCustomBackgroundHue;
+            }
+
+            return Notoriety.GetHue(m.NotorietyFlag);
+        }
+
+        private void DrawFullPlateHpOverBackground(UltimaBatcher2D batcher, Mobile m, int gx, int gy)
+        {
+            int w = Width;
+            int h = Height;
+            if (w <= 0 || h <= 0)
+            {
+                return;
+            }
+
+            Profile pr = ProfileManager.CurrentProfile;
+            bool widthTracksHp = pr != null && pr.NamePlateFullPlateWidthScalesWithHp && m.HitsMax > 0;
+            float bgOp = pr != null ? pr.NamePlateOpacity / 100f : 0.75f;
+            float fillA = Math.Min(0.97f, 0.52f + bgOp * 0.44f);
+            float depA = Math.Max(0.2f, Math.Min(fillA - 0.18f, 0.26f + bgOp * 0.42f));
+            Texture2D depletedTex = SolidColorTextureCache.GetTexture(new Color(52, 52, 56));
+            Texture2D fillTex = SolidColorTextureCache.GetTexture(Color.White);
+            ushort nh = NameplateHueForHpOverlay(m);
+            if (nh == 0)
+            {
+                nh = Notoriety.GetHue(m.NotorietyFlag);
+            }
+
+            if (nh == 0)
+            {
+                nh = 0x0481;
+            }
+
+            Vector3 vDepleted = ShaderHueTranslator.GetHueVector(nh, true, depA, true);
+            Vector3 vFill = ShaderHueTranslator.GetHueVector(nh, false, fillA, true);
+
+            if (widthTracksHp)
+            {
+                if (m.HitsMax <= 0)
+                {
+                    batcher.Draw(depletedTex, new Rectangle(gx, gy, w, h), vDepleted);
+                    return;
+                }
+
+                int poolW = Math.Min(w, (w * m.Hits + m.HitsMax - 1) / m.HitsMax);
+                if (m.Hits > 0 && poolW < 1)
+                {
+                    poolW = 1;
+                }
+
+                int poolX = gx + (w - poolW) / 2;
+                batcher.Draw(depletedTex, new Rectangle(gx, gy, w, h), vDepleted);
+                if (poolW > 0)
+                {
+                    batcher.Draw(fillTex, new Rectangle(poolX, gy, poolW, h), vFill);
+                }
+
+                return;
+            }
+
+            int hpW = NohHpFillWidth(m.HitsMax, m.Hits, w);
+            batcher.Draw(depletedTex, new Rectangle(gx, gy, w, h), vDepleted);
+            if (hpW > 0)
+            {
+                batcher.Draw(fillTex, new Rectangle(gx, gy, hpW, h), vFill);
+            }
+        }
+
+        private void DrawColoredBar(UltimaBatcher2D batcher, int x, int barY, int barWidth, int innerH, Texture2D texture, Color barColor, Vector3 barHue, Vector3 borderHue, double percent, int minFillWidth)
         {
             Color borderColor = new Color(
                 Math.Max(0, barColor.R - 80),
@@ -885,25 +1094,56 @@ namespace ClassicUO.Game.UI.Gumps
                 x + 1,
                 barY,
                 barWidth - 2,
-                HP_BAR_HEIGHT + 2,
+                innerH + 2,
                 borderHue
             );
-            int fillWidth = Math.Max(0, (int)((barWidth - 4) * percent));
+            int innerPixels = Math.Max(0, barWidth - 4);
+            int fillWidth = innerPixels <= 0 ? 0 : Math.Max(0, (int)(innerPixels * percent + 1e-6));
+            if (percent > 0 && minFillWidth > 0 && fillWidth > 0 && fillWidth < minFillWidth)
+            {
+                fillWidth = Math.Min(minFillWidth, innerPixels);
+            }
+
             if (fillWidth > 0)
             {
-                batcher.Draw(texture, new Vector2(x + 2, barY + 1), new Rectangle(0, 0, fillWidth, HP_BAR_HEIGHT), barHue);
+                batcher.Draw(texture, new Vector2(x + 2, barY + 1), new Rectangle(0, 0, fillWidth, innerH), barHue);
             }
         }
 
-        private void DrawHpBarBelowName(UltimaBatcher2D batcher, Mobile m, int x, int y, float alpha)
+        private void DrawHpBarAboveName(UltimaBatcher2D batcher, Mobile m, int x, int y, float alpha)
         {
-            int barY = y + Height - HP_BAR_HEIGHT - 2;
+            int hpH = NameplateStripBarInnerHeight(_text.Height);
+            int barY = y + 2;
             int barWidth = Width;
-            double hpPercent = (double)m.Hits / m.HitsMax;
-            Color barColor = hpPercent > 0.6 ? Color.Green : hpPercent > 0.3 ? Color.Yellow : Color.Red;
+            double hpPercent = m.HitsMax > 0 ? (double)m.Hits / m.HitsMax : 1;
+            Color barColor;
+            if (hpPercent > 0.5)
+            {
+                barColor = new Color(45, 210, 90);
+            }
+            else if (hpPercent > 0.2)
+            {
+                barColor = new Color(255, 215, 45);
+            }
+            else
+            {
+                barColor = new Color(255, 28, 28);
+            }
+
             Vector3 barHue = ShaderHueTranslator.GetHueVector(0, false, alpha, true);
             Vector3 borderHue = ShaderHueTranslator.GetHueVector(0, false, 0.9f, true);
-            DrawColoredBar(batcher, x, barY, barWidth, SolidColorTextureCache.GetTexture(barColor), barColor, barHue, borderHue, hpPercent);
+            DrawColoredBar(
+                batcher,
+                x,
+                barY,
+                barWidth,
+                hpH,
+                SolidColorTextureCache.GetTexture(barColor),
+                barColor,
+                barHue,
+                borderHue,
+                hpPercent,
+                m.Hits > 0 ? 3 : 0);
         }
 
         public override void Dispose()

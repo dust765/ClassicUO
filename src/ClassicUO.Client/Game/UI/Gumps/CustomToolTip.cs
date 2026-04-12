@@ -45,7 +45,7 @@ namespace ClassicUO.Game.UI.Gumps
         private void BuildGump()
         {
             var profile = ProfileManager.CurrentProfile;
-            byte font = profile?.SelectedToolTipFont ?? 1;
+            byte font = profile?.TooltipFont ?? 1;
             TEXT_ALIGN_TYPE align = profile?.LeftAlignToolTips == true ? TEXT_ALIGN_TYPE.TS_LEFT : TEXT_ALIGN_TYPE.TS_CENTER;
             FontStyle textStyle = (profile != null && profile.TooltipTextHue != 0xFFFF) ? FontStyle.None : FontStyle.BlackBorder;
             text = new UOLabel("Loading item data...", font, (ushort)hue, align, 150, textStyle, true, true);
@@ -82,7 +82,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                     text?.Dispose();
                     var p = ProfileManager.CurrentProfile;
-                    byte font = p?.SelectedToolTipFont ?? 1;
+                    byte font = p?.TooltipFont ?? 1;
                     TEXT_ALIGN_TYPE align = p?.LeftAlignToolTips == true ? TEXT_ALIGN_TYPE.TS_LEFT : TEXT_ALIGN_TYPE.TS_CENTER;
                     FontStyle textStyle = (p != null && p.TooltipTextHue != 0xFFFF) ? FontStyle.None : FontStyle.BlackBorder;
                     text = new UOLabel(displayText, font, (ushort)hue, align, 600, textStyle, true, true);

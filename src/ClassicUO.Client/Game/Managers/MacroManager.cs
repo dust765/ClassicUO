@@ -325,6 +325,76 @@ namespace ClassicUO.Game.Managers
             return macros;
         }
 
+        public static bool TryGetSpellFullIdFromCastSpellSubCode(MacroSubType subCode, out int spellFullId)
+        {
+            spellFullId = 0;
+            ReadOnlySpan<int> spellsCountTable = stackalloc int[]
+            {
+                Constants.SPELLBOOK_1_SPELLS_COUNT,
+                Constants.SPELLBOOK_2_SPELLS_COUNT,
+                Constants.SPELLBOOK_3_SPELLS_COUNT,
+                Constants.SPELLBOOK_4_SPELLS_COUNT,
+                Constants.SPELLBOOK_5_SPELLS_COUNT,
+                Constants.SPELLBOOK_6_SPELLS_COUNT,
+                Constants.SPELLBOOK_7_SPELLS_COUNT
+            };
+            int spell = subCode - MacroSubType.Clumsy + 1;
+            if (spell <= 0 || spell > 151)
+            {
+                return false;
+            }
+            int totalCount = 0;
+            int spellType;
+            for (spellType = 0; spellType < 8; spellType++)
+            {
+                totalCount += spellsCountTable[spellType];
+                if (spell <= totalCount)
+                {
+                    break;
+                }
+            }
+            if (spellType >= 7)
+            {
+                return false;
+            }
+            spell -= totalCount - spellsCountTable[spellType];
+            spell += spellType * 100;
+            if (spellType > 2)
+            {
+                spell += 100;
+                if (spellType == 6)
+                {
+                    spell -= 23;
+                }
+            }
+            spellFullId = spell;
+            return true;
+        }
+
+        public static bool TryGetSkillServerIndexFromUseSkillSubCode(MacroSubType subCode, out int skillServerIndex)
+        {
+            skillServerIndex = -1;
+            ReadOnlySpan<byte> skillTable = stackalloc byte[]
+            {
+                1, 2, 35, 4, 6, 12,
+                14, 15, 16, 19, 21, 56,
+                23, 3, 46, 9, 30, 22,
+                48, 32, 33, 47, 36, 38
+            };
+            int skill = subCode - MacroSubType.Anatomy;
+            if (skill < 0 || skill >= 24)
+            {
+                return false;
+            }
+            byte v = skillTable[skill];
+            if (v == 0xFF)
+            {
+                return false;
+            }
+            skillServerIndex = v;
+            return true;
+        }
+
         public Macro FindMacro(SDL_GamepadButton button)
         {
             Macro obj = (Macro)Items;
@@ -1409,7 +1479,19 @@ namespace ClassicUO.Game.Managers
                     // ## BEGIN - END ## // LINES
                     // ## BEGIN - END ## // UI/GUMPS
                     // ## BEGIN - END ## // TAZUO
-                    UIManager.Gumps.Where(s => !(s is TopBarGump) && !(s is BuffGump) && !(s is ImprovedBuffGump) && !(s is WorldViewportGump) && !(s is UOClassicCombatLTBar) && !(s is BandageGump) && !(s is UOClassicCombatLines) && !(s is UOClassicCombatAL) && !(s is UOClassicCombatBuffbar) && !(s is UOClassicCombatSelf) && !(s is ECBuffGump) && !(s is ECDebuffGump) && !(s is ECStateGump) && !(s is ModernCooldownBar)).ToList().ForEach(s => s.Dispose());
+                    for (LinkedListNode<Gump> n = UIManager.Gumps.Last; n != null;)
+                    {
+                        LinkedListNode<Gump> prev = n.Previous;
+                        Gump gump = n.Value;
+
+                        if (!(gump is TopBarGump) && !(gump is BuffGump) && !(gump is ImprovedBuffGump) && !(gump is WorldViewportGump) && !(gump is UOClassicCombatLTBar) && !(gump is BandageGump) && !(gump is UOClassicCombatLines) && !(gump is UOClassicCombatAL) && !(gump is UOClassicCombatBuffbar) && !(gump is UOClassicCombatSelf) && !(gump is ECBuffGump) && !(gump is ECDebuffGump) && !(gump is ECStateGump) && !(gump is ModernCooldownBar))
+                        {
+                            gump.Dispose();
+                        }
+
+                        n = prev;
+                    }
+
                     // ## BEGIN - END ## // TAZUO
 
 
@@ -1419,6 +1501,13 @@ namespace ClassicUO.Game.Managers
                     ProfileManager.CurrentProfile.AlwaysRun = !ProfileManager.CurrentProfile.AlwaysRun;
 
                     GameActions.Print(ProfileManager.CurrentProfile.AlwaysRun ? ResGeneral.AlwaysRunIsNowOn : ResGeneral.AlwaysRunIsNowOff);
+
+                    break;
+
+                case MacroType.ToggleAvoidObstacules:
+                    ProfileManager.CurrentProfile.AutoAvoidObstacules = !ProfileManager.CurrentProfile.AutoAvoidObstacules;
+
+                    GameActions.Print(ProfileManager.CurrentProfile.AutoAvoidObstacules ? "Avoid Obstacules is now ON." : "Avoid Obstacules is now OFF.");
 
                     break;
 
@@ -2010,12 +2099,9 @@ namespace ClassicUO.Game.Managers
 
                 case MacroType.CloseAllHealthBars:
 
-                    //Includes HealthBarGump/HealthBarGumpCustom
-                    IEnumerable<BaseHealthBarGump> healthBarGumps = UIManager.Gumps.OfType<BaseHealthBarGump>();
-
-                    foreach (BaseHealthBarGump healthbar in healthBarGumps)
+                    for (LinkedListNode<Gump> n = UIManager.Gumps.Last; n != null; n = n.Previous)
                     {
-                        if (UIManager.AnchorManager[healthbar] == null && healthbar.LocalSerial != World.Player)
+                        if (n.Value is BaseHealthBarGump healthbar && !healthbar.IsDisposed && UIManager.AnchorManager[healthbar] == null && healthbar.LocalSerial != World.Player)
                         {
                             healthbar.Dispose();
                         }
@@ -2034,18 +2120,22 @@ namespace ClassicUO.Game.Managers
                     break;
 
                 case MacroType.CloseInactiveHealthBars:
-                    IEnumerable<BaseHealthBarGump> inactiveHealthBarGumps = UIManager.Gumps.OfType<BaseHealthBarGump>().Where(hb => hb.IsInactive);
-
-                    foreach (var healthbar in inactiveHealthBarGumps)
+                    for (LinkedListNode<Gump> n = UIManager.Gumps.Last; n != null; n = n.Previous)
                     {
-                        if (healthbar.LocalSerial == World.Player) continue;
-
-                        if (UIManager.AnchorManager[healthbar] != null)
+                        if (n.Value is BaseHealthBarGump healthbar && !healthbar.IsDisposed && healthbar.IsInactive)
                         {
-                            UIManager.AnchorManager[healthbar].DetachControl(healthbar);
-                        }
+                            if (healthbar.LocalSerial == World.Player)
+                            {
+                                continue;
+                            }
 
-                        healthbar.Dispose();
+                            if (UIManager.AnchorManager[healthbar] != null)
+                            {
+                                UIManager.AnchorManager[healthbar].DetachControl(healthbar);
+                            }
+
+                            healthbar.Dispose();
+                        }
                     }
                     break;
 
@@ -2053,20 +2143,22 @@ namespace ClassicUO.Game.Managers
                     var gridLootType = ProfileManager.CurrentProfile?.GridLootType; // 0 = none, 1 = only grid, 2 = both
                     if (gridLootType == 0 || gridLootType == 2)
                     {
-                        IEnumerable<ContainerGump> containerGumps = UIManager.Gumps.OfType<ContainerGump>().Where(cg => cg.Graphic == ContainerGump.CORPSES_GUMP);
-
-                        foreach (var containerGump in containerGumps)
+                        for (LinkedListNode<Gump> n = UIManager.Gumps.Last; n != null; n = n.Previous)
                         {
-                            containerGump.Dispose();
+                            if (n.Value is ContainerGump cg && !cg.IsDisposed && cg.Graphic == ContainerGump.CORPSES_GUMP)
+                            {
+                                cg.Dispose();
+                            }
                         }
                     }
                     if (gridLootType == 1 || gridLootType == 2)
                     {
-                        IEnumerable<GridLootGump> gridLootGumps = UIManager.Gumps.OfType<GridLootGump>();
-
-                        foreach (var gridLootGump in gridLootGumps)
+                        for (LinkedListNode<Gump> n = UIManager.Gumps.Last; n != null; n = n.Previous)
                         {
-                            gridLootGump.Dispose();
+                            if (n.Value is GridLootGump gl && !gl.IsDisposed)
+                            {
+                                gl.Dispose();
+                            }
                         }
                     }
                     break;
@@ -2255,12 +2347,8 @@ namespace ClassicUO.Game.Managers
                 // ## BEGIN - END ## // LINES
 
                 case MacroType.UseCounterBar:
-                    string counterIndex = ((MacroObjectString)macro).Text;
-
-                    if (!string.IsNullOrEmpty(counterIndex) && int.TryParse(counterIndex, out int cIndex))
-                    {
-                        CounterBarGump.CurrentCounterBarGump?.GetCounterItem(cIndex)?.Use();
-                    }
+                    string counterSlot = ((MacroObjectString)macro).Text?.Trim();
+                    CounterBarGump.CurrentCounterBarGump?.UseSlot(counterSlot);
                     break;
                 case MacroType.ClientCommand:
                     string command = ((MacroObjectString)macro).Text;
@@ -2354,6 +2442,22 @@ namespace ClassicUO.Game.Managers
         public Macro(string name)
         {
             Name = name;
+        }
+
+        public static MacroObject FindFirstCastSpellOrUseSkillAction(Macro macro)
+        {
+            if (macro?.Items is not MacroObject cur)
+            {
+                return null;
+            }
+            for (; cur != null; cur = (MacroObject)cur.Next)
+            {
+                if (cur.Code == MacroType.CastSpell || cur.Code == MacroType.UseSkill)
+                {
+                    return cur;
+                }
+            }
+            return null;
         }
 
         public string Name { get; }
@@ -2957,7 +3061,8 @@ namespace ClassicUO.Game.Managers
         StunAbility,
         DisarmAbility,
         ToggleGump,
-        ToggleDurabilityGump
+        ToggleDurabilityGump,
+        ToggleAvoidObstacules
     }
 
     public enum MacroSubType

@@ -31,6 +31,7 @@
 #endregion
 
 using ClassicUO.Configuration;
+using ClassicUO.Dust765.Dust765;
 using ClassicUO.Game.UI.Controls;
 using ClassicUO.Game.UI.Gumps;
 using ClassicUO.Input;
@@ -75,6 +76,33 @@ namespace ClassicUO.Game.Managers
                     MouseOverControl == null &&
                     !IsModalOpen &&
                     Client.Game.Scene.Camera.Bounds.Contains(mouse);
+            }
+        }
+
+        public static bool IsPointerOverWorldPlayfield
+        {
+            get
+            {
+                Point mouse = Mouse.Position;
+                Profile profile = ProfileManager.CurrentProfile;
+
+                if (
+                    profile == null
+                    || DraggingControl != null
+                    || IsModalOpen
+                    || !Client.Game.Scene.Camera.Bounds.Contains(mouse)
+                )
+                {
+                    return false;
+                }
+
+                if (MouseOverControl == null)
+                {
+                    return true;
+                }
+
+                return MouseOverControl.RootParent is WorldViewportGump
+                    || MouseOverControl is WorldViewportGump;
             }
         }
 
@@ -386,6 +414,123 @@ namespace ClassicUO.Game.Managers
             return null;
         }
 
+        public static bool HasNameOverheadForSerial(uint serial)
+        {
+            for (LinkedListNode<Gump> n = Gumps.First; n != null; n = n.Next)
+            {
+                if (n.Value is NameOverheadGump g && !g.IsDisposed && g.LocalSerial == serial)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal static void GetBaseHealthBarGumpsSortedByScreen(List<BaseHealthBarGump> result)
+        {
+            result.Clear();
+            for (LinkedListNode<Gump> n = Gumps.First; n != null; n = n.Next)
+            {
+                if (n.Value is BaseHealthBarGump hb && !hb.IsDisposed)
+                {
+                    result.Add(hb);
+                }
+            }
+
+            result.Sort(CompareHealthBarScreenPosition);
+        }
+
+        private static int CompareHealthBarScreenPosition(BaseHealthBarGump a, BaseHealthBarGump b)
+        {
+            int c = a.ScreenCoordinateX.CompareTo(b.ScreenCoordinateX);
+            return c != 0 ? c : a.ScreenCoordinateY.CompareTo(b.ScreenCoordinateY);
+        }
+
+        public static int CountHealthBarGumpCustom()
+        {
+            int count = 0;
+            for (LinkedListNode<Gump> n = Gumps.First; n != null; n = n.Next)
+            {
+                if (n.Value is HealthBarGumpCustom && !n.Value.IsDisposed)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        public static void DisposeMacroButtonGumpForMacro(Macro macro)
+        {
+            if (macro == null)
+            {
+                return;
+            }
+
+            for (LinkedListNode<Gump> n = Gumps.First; n != null; n = n.Next)
+            {
+                if (n.Value is MacroButtonGump mb && !mb.IsDisposed && mb.TheMacro == macro)
+                {
+                    mb.Dispose();
+                    return;
+                }
+            }
+        }
+
+        internal static MacroButtonGump FindMacroButtonGumpForMacro(Macro macro)
+        {
+            if (macro == null)
+            {
+                return null;
+            }
+
+            for (LinkedListNode<Gump> n = Gumps.First; n != null; n = n.Next)
+            {
+                if (n.Value is MacroButtonGump mb && !mb.IsDisposed && mb.TheMacro == macro)
+                {
+                    return mb;
+                }
+            }
+
+            return null;
+        }
+
+        public static void DisposeAllUOClassicCombatLTBars()
+        {
+            for (LinkedListNode<Gump> n = Gumps.Last; n != null; n = n.Previous)
+            {
+                if (n.Value is UOClassicCombatLTBar lt && !lt.IsDisposed)
+                {
+                    lt.Dispose();
+                }
+            }
+        }
+
+        public static void DisposeFirstOfType<T>() where T : Gump
+        {
+            for (LinkedListNode<Gump> n = Gumps.First; n != null; n = n.Next)
+            {
+                if (n.Value is T t && !t.IsDisposed)
+                {
+                    t.Dispose();
+                    return;
+                }
+            }
+        }
+
+        public static void CollectGumps<T>(List<T> buffer) where T : Gump
+        {
+            buffer.Clear();
+            for (LinkedListNode<Gump> n = Gumps.First; n != null; n = n.Next)
+            {
+                if (n.Value is T t && !t.IsDisposed)
+                {
+                    buffer.Add(t);
+                }
+            }
+        }
+
         public static TradingGump GetTradingGump(uint serial)
         {
             for (LinkedListNode<Gump> g = Gumps.Last; g != null; g = g.Previous)
@@ -622,8 +767,6 @@ namespace ClassicUO.Game.Managers
                 return DraggingControl;
             }
 
-            Control control = null;
-
             IsModalOpen = IsModalControlOpen();
 
             for (LinkedListNode<Gump> first = Gumps.First; first != null; first = first.Next)
@@ -635,11 +778,12 @@ namespace ClassicUO.Game.Managers
                     continue;
                 }
 
-                c.HitTest(position, ref control);
+                Control hit = null;
+                c.HitTest(position, ref hit);
 
-                if (control != null)
+                if (hit != null)
                 {
-                    return control;
+                    return hit;
                 }
             }
 

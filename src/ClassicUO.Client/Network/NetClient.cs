@@ -31,6 +31,7 @@
 #endregion
 
 using ClassicUO.Network.Encryption;
+using ClassicUO.Network.Socket;
 using ClassicUO.Utility;
 using ClassicUO.Utility.Logging;
 using System;
@@ -42,118 +43,6 @@ using System.Threading;
 
 namespace ClassicUO.Network
 {
-    sealed class SocketWrapper : IDisposable
-    {
-        private TcpClient _socket;
-
-        public bool IsConnected => _socket?.Client?.Connected ?? false;
-
-        public EndPoint LocalEndPoint => _socket?.Client?.LocalEndPoint;
-
-
-        public event EventHandler OnConnected, OnDisconnected;
-        public event EventHandler<SocketError> OnError;
-
-
-        private const int ConnectTimeoutMs = 10000;
-
-        public void Connect(string ip, int port)
-        {
-            if (IsConnected) return;
-
-            _socket = new TcpClient();
-            _socket.NoDelay = true;
-
-            try
-            {
-                var result = _socket.BeginConnect(ip, port, null, null);
-                if (!result.AsyncWaitHandle.WaitOne(ConnectTimeoutMs))
-                {
-                    Disconnect();
-                    Log.Error($"connection timeout to {ip}:{port}");
-                    OnError?.Invoke(this, SocketError.TimedOut);
-                    return;
-                }
-
-                _socket.EndConnect(result);
-
-                if (!IsConnected)
-                {
-                    OnError?.Invoke(this, SocketError.NotConnected);
-                    return;
-                }
-
-                OnConnected?.Invoke(this, EventArgs.Empty);
-            }
-            catch (SocketException socketEx)
-            {
-                Log.Error($"error while connecting {socketEx}");
-                OnError?.Invoke(this, socketEx.SocketErrorCode);
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"error while connecting {ex}");
-                OnError?.Invoke(this, SocketError.SocketError);
-            }
-        }
-
-        public void Send(byte[] buffer, int offset, int count)
-        {
-            var stream = _socket.GetStream();
-            stream.Write(buffer, offset, count);
-            stream.Flush();
-        }
-
-        public int Read(byte[] buffer)
-        {
-            if (!IsConnected) return 0;
-
-            var available = _socket.Available;
-            if (available == 0)
-                return -1;
-
-            available = Math.Min(buffer.Length, available);
-            var done = 0;
-            var stream = _socket.GetStream();
-
-            while (done < available)
-            {
-                var toRead = Math.Min(buffer.Length, available - done);
-                var read = stream.Read(buffer, done, toRead);
-
-                if (read <= 0)
-                {
-                    OnDisconnected?.Invoke(this, EventArgs.Empty);
-                    Disconnect();
-                    return 0;
-                }
-
-                done += read;
-            }
-
-            return done;
-        }
-
-        public void Disconnect()
-        {
-            var s = _socket;
-            _socket = null;
-            if (s == null) return;
-            try
-            {
-                if (s.Client?.Connected == true)
-                    s.Close();
-            }
-            catch { }
-            try { s.Dispose(); } catch { }
-        }
-
-        public void Dispose()
-        {
-            Disconnect();
-        }
-    }
-
     internal sealed class NetClient
     {
         private const int BUFF_SIZE = 0x10000;
@@ -168,10 +57,11 @@ namespace ClassicUO.Network
         private readonly byte[] _networkReadBuffer = new byte[4096];
         private readonly Huffman _huffman = new Huffman();
         private bool _isCompressionEnabled;
-        private readonly SocketWrapper _socket;
+        private SocketWrapper _socket;
+        private SocketWrapperType? _socketType;
         private uint? _localIP;
         private readonly CircularBuffer _sendStream;
-        private readonly ConcurrentQueue<byte[]> _receiveQueue = new ConcurrentQueue<byte[]>();
+        private readonly ConcurrentQueue<(byte[] data, int length, long recvWallMs)> _receiveQueue = new ConcurrentQueue<(byte[] data, int length, long recvWallMs)>();
         private long _queuedReceiveBytes;
         private int _queuedReceiveMessages;
         private volatile bool _receiveBackpressure;
@@ -184,19 +74,6 @@ namespace ClassicUO.Network
         {
             Statistics = new NetStatistics(this);
             _sendStream = new CircularBuffer();
-
-            _socket = new SocketWrapper();
-            _socket.OnConnected += (o, e) =>
-            {
-                Statistics.Reset();
-                _pendingDisconnect = false;
-                _networkRunning = true;
-                _networkThread = new Thread(NetworkLoop) { IsBackground = true };
-                _networkThread.Start();
-                Connected?.Invoke(this, EventArgs.Empty);
-            };
-            _socket.OnDisconnected += (o, e) => RaiseDisconnectedOnGameThread(SocketError.Success);
-            _socket.OnError += (o, e) => RaiseDisconnectedOnGameThread(e);
         }
 
         private void RaiseDisconnectedOnGameThread(SocketError e)
@@ -205,9 +82,46 @@ namespace ClassicUO.Network
             _pendingDisconnectError = e;
         }
 
+        private void SetupSocket(SocketWrapperType wrapperType)
+        {
+            _networkRunning = false;
+            if (_networkThread != null && _networkThread.IsAlive)
+            {
+                try
+                {
+                    _networkThread.Join(2000);
+                }
+                catch { }
+
+                _networkThread = null;
+            }
+
+            _socket?.Dispose();
+
+            _socket = wrapperType switch
+            {
+                SocketWrapperType.TcpSocket => new TcpSocketWrapper(),
+                SocketWrapperType.WebSocket => new WebSocketWrapper(),
+                _ => throw new ArgumentOutOfRangeException(nameof(wrapperType), wrapperType, null)
+            };
+
+            _socket.OnConnected += (_, _) =>
+            {
+                Statistics.Reset();
+                _pendingDisconnect = false;
+                _networkRunning = true;
+                _networkThread = new Thread(NetworkLoop) { IsBackground = true };
+                _networkThread.Start();
+                Connected?.Invoke(this, EventArgs.Empty);
+            };
+
+            _socket.OnDisconnected += (_, _) => RaiseDisconnectedOnGameThread(SocketError.Success);
+            _socket.OnError += (_, e) => RaiseDisconnectedOnGameThread(e);
+        }
+
         private void NetworkLoop()
         {
-            while (_networkRunning && _socket.IsConnected)
+            while (_networkRunning && _socket != null && _socket.IsConnected)
             {
                 try
                 {
@@ -222,7 +136,7 @@ namespace ClassicUO.Network
                         else
                         {
                             ProcessSendFromQueue();
-                            Thread.Sleep(1);
+                            Thread.Sleep(0); // cede time slice; watermark faz o throttle real
                             continue;
                         }
                     }
@@ -230,7 +144,7 @@ namespace ClassicUO.Network
                     {
                         _receiveBackpressure = true;
                         ProcessSendFromQueue();
-                        Thread.Sleep(1);
+                        Thread.Sleep(0); // cede time slice; watermark faz o throttle real
                         continue;
                     }
 
@@ -249,10 +163,11 @@ namespace ClassicUO.Network
 
                         if (!decompressed.IsEmpty)
                         {
-                            byte[] message = new byte[decompressed.Length];
-                            decompressed.CopyTo(message.AsSpan());
-                            _receiveQueue.Enqueue(message);
-                            Interlocked.Add(ref _queuedReceiveBytes, message.Length);
+                            int msgLen = decompressed.Length;
+                            byte[] pooled = ArrayPool<byte>.Shared.Rent(msgLen);
+                            decompressed.CopyTo(pooled.AsSpan());
+                            _receiveQueue.Enqueue((pooled, msgLen, Environment.TickCount64));
+                            Interlocked.Add(ref _queuedReceiveBytes, msgLen);
                             Interlocked.Increment(ref _queuedReceiveMessages);
                         }
                     }
@@ -262,7 +177,7 @@ namespace ClassicUO.Network
                     }
                     else
                     {
-                        Thread.SpinWait(100);
+                        Thread.Sleep(1); // socket idle — cede o core em vez de busy-wait
                     }
                 }
                 catch (SocketException ex)
@@ -288,14 +203,17 @@ namespace ClassicUO.Network
 
                 ProcessSendFromQueue();
                 if (_receiveQueue.IsEmpty && _sendStream.Length == 0)
-                    Thread.SpinWait(50);
+                    Thread.Sleep(1); // nada a fazer — cede o core
             }
             _networkRunning = false;
         }
 
         private void ProcessSendFromQueue()
         {
-            if (!_socket.IsConnected) return;
+            if (_socket == null || !_socket.IsConnected)
+            {
+                return;
+            }
             try
             {
                 while (true)
@@ -379,14 +297,43 @@ namespace ClassicUO.Network
 
         public void Connect(string ip, ushort port)
         {
+            if (string.IsNullOrEmpty(ip))
+            {
+                throw new ArgumentNullException(nameof(ip));
+            }
+
             _sendStream.Clear();
             ClearReceiveQueue();
             _huffman.Reset();
             Statistics.Reset();
             _pendingDisconnect = false;
             _receiveBackpressure = false;
+            _localIP = null;
 
-            _socket.Connect(ip, port);
+            bool isWebsocketAddress =
+                ip.StartsWith("ws://", StringComparison.OrdinalIgnoreCase)
+                || ip.StartsWith("wss://", StringComparison.OrdinalIgnoreCase);
+
+            string addr = $"{(isWebsocketAddress ? string.Empty : "tcp://")}{ip}:{port}";
+            if (!Uri.TryCreate(addr, UriKind.Absolute, out Uri uri))
+            {
+                throw new UriFormatException($"NetClient::Connect() invalid Uri {addr}");
+            }
+
+            Log.Trace($"Connecting to {uri}");
+
+            SocketWrapperType want = isWebsocketAddress ? SocketWrapperType.WebSocket : SocketWrapperType.TcpSocket;
+            if (_socketType == null)
+            {
+                _socketType = want;
+            }
+            else if (_socketType != want)
+            {
+                throw new InvalidOperationException("Cannot switch between WebSocket and TCP in the same session.");
+            }
+
+            SetupSocket(_socketType.Value);
+            _socket.Connect(uri);
         }
 
         public void Disconnect()
@@ -395,12 +342,13 @@ namespace ClassicUO.Network
             _isCompressionEnabled = false;
             Statistics.Reset();
             ClearReceiveQueue();
-            _socket.Disconnect();
+            _socket?.Disconnect();
         }
 
         private void ClearReceiveQueue()
         {
-            while (_receiveQueue.TryDequeue(out _)) { }
+            while (_receiveQueue.TryDequeue(out var item))
+                ArrayPool<byte>.Shared.Return(item.data);
             Interlocked.Exchange(ref _queuedReceiveBytes, 0);
             Interlocked.Exchange(ref _queuedReceiveMessages, 0);
         }
@@ -423,21 +371,25 @@ namespace ClassicUO.Network
             }
 
             int totalLen = 0;
-            var overflow = default(System.Collections.Generic.List<byte[]>);
+            var overflow = default(System.Collections.Generic.List<(byte[] data, int length, long recvWallMs)>);
 
-            while (_receiveQueue.TryDequeue(out byte[] chunk))
+            while (_receiveQueue.TryDequeue(out var item))
             {
-                Interlocked.Add(ref _queuedReceiveBytes, -chunk.Length);
+                byte[] chunk = item.data;
+                int chunkLen = item.length;
+                long wall = item.recvWallMs;
+                Interlocked.Add(ref _queuedReceiveBytes, -chunkLen);
                 Interlocked.Decrement(ref _queuedReceiveMessages);
 
-                if (totalLen + chunk.Length <= _receiveDrainBuffer.Length)
+                if (totalLen + chunkLen <= _receiveDrainBuffer.Length)
                 {
-                    Array.Copy(chunk, 0, _receiveDrainBuffer, totalLen, chunk.Length);
-                    totalLen += chunk.Length;
+                    Array.Copy(chunk, 0, _receiveDrainBuffer, totalLen, chunkLen);
+                    totalLen += chunkLen;
+                    ArrayPool<byte>.Shared.Return(chunk);
                 }
                 else
                 {
-                    (overflow ??= new System.Collections.Generic.List<byte[]>()).Add(chunk);
+                    (overflow ??= new System.Collections.Generic.List<(byte[], int, long)>()).Add((chunk, chunkLen, wall));
                 }
             }
 
@@ -446,7 +398,7 @@ namespace ClassicUO.Network
                 foreach (var c in overflow)
                 {
                     _receiveQueue.Enqueue(c);
-                    Interlocked.Add(ref _queuedReceiveBytes, c.Length);
+                    Interlocked.Add(ref _queuedReceiveBytes, c.length);
                     Interlocked.Increment(ref _queuedReceiveMessages);
                 }
             }
@@ -457,9 +409,11 @@ namespace ClassicUO.Network
             return _receiveDrainBuffer.AsSpan(0, totalLen);
         }
 
-        public bool TryDequeuePacket(out byte[] packet)
+        public bool TryDequeuePacket(out byte[] data, out int length, out long recvWallMs)
         {
-            packet = null;
+            data = null;
+            length = 0;
+            recvWallMs = 0;
 
             if (_pendingDisconnect)
             {
@@ -469,15 +423,20 @@ namespace ClassicUO.Network
                 return false;
             }
 
-            if (!_receiveQueue.TryDequeue(out packet))
-            {
+            if (!_receiveQueue.TryDequeue(out var item))
                 return false;
-            }
 
-            Interlocked.Add(ref _queuedReceiveBytes, -packet.Length);
+            data = item.data;
+            length = item.length;
+            recvWallMs = item.recvWallMs;
+            Interlocked.Add(ref _queuedReceiveBytes, -length);
             Interlocked.Decrement(ref _queuedReceiveMessages);
-
             return true;
+        }
+
+        public void ReturnPacketBuffer(byte[] buffer)
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
         }
 
         public void Flush()
@@ -506,7 +465,9 @@ namespace ClassicUO.Network
 
             if (message.IsEmpty) return;
 
+#if DEBUG
             PacketLogger.Default?.Log(message, true);
+#endif
 
             if (!skipEncryption)
             {

@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -41,7 +41,6 @@ using ClassicUO.Game.Data;
 using ClassicUO.Game.GameObjects;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using ClassicUO.IO.Audio;
 using static ClassicUO.Renderer.UltimaBatcher2D;
 using ClassicUO.Game.Scenes;
@@ -217,7 +216,7 @@ namespace ClassicUO.Game.UI.Gumps
             area.Add(_scale);
 
 
-            ModernColorPicker.HueDisplay _hueDisplay = new ModernColorPicker.HueDisplay(_macro.Hue, null, true)
+            HueDisplay _hueDisplay = new HueDisplay(_macro.Hue, null, true)
             {
                 X = 10,
                 Y = _scale.Y + _scale.Height + 15
@@ -313,7 +312,7 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 case 1:
                     Client.Game.GetScene<GameScene>().Macros.Save();
-                    var existing = UIManager.Gumps.OfType<MacroButtonGump>().FirstOrDefault(s => s.TheMacro == _macro);
+                    MacroButtonGump existing = UIManager.FindMacroButtonGumpForMacro(_macro);
                     if (existing != null)
                     {
                         existing.TheMacro = _macro;

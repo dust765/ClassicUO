@@ -61,7 +61,7 @@ namespace ClassicUO.Game.UI.Gumps.Login
         private readonly GothicStyleCombobox _languageCombo;
 
         private float _time;
-        private Texture2D LogoBackgroundImg = PNGLoader.Instance.GetImageTexture(Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Client", "logodust.png"));
+        private Texture2D LogoBackgroundImg = UOFileManager.Current.Png.GetImageTexture(Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Client", "logodust.png"));
 
 
         public LoginGump(LoginScene scene) : base(0, 0)

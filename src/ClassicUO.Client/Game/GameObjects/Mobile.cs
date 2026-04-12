@@ -105,6 +105,9 @@ namespace ClassicUO.Game.GameObjects
                 mobile.HitsRequest = HitsRequestStatus.None;
                 mobile.CalculateRandomIdleTime();
                 mobile.IsParalyzed = false;
+                mobile._surfaceOverheadCacheX = int.MinValue;
+                mobile._surfaceOverheadCacheY = int.MinValue;
+                mobile._surfaceOverheadCacheMaxZ = int.MinValue;
 
             }
         );
@@ -137,6 +140,11 @@ namespace ClassicUO.Game.GameObjects
         private bool _animationRepeat;
         private ushort _animationRepeateMode = 1;
         private ushort _animationRepeatModeCount = 1;
+
+        internal int _surfaceOverheadCacheX = int.MinValue;
+        internal int _surfaceOverheadCacheY = int.MinValue;
+        internal int _surfaceOverheadCacheMaxZ = int.MinValue;
+        internal bool _cachedHasSurfaceOverhead;
 
         public Mobile(uint serial) : base(serial)
         {
@@ -238,7 +246,7 @@ namespace ClassicUO.Game.GameObjects
             }
         }
 
-        protected virtual bool IsWalking => LastStepTime > Time.Ticks - Constants.WALKING_DELAY;
+        protected virtual bool IsWalking => LastStepTime > Time.Ticks - MovementTimingManager.WalkingDelay;
 
         public byte AnimationFrameCount;
         public bool AnimationFromServer;
@@ -565,7 +573,7 @@ namespace ClassicUO.Game.GameObjects
         private bool NoIterateAnimIndex()
         {
             return !ExecuteAnimation
-                || (LastStepTime > Time.Ticks - Constants.WALKING_DELAY && Steps.Count == 0);
+                || (LastStepTime > Time.Ticks - MovementTimingManager.WalkingDelay && Steps.Count == 0);
         }
 
         private void ProcessFootstepsSound()
@@ -623,7 +631,7 @@ namespace ClassicUO.Game.GameObjects
                 byte action = GetGroupForAnimation(this, id, true);
 
                 bool mirror = false;
-                AnimationsLoader.Instance.GetAnimDirection(ref dir, ref mirror);
+                UOFileManager.Current.Animations.GetAnimDirection(ref dir, ref mirror);
                 int currentDelay = Constants.CHARACTER_ANIMATION_DELAY;
 
                 if (id < Client.Game.Animations.MaxAnimationCount && dir < 5)

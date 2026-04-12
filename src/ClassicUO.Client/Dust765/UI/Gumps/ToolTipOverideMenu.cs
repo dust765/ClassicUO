@@ -9,6 +9,7 @@ using ClassicUO.Renderer;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ClassicUO.Dust765.UI.Gumps
@@ -21,6 +22,24 @@ namespace ClassicUO.Dust765.UI.Gumps
         private ScrollArea highlightSectionScroll;
 
         public static bool Reopen = false;
+
+        private sealed class DebounceState
+        {
+            public int Revision;
+        }
+
+        private static void Debounce(DebounceState state, int delayMs, Action action)
+        {
+            int current = Interlocked.Increment(ref state.Revision);
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(delayMs).ConfigureAwait(false);
+                if (current == Volatile.Read(ref state.Revision))
+                {
+                    action();
+                }
+            });
+        }
 
         public ToolTipOverideMenu(int x = 200, int y = 200) : base(0, 0)
         {
@@ -124,12 +143,12 @@ namespace ClassicUO.Dust765.UI.Gumps
             OptionsGump.InputField _searchText, _formatText, _min1, _min2, _max1, _max2;
             area.Add(_searchText = new OptionsGump.InputField(0x0BB8, 0xFF, 0xFFFF, true, 200, 20) { X = 25, Y = y, AcceptKeyboardInput = true });
             _searchText.SetText(data.SearchText);
+            DebounceState searchTextRevision = new DebounceState();
             _searchText.TextChanged += (s, e) =>
             {
-                Task.Factory.StartNew(() =>
+                Debounce(searchTextRevision, 1500, () =>
                 {
                     var tVal = _searchText.Text;
-                    System.Threading.Thread.Sleep(1500);
                     if (_searchText.Text == tVal)
                     {
                         if (string.IsNullOrEmpty(_searchText.Text))
@@ -143,12 +162,12 @@ namespace ClassicUO.Dust765.UI.Gumps
 
             area.Add(_formatText = new OptionsGump.InputField(0x0BB8, 0xFF, 0xFFFF, true, 230, 20) { X = _searchText.X + _searchText.Width + 5, Y = y, AcceptKeyboardInput = true });
             _formatText.SetText(data.FormattedText);
+            DebounceState formatTextRevision = new DebounceState();
             _formatText.TextChanged += (s, e) =>
             {
-                Task.Factory.StartNew(() =>
+                Debounce(formatTextRevision, 1500, () =>
                 {
                     var tVal = _formatText.Text;
-                    System.Threading.Thread.Sleep(1500);
                     if (_formatText.Text == tVal)
                     {
                         data.FormattedText = _formatText.Text;
@@ -162,12 +181,12 @@ namespace ClassicUO.Dust765.UI.Gumps
             area.Add(label = new Label("Min/Max first", true, 0xFFFF) { X = 5, Y = y + 20 });
             area.Add(_min1 = new OptionsGump.InputField(0x0BB8, 0xFF, 0xFFFF, true, 30, 20) { X = label.X + label.Width + 5, Y = y + 20, AcceptKeyboardInput = true, NumbersOnly = true });
             _min1.SetText(data.Min1.ToString());
+            DebounceState min1Revision = new DebounceState();
             _min1.TextChanged += (s, e) =>
             {
-                Task.Factory.StartNew(() =>
+                Debounce(min1Revision, 1500, () =>
                 {
                     var tVal = _min1.Text;
-                    System.Threading.Thread.Sleep(1500);
                     if (_min1.Text == tVal && int.TryParse(_min1.Text, out int val))
                     {
                         data.Min1 = val;
@@ -179,12 +198,12 @@ namespace ClassicUO.Dust765.UI.Gumps
 
             area.Add(_max1 = new OptionsGump.InputField(0x0BB8, 0xFF, 0xFFFF, true, 30, 20) { X = _min1.X + _min1.Width + 5, Y = y + 20, AcceptKeyboardInput = true, NumbersOnly = true });
             _max1.SetText(data.Max1.ToString());
+            DebounceState max1Revision = new DebounceState();
             _max1.TextChanged += (s, e) =>
             {
-                Task.Factory.StartNew(() =>
+                Debounce(max1Revision, 1500, () =>
                 {
                     var tVal = _max1.Text;
-                    System.Threading.Thread.Sleep(1500);
                     if (_max1.Text == tVal && int.TryParse(_max1.Text, out int val))
                     {
                         data.Max1 = val;
@@ -197,12 +216,12 @@ namespace ClassicUO.Dust765.UI.Gumps
             area.Add(label = new Label("Min/Max second", true, 0xFFFF) { X = _max1.X + _max1.Width + 15, Y = y + 20 });
             area.Add(_min2 = new OptionsGump.InputField(0x0BB8, 0xFF, 0xFFFF, true, 30, 20) { X = label.X + label.Width + 5, Y = y + 20, AcceptKeyboardInput = true, NumbersOnly = true });
             _min2.SetText(data.Min2.ToString());
+            DebounceState min2Revision = new DebounceState();
             _min2.TextChanged += (s, e) =>
             {
-                Task.Factory.StartNew(() =>
+                Debounce(min2Revision, 1500, () =>
                 {
                     var tVal = _min2.Text;
-                    System.Threading.Thread.Sleep(1500);
                     if (_min2.Text == tVal && int.TryParse(_min2.Text, out int val))
                     {
                         data.Min2 = val;
@@ -214,12 +233,12 @@ namespace ClassicUO.Dust765.UI.Gumps
 
             area.Add(_max2 = new OptionsGump.InputField(0x0BB8, 0xFF, 0xFFFF, true, 30, 20) { X = _min2.X + _min2.Width + 5, Y = y + 20, AcceptKeyboardInput = true, NumbersOnly = true });
             _max2.SetText(data.Max2.ToString());
+            DebounceState max2Revision = new DebounceState();
             _max2.TextChanged += (s, e) =>
             {
-                Task.Factory.StartNew(() =>
+                Debounce(max2Revision, 1500, () =>
                 {
                     var tVal = _max2.Text;
-                    System.Threading.Thread.Sleep(1500);
                     if (_max2.Text == tVal && int.TryParse(_max2.Text, out int val))
                     {
                         data.Max2 = val;

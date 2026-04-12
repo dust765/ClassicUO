@@ -2,6 +2,7 @@ using ClassicUO.Configuration;
 using ClassicUO.Game.Data;
 using ClassicUO.Game.GameObjects;
 using ClassicUO.Game.Scenes;
+using ClassicUO.Game.UI.Gumps;
 using ClassicUO.Input;
 using SDL3;
 using System.Collections.Generic;
@@ -12,7 +13,8 @@ namespace ClassicUO.Game.Managers
     {
         Spell = 0,
         Skill = 1,
-        Ability = 2
+        Ability = 2,
+        Macro = 3
     }
 
     public class ActionBarSlotData
@@ -21,6 +23,7 @@ namespace ClassicUO.Game.Managers
         public int SpellID { get; set; }
         public int SkillIndex { get; set; } = -1;
         public int AbilityIndex { get; set; }
+        public string MacroName { get; set; }
         public int TargetType { get; set; }
         public int Key { get; set; }
         public bool Alt { get; set; }
@@ -35,6 +38,7 @@ namespace ClassicUO.Game.Managers
                 SpellID = SpellID,
                 SkillIndex = SkillIndex,
                 AbilityIndex = AbilityIndex,
+                MacroName = MacroName,
                 TargetType = TargetType,
                 Key = Key,
                 Alt = Alt,
@@ -97,10 +101,43 @@ namespace ClassicUO.Game.Managers
             return false;
         }
 
+        public bool TryExecuteSlotByIndex(int slotIndex)
+        {
+            if (!World.InGame || World.Player == null)
+            {
+                return false;
+            }
+            var profile = ProfileManager.CurrentProfile;
+            if (profile == null || !profile.ActionBarEnabled || profile.ActionBarSlots == null)
+            {
+                return false;
+            }
+            if (slotIndex < 0 || slotIndex >= profile.ActionBarSlots.Count || slotIndex >= MAX_SLOT_COUNT)
+            {
+                return false;
+            }
+            var slot = profile.ActionBarSlots[slotIndex];
+            if (!HasValidAction(slot) || IsSlotOnCooldown(slotIndex))
+            {
+                return false;
+            }
+            ExecuteSlot(slotIndex, slot);
+            return true;
+        }
+
         private static bool HasValidAction(ActionBarSlotData slot)
         {
+            if (slot.SlotType == (int)ActionBarSlotType.Macro)
+            {
+                if (string.IsNullOrEmpty(slot.MacroName))
+                {
+                    return false;
+                }
+                Macro m = MacroManager.TryGetMacroManager()?.FindMacro(slot.MacroName);
+                return m?.Items is MacroObject;
+            }
             return ((slot.SlotType == (int)ActionBarSlotType.Spell || slot.SlotType == 0) && slot.SpellID > 0) ||
-                   (slot.SlotType == (int)ActionBarSlotType.Skill && slot.SkillIndex >= 0) ||
+                   (slot.SlotType == (int)ActionBarSlotType.Skill && slot.SkillIndex >= 0 && ActionBarSkillResolver.PlayerHasSkillServerIndex(slot.SkillIndex)) ||
                    (slot.SlotType == (int)ActionBarSlotType.Ability && slot.AbilityIndex > 0);
         }
 
@@ -121,7 +158,11 @@ namespace ClassicUO.Game.Managers
             }
             else if (slot.SlotType == (int)ActionBarSlotType.Skill)
             {
-                if (slot.SkillIndex < 0 || slot.SkillIndex >= World.Player.Skills.Length) return;
+                if (slot.SkillIndex < 0 || !ActionBarSkillResolver.PlayerHasSkillServerIndex(slot.SkillIndex))
+                {
+                    return;
+                }
+
                 GameActions.UseSkill(slot.SkillIndex);
                 long duration = 1500;
                 _cooldownDuration[slotIndex] = duration;
@@ -131,6 +172,25 @@ namespace ClassicUO.Game.Managers
                 if (slot.AbilityIndex <= 0 || slot.AbilityIndex > AbilityData.Abilities.Length) return;
                 GameActions.UseCombatAbility((byte)slot.AbilityIndex);
                 long duration = 1500;
+                _cooldownDuration[slotIndex] = duration;
+            }
+            else if (slot.SlotType == (int)ActionBarSlotType.Macro)
+            {
+                if (string.IsNullOrEmpty(slot.MacroName))
+                {
+                    return;
+                }
+                MacroManager mm = MacroManager.TryGetMacroManager();
+                Macro macro = mm?.FindMacro(slot.MacroName);
+                if (macro?.Items is not MacroObject first)
+                {
+                    return;
+                }
+                mm.SetMacroToExecute(first);
+                mm.WaitingBandageTarget = false;
+                mm.WaitForTargetTimer = 0;
+                mm.Update();
+                long duration = 400;
                 _cooldownDuration[slotIndex] = duration;
             }
 

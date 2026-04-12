@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (C) 2020 project dust765
 // 
@@ -26,6 +26,7 @@ using ClassicUO.Game.Data;
 using ClassicUO.Game.GameObjects;
 using ClassicUO.Game.Managers;
 using System;
+using System.Collections.Generic;
 
 namespace ClassicUO.Dust765.Macros
 {
@@ -48,8 +49,9 @@ namespace ClassicUO.Dust765.Macros
             //
             if (!World.Player.IsDead && World.Player.Exists && World.Player != null && ProfileManager.CurrentProfile != null)
             {
-                foreach (Mobile mobile in World.Mobiles.Values)
+                foreach (KeyValuePair<uint, Mobile> mkv in World.Mobiles)
                 {
+                    Mobile mobile = mkv.Value;
                     if (World.Mobiles.Get(mobile.Serial).Distance < 12 && mobile.IsHuman && ProfileManager.CurrentProfile != null)
                     {
                         if (mobile.Name.Length == 0 || mobile.Name == null && ProfileManager.CurrentProfile != null)
@@ -58,8 +60,9 @@ namespace ClassicUO.Dust765.Macros
                             return;
                         }
                         else
-                            foreach (Mobile mobile1 in World.Mobiles.Values)
+                            foreach (KeyValuePair<uint, Mobile> mkv1 in World.Mobiles)
                             {
+                                Mobile mobile1 = mkv1.Value;
                                 if (mobile.NotorietyFlag == NotorietyFlag.Ally || World.Party.Contains(mobile.Serial) && mobile != World.Player && ProfileManager.CurrentProfile != null)
                                 {
                                     if (!mobile.IsDead && mobile != null && SerialHelper.IsMobile(mobile.Serial) && ProfileManager.CurrentProfile != null)

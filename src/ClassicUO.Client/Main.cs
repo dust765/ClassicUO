@@ -44,6 +44,7 @@ using Sentry;
 using System;
 using System.Globalization;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 
@@ -59,8 +60,21 @@ namespace ClassicUO
         private static bool SetDllDirectory(string lpPathName) => false;
 #endif
 
+        [UnmanagedCallersOnly(EntryPoint = "Initialize", CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        static unsafe void Initialize(IntPtr* argv, int argc, HostBindings* hostSetup)
+        {
+            var args = new string[argc];
+            for (int i = 0; i < argc; i++)
+                args[i] = Marshal.PtrToStringAnsi(argv[i]);
+
+            var host = new UnmanagedAssistantHost(hostSetup);
+            Boot(host, args);
+        }
+
         [STAThread]
-        public static void Main(string[] args)
+        public static void Main(string[] args) => Boot(null, args);
+
+        public static void Boot(UnmanagedAssistantHost pluginHost, string[] args)
         {
             // Initialize Sentry for crash reporting
             string sentrydDsn = Environment.GetEnvironmentVariable("SENTRY_DSN");
@@ -316,7 +330,7 @@ namespace ClassicUO
                         break;
                 }
 
-                Client.Run();
+                Client.Run(pluginHost);
             }
 
             Log.Trace("Closing...");
@@ -563,7 +577,7 @@ namespace ClassicUO
                         break;
 
                     case "packetlog":
-
+#if DEBUG
                         PacketLogger.Default.Enabled = true;
                         PacketLogger.Default.CreateFile();
 
@@ -581,7 +595,7 @@ namespace ClassicUO
                                     PacketLogger.Default.LogPacketID.Add(res2);
                             }
                         }
-
+#endif
                         break;
 
                     case "language":

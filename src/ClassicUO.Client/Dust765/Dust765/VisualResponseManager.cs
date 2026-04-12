@@ -43,7 +43,8 @@ namespace ClassicUO.Dust765.Dust765
 {
     internal class VisualResponseManager
     {
-        public bool IsEnabled => ProfileManager.CurrentProfile != null && ProfileManager.CurrentProfile.VisualResponseManager;
+        public bool IsEnabled =>
+            ProfileManager.CurrentProfile != null && ProfileManager.CurrentProfile.VisualResponseManager;
         private readonly List<VREntry> _actions = new List<VREntry>();
 
         public class VREntry

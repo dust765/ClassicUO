@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 
 // Copyright (c) 2021, andreakarasho
 // All rights reserved.
@@ -239,22 +239,22 @@ namespace ClassicUO.Game.UI.Controls
 
     //            if (_label.Unicode)
     //            {
-    //                w = FontsLoader.Instance.GetWidthUnicode(_label.Font, item);
+    //                w = UOFileManager.Current.Fonts.GetWidthUnicode(_label.Font, item);
     //            }
     //            else
     //            {
-    //                w = FontsLoader.Instance.GetWidthASCII(_label.Font, item);
+    //                w = UOFileManager.Current.Fonts.GetWidthASCII(_label.Font, item);
     //            }
 
     //            if (w > width)
     //            {
     //                if (_label.Unicode)
     //                {
-    //                    h = FontsLoader.Instance.GetHeightUnicode(_label.Font, item, w, TEXT_ALIGN_TYPE.TS_LEFT, 0x0);
+    //                    h = UOFileManager.Current.Fonts.GetHeightUnicode(_label.Font, item, w, TEXT_ALIGN_TYPE.TS_LEFT, 0x0);
     //                }
     //                else
     //                {
-    //                    h = FontsLoader.Instance.GetHeightASCII(_label.Font, item, w, TEXT_ALIGN_TYPE.TS_LEFT, 0x0);
+    //                    h = UOFileManager.Current.Fonts.GetHeightASCII(_label.Font, item, w, TEXT_ALIGN_TYPE.TS_LEFT, 0x0);
     //                }
 
     //                width = w;
