@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Concurrent;
 using System.Threading.Tasks;
 
 namespace ClassicUO.Game.Managers
 {
     internal class MobileStatusRequestQueue
     {
-        private ConcurrentQueue<uint> requestedSerials = new ConcurrentQueue<uint>();
+        private readonly ConcurrentQueue<uint> _requestedSerials = new ConcurrentQueue<uint>();
         private static MobileStatusRequestQueue instance;
-        private Task queueProccessor;
+        private Task _queueProcessor;
+
         public static MobileStatusRequestQueue Instance
         {
             get
@@ -20,19 +17,25 @@ namespace ClassicUO.Game.Managers
                 return instance;
             }
         }
-        private MobileStatusRequestQueue(){        }
+
+        private MobileStatusRequestQueue() { }
 
         public void RequestMobileStatus(uint serial)
         {
-            requestedSerials.Enqueue(serial);
-            if (requestedSerials.Count > 0 && (queueProccessor == null || queueProccessor.IsCompleted || !queueProccessor.Status.Equals(TaskStatus.Running)))
+            _requestedSerials.Enqueue(serial);
+
+            if (_queueProcessor == null || _queueProcessor.IsCompleted)
             {
-                queueProccessor = Task.Factory.StartNew(() => {
-                    while (requestedSerials.TryDequeue(out var serial))
+                _queueProcessor = Task.Run(async () =>
+                {
+                    while (_requestedSerials.TryDequeue(out uint s))
                     {
-                        GameActions.RequestMobileStatus(serial);
-                        GameActions.Print($"Processing {serial}");
-                        Task.Delay(1000).Wait();
+                        // GameActions must run on main thread
+                        MainThreadQueue.EnqueueAction(() =>
+                        {
+                            GameActions.RequestMobileStatus(s);
+                        });
+                        await Task.Delay(1000).ConfigureAwait(false);
                     }
                 });
             }

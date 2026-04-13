@@ -67,6 +67,13 @@ namespace ClassicUO.Dust765.UI.Gumps
             int contentY = 0;
             string[] sections =
             {
+                "/c[yellow]v3.0.11/cd",
+                "",
+                "- Fix: restore SuppressDraw + Thread.Sleep(1) frame limiter (matching upstream CUO)",
+                "- Fix: Texture2D.FromStream moved to main thread in GumpPicExternalUrl",
+                "- Fix: MobileStatusRequestQueue GameActions now dispatched via MainThreadQueue",
+                "- Fix: network backpressure Sleep(0) restored to Sleep(1) to avoid CPU spin",
+                "",
                 "/c[yellow]v3.0.10/cd",
                 "",
                 "- Update for net core 10",

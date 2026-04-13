@@ -30,6 +30,7 @@
 
 #endregion
 
+using ClassicUO.Game.Managers;
 using ClassicUO.Renderer;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -67,33 +68,30 @@ namespace ClassicUO.Game.UI.Controls
 
         private void getImageTexture()
         {
-            Task.Factory.StartNew(() =>
+            _ = Task.Run(async () =>
             {
                 try
                 {
+                    byte[] pngBytes;
                     using (HttpClient httpClient = new HttpClient())
-                    using (Stream stream = httpClient.GetStreamAsync(ImgUrl).Result)
                     {
-                        using (var image = Image.Load(stream))
-                        {
-                            Console.WriteLine($"Image size {image.Width} x {image.Height}");
-
-                            var memStream = new MemoryStream();
-                            image.Save(memStream, new PngEncoder());
-
-                            using (memStream)
-                            {
-                                var t = Texture2D.FromStream(Client.Game.GraphicsDevice, memStream);
-                                //Color[] buffer = new Color[t.Width * t.Height];
-                                //t.GetData(buffer);
-                                //for (int i = 0; i < buffer.Length; i++)
-                                //    buffer[i] = Color.FromNonPremultiplied(buffer[i].R, buffer[i].G, buffer[i].B, buffer[i].A);
-                                //t.SetData(buffer);
-                                imageTexture = t;
-                            }
-                        }
-
+                        byte[] rawBytes = await httpClient.GetByteArrayAsync(ImgUrl).ConfigureAwait(false);
+                        using var image = Image.Load(rawBytes);
+                        var memStream = new MemoryStream();
+                        image.Save(memStream, new PngEncoder());
+                        pngBytes = memStream.ToArray();
                     }
+
+                    // Texture2D.FromStream must run on the main/render thread
+                    MainThreadQueue.EnqueueAction(() =>
+                    {
+                        try
+                        {
+                            using var ms = new MemoryStream(pngBytes);
+                            imageTexture = Texture2D.FromStream(Client.Game.GraphicsDevice, ms);
+                        }
+                        catch { }
+                    });
                 }
                 catch { }
             });
