@@ -1414,26 +1414,32 @@ namespace ClassicUO.Dust765.Dust765
         //NETWORK\PACKETHANDLERS.CS
         public static void SpellCastFromCliloc(string text)
         {
-            if (SpellDefinition.WordToTargettype.TryGetValue(text, out SpellDefinition spell))
+            SpellDefinition spell = null;
+
+            if (SpellDefinition.WordToTargettype.TryGetValue(text, out SpellDefinition direct))
             {
+                spell = direct;
                 GameActions.LastSpellIndexCursor = spell.ID;
             }
             else
             {
-                //THIS IS INCASE RAZOR OR ANOTHER ASSISTANT REWRITES THE STRING
-
                 foreach (var key in SpellDefinition.WordToTargettype.Keys)
                 {
-                    if (text.Contains(key)) //SPELL FOUND
+                    if (text.Contains(key))
                     {
-                        GameActions.LastSpellIndexCursor = SpellDefinition.WordToTargettype[key].ID;
-
-                        //break; //DONT BREAK LOOP BECAUSE OF IN NOX / IN NOX GRAV
+                        spell = SpellDefinition.WordToTargettype[key];
+                        GameActions.LastSpellIndexCursor = spell.ID;
                     }
                 }
             }
+
             // ## BEGIN - END ## // ONCASTINGGUMP
-            if (ProfileManager.CurrentProfile.OnCastingGump && World.Player.OnCasting != null)
+            if (
+                spell != null
+                && ProfileManager.CurrentProfile != null
+                && ProfileManager.CurrentProfile.OnCastingGump
+                && World.Player?.OnCasting != null
+            )
             {
                 GameActions.LastSpellIndex = spell.ID;
                 // ## BEGIN - END ## // VISUAL HELPERS
@@ -1441,7 +1447,9 @@ namespace ClassicUO.Dust765.Dust765
                 GameCursor._spellTime = 0;
                 // ## BEGIN - END ## // VISUAL HELPERS
                 if (!GameActions.iscasting)
+                {
                     World.Player.OnCasting.Start((uint)GameActions.LastSpellIndexCursor);
+                }
             }
             // ## BEGIN - END ## // ONCASTINGGUMP
         }
