@@ -586,6 +586,12 @@ delete it?</value>
   <data name="ChatMessageColor" xml:space="preserve">
     <value>Chat Message Color</value>
   </data>
+  <data name="ChatInputAutoLineBreak" xml:space="preserve">
+    <value>Break typed chat into multiple lines</value>
+  </data>
+  <data name="ChatInputMaxCharsPerLine" xml:space="preserve">
+    <value>Max characters per line (when line break is on):</value>
+  </data>
   <data name="QueryAttack" xml:space="preserve">
     <value>Query before attack</value>
   </data>

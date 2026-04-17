@@ -51,6 +51,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using static SDL3.SDL;
 
 namespace ClassicUO
@@ -69,6 +70,7 @@ namespace ClassicUO
         private uint _totalFrames;
         private uint _lastMainThreadQueueTicks;
         private UltimaBatcher2D _uoSpriteBatch;
+        private bool _suppressedDraw;
         private Texture2D _background;
 
         private static Vector3 bgHueShader = new Vector3(0, 0, 0.3f);
@@ -584,15 +586,24 @@ namespace ClassicUO
                 {
                     _totalElapsed %= frameMs;
                     fullGameTick = true;
+                    _suppressedDraw = false;
                 }
                 else
                 {
                     fullGameTick = false;
+                    _suppressedDraw = true;
+                    SuppressDraw();
+
+                    if (!gameTime.IsRunningSlowly)
+                    {
+                        Thread.Sleep(1);
+                    }
                 }
             }
             else
             {
                 _totalElapsed = 0;
+                _suppressedDraw = false;
             }
 
             FullGameTick = fullGameTick;
@@ -756,7 +767,7 @@ namespace ClassicUO
 
         protected override bool BeginDraw()
         {
-            return base.BeginDraw();
+            return !_suppressedDraw && base.BeginDraw();
         }
 
         private void WindowOnClientSizeChanged(object sender, EventArgs e)

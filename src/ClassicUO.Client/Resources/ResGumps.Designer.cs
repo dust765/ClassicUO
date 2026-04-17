@@ -619,6 +619,24 @@ namespace ClassicUO.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Break typed chat into multiple lines.
+        /// </summary>
+        public static string ChatInputAutoLineBreak {
+            get {
+                return ResourceManager.GetString("ChatInputAutoLineBreak", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Max characters per line (when line break is on):.
+        /// </summary>
+        public static string ChatInputMaxCharsPerLine {
+            get {
+                return ResourceManager.GetString("ChatInputMaxCharsPerLine", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to You are about to choose your name for the Ultima Online chat system. This name will be PERMANENT and unique on this shard. It will apply to all characters using this account. Do not use your Ultima Online account name for this name as the name you choose will be public. Enter your chat name here:.
         /// </summary>
         public static string ChooseName {

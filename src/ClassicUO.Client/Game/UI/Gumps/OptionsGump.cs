@@ -139,6 +139,7 @@ namespace ClassicUO.Game.UI.Gumps
                          _highlightByParalyzed,
                          _highlightByInvul,
                          _drawRoofs,
+                         _hideInvulnerableMannequinsOnInvisibleHouses,
                          // ## BEGIN - END ## // ART / HUE CHANGES
                          //_treeToStumps,
                          // ## BEGIN - END ## // ART / HUE CHANGES
@@ -152,6 +153,7 @@ namespace ClassicUO.Game.UI.Gumps
                          _chatAfterEnter,
                          _chatAdditionalButtonsCheckbox,
                          _chatShiftEnterCheckbox,
+                         _chatInputAutoLineBreak,
                          _enableCaveBorder;
         private Checkbox _holdShiftForContext, _holdShiftToSplitStack, _reduceFPSWhenInactive, _enableVSync, _sallosEasyGrab, _partyInviteGump, _objectsFading, _textFading, _holdAltToMoveGumps;
         private Combobox _hpComboBox, _healtbarType, _fieldsType, _hpComboBoxShowWhen;
@@ -189,6 +191,7 @@ namespace ClassicUO.Game.UI.Gumps
         // general
         private HSliderBar _sliderFPS, _circleOfTranspRadius;
         private HSliderBar _sliderSpeechDelay;
+        private HSliderBar _chatInputMaxCharsPerLineSlider;
         private HSliderBar _sliderZoom;
         private HSliderBar _soundsVolume, _musicVolume, _loginMusicVolume;
         private HSliderBar _hiddenBodyAlpha;
@@ -1862,6 +1865,18 @@ namespace ClassicUO.Game.UI.Gumps
                 )
             );
 
+            section5.Add
+            (
+                _hideInvulnerableMannequinsOnInvisibleHouses = AddCheckBox
+                (
+                    null,
+                    "Hide mannequin fully",
+                    _currentProfile.HideInvulnerableMannequinsOnInvisibleHouses,
+                    startX,
+                    startY
+                )
+            );
+
             // ## BEGIN - END ## // ART / HUE CHANGES
             /*
             section5.Add
@@ -2944,6 +2959,35 @@ namespace ClassicUO.Game.UI.Gumps
             );
 
             startY += _chatShiftEnterCheckbox.Height + 6;
+            startX = 5;
+
+            _chatInputAutoLineBreak = AddCheckBox
+            (
+                rightArea,
+                ResGumps.ChatInputAutoLineBreak,
+                _currentProfile.ChatInputAutoLineBreak,
+                startX,
+                startY
+            );
+
+            startY += _chatInputAutoLineBreak.Height + 6;
+
+            AddLabel(rightArea, ResGumps.ChatInputMaxCharsPerLine, startX, startY);
+
+            startY += 15;
+
+            _chatInputMaxCharsPerLineSlider = AddHSlider
+            (
+                rightArea,
+                20,
+                120,
+                Math.Clamp(_currentProfile.ChatInputMaxCharsPerLine, 20, 120),
+                startX,
+                startY,
+                180
+            );
+
+            startY += _chatInputMaxCharsPerLineSlider.Height + 6;
             startX = 5;
 
             _hideChatGradient = AddCheckBox
@@ -6392,6 +6436,7 @@ namespace ClassicUO.Game.UI.Gumps
                     _paralyzedColorPickerBox.Hue = 0x014C;
                     _invulnerableColorPickerBox.Hue = 0x0030;
                     _drawRoofs.IsChecked = false;
+                    _hideInvulnerableMannequinsOnInvisibleHouses.IsChecked = false;
                     _enableCaveBorder.IsChecked = false;
                     // ## BEGIN - END ## // ART / HUE CHANGES
                     //_treeToStumps.IsChecked = false;
@@ -6526,6 +6571,8 @@ namespace ClassicUO.Game.UI.Gumps
                     UIManager.SystemChat.IsActive = !_chatAfterEnter.IsChecked;
                     _chatAdditionalButtonsCheckbox.IsChecked = true;
                     _chatShiftEnterCheckbox.IsChecked = true;
+                    _chatInputAutoLineBreak.IsChecked = true;
+                    _chatInputMaxCharsPerLineSlider.Value = 100;
                     _saveJournalCheckBox.IsChecked = false;
                     _hideChatGradient.IsChecked = false;
                     _ignoreGuildMessages.IsChecked = false;
@@ -6845,6 +6892,8 @@ namespace ClassicUO.Game.UI.Gumps
             // ## BEGIN - END ## // ART / HUE CHANGES
 
             _currentProfile.FieldsType = _fieldsType.SelectedIndex;
+            _currentProfile.HideInvulnerableMannequinsOnInvisibleHouses =
+                _hideInvulnerableMannequinsOnInvisibleHouses.IsChecked;
             _currentProfile.HideVegetation = _hideVegetation.IsChecked;
             _currentProfile.NoColorObjectsOutOfRange = _noColorOutOfRangeObjects.IsChecked;
             _currentProfile.UseCircleOfTransparency = _useCircleOfTransparency.IsChecked;
@@ -6973,6 +7022,8 @@ namespace ClassicUO.Game.UI.Gumps
 
             _currentProfile.ActivateChatAdditionalButtons = _chatAdditionalButtonsCheckbox.IsChecked;
             _currentProfile.ActivateChatShiftEnterSupport = _chatShiftEnterCheckbox.IsChecked;
+            _currentProfile.ChatInputAutoLineBreak = _chatInputAutoLineBreak.IsChecked;
+            _currentProfile.ChatInputMaxCharsPerLine = Math.Clamp(_chatInputMaxCharsPerLineSlider.Value, 20, 120);
             _currentProfile.SaveJournalToFile = _saveJournalCheckBox.IsChecked;
 
             // video

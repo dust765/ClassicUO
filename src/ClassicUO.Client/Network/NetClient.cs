@@ -136,7 +136,7 @@ namespace ClassicUO.Network
                         else
                         {
                             ProcessSendFromQueue();
-                            Thread.Sleep(0); // cede time slice; watermark faz o throttle real
+                            Thread.Sleep(1); // backpressure: cede CPU para a main thread consumir a fila
                             continue;
                         }
                     }
@@ -144,7 +144,7 @@ namespace ClassicUO.Network
                     {
                         _receiveBackpressure = true;
                         ProcessSendFromQueue();
-                        Thread.Sleep(0); // cede time slice; watermark faz o throttle real
+                        Thread.Sleep(1); // backpressure: cede CPU para a main thread consumir a fila
                         continue;
                     }
 

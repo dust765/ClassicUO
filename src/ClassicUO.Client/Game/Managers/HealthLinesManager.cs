@@ -158,6 +158,15 @@ namespace ClassicUO.Game.Managers
                     continue;
                 }
 
+                if (
+                    ProfileManager.CurrentProfile.HideInvulnerableMannequinsOnInvisibleHouses
+                    && mobile.Serial != World.Player.Serial
+                    && mobile.IsInvulnerableMannequin
+                )
+                {
+                    continue;
+                }
+
                 int current = mobile.Hits;
                 int max = mobile.HitsMax;
 

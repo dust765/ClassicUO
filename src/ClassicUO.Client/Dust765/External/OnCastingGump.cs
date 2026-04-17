@@ -46,6 +46,11 @@ namespace ClassicUO.Dust765.External
 
         public void Start(uint _spell_id, uint _re = 0)
         {
+            if (_spell_id < 1 || _spell_id > 99)
+            {
+                return;
+            }
+
             _startTime = Time.Ticks;
             uint circle;
 

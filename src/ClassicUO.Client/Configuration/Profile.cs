@@ -167,7 +167,7 @@ namespace ClassicUO.Configuration
         public int FieldsType { get; set; } // 0 = normal, 1 = static, 2 = tile
         public bool NoColorObjectsOutOfRange { get; set; }
         public bool UseCircleOfTransparency { get; set; }
-        public int CircleOfTransparencyRadius { get; set; } = Constants.MAX_CIRCLE_OF_TRANSPARENCY_RADIUS / 2;
+        public int CircleOfTransparencyRadius { get; set; } = Constants.MAX_CIRCLE_OF_TRANSPARENCY_RADIUS /2;
         public int CircleOfTransparencyType { get; set; } // 0 = normal, 1 = like original client
         public int VendorGumpHeight { get; set; } = 60;   //original vendor gump size
         public float DefaultScale { get; set; } = 1.0f;
@@ -225,6 +225,8 @@ namespace ClassicUO.Configuration
         public bool ActivateChatAfterEnter { get; set; }
         public bool ActivateChatAdditionalButtons { get; set; } = true;
         public bool ActivateChatShiftEnterSupport { get; set; } = true;
+        public bool ChatInputAutoLineBreak { get; set; } = true;
+        public int ChatInputMaxCharsPerLine { get; set; } = 100;
         public bool UseObjectsFading { get; set; } = true;
         public bool HoldDownKeyAltToCloseAnchored { get; set; } = true;
         public bool CloseAllAnchoredGumpsInGroupWithRightClick { get; set; } = false;
@@ -521,6 +523,8 @@ namespace ClassicUO.Configuration
         public int TransparentHousesTransparency { get; set; }
         public bool InvisibleHousesEnabled { get; set; } = false;
         public int InvisibleHousesZ { get; set; }
+        public bool HideInvulnerableMannequinNameplates { get; set; }
+        public bool HideInvulnerableMannequinsOnInvisibleHouses { get; set; }
         public int DontRemoveHouseBelowZ { get; set; } = 6;
         public bool DrawMobilesWithSurfaceOverhead { get; set; } = false;
         public bool IgnoreCoTEnabled { get; set; } = false;

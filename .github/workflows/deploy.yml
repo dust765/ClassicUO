@@ -27,23 +27,24 @@ jobs:
       COMMIT_SHA:  ${{ github.sha }}
 
     strategy:
+      max-parallel: 1
       matrix:
         include:
-          - os: windows-latest
-            target: win-x64
-            tfm: net10.0
-            bootTfm: net472
-            bootOutputType: WinExe
-          - os: ubuntu-22.04
-            target: linux-x64
-            tfm: net10.0
-            bootTfm: net472
-            bootOutputType: Exe
           - os: macos-14
             target: osx-x64
             tfm: net10.0
             bootTfm: net472
             bootOutputType: Exe
+          - os: ubuntu-22.04
+            target: linux-x64
+            tfm: net10.0
+            bootTfm: net472
+            bootOutputType: Exe
+          - os: windows-latest
+            target: win-x64
+            tfm: net10.0
+            bootTfm: net472
+            bootOutputType: WinExe
 
     steps:
       - uses: actions/checkout@v4
