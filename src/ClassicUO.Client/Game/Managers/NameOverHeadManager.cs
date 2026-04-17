@@ -166,6 +166,16 @@ namespace ClassicUO.Game.Managers
             if (mobile.Serial == TargetManager.LastTargetInfo.Serial)
                 return true;
 
+            if (mobile.Serial != World.Player.Serial
+                && mobile.IsInvulnerableMannequin
+                && (
+                    ProfileManager.CurrentProfile.HideInvulnerableMannequinNameplates
+                    || ProfileManager.CurrentProfile.HideInvulnerableMannequinsOnInvisibleHouses
+                ))
+            {
+                return false;
+            }
+
             if (mobile.Equals(World.Player) && ActiveOverheadOptions.HasFlag(NameOverheadOptions.ExcludeSelf)
                 && !ActiveOverheadOptions.HasFlag(NameOverheadOptions.Self))
                 return false;

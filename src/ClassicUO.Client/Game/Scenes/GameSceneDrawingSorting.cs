@@ -1015,6 +1015,17 @@ namespace ClassicUO.Game.Scenes
                 }
                 else if (obj is Mobile mobile)
                 {
+                    Profile pMan = ProfileManager.CurrentProfile;
+                    if (pMan != null
+                        && pMan.HideInvulnerableMannequinsOnInvisibleHouses
+                        && World.Player != null
+                        && mobile.Serial != World.Player.Serial
+                        && mobile.IsInvulnerableMannequin)
+                    {
+                        mobile.ObjectHandlesStatus = ObjectHandlesStatus.NONE;
+                        continue;
+                    }
+
                     UpdateObjectHandles(mobile, useObjectHandles);
 
                     maxObjectZ += Constants.DEFAULT_CHARACTER_HEIGHT;

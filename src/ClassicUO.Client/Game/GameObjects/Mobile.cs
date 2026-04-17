@@ -221,6 +221,15 @@ namespace ClassicUO.Game.GameObjects
         public bool IsGargoyle =>
             Client.Version >= ClientVersion.CV_7000 && Graphic == 0x029A || Graphic == 0x029B;
 
+        public bool IsInvulnerableMannequin =>
+            NotorietyFlag == NotorietyFlag.Invulnerable
+            && IsHuman
+            && !string.IsNullOrEmpty(Name)
+            && (
+                Name.Contains("mannequin", StringComparison.OrdinalIgnoreCase)
+                || Name.Contains("manequin", StringComparison.OrdinalIgnoreCase)
+            );
+
         public bool IsMounted
         {
             get
